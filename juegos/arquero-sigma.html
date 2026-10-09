@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arquero Sigma</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--mut:#667085;--ac:#0a7d5a;--bd:#dde1e6;--bad:#c0392b;--warn:#b7791f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181c;--fg:#e8ebee;--card:#1d2328;--mut:#98a2b3;--ac:#34d399;--bd:#2c343b;--bad:#f87171;--warn:#fbbf24}}
+:root[data-theme="dark"]{--bg:#14181c;--fg:#e8ebee;--card:#1d2328;--mut:#98a2b3;--ac:#34d399;--bd:#2c343b;--bad:#f87171;--warn:#fbbf24}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:560px;margin:0 auto;padding:14px}
+h1{font-size:20px;margin:0 0 8px}h2{font-size:17px;margin:4px 0 8px}h3{font-size:15px;margin:10px 0 4px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+button{font:inherit;font-size:14px;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.main{background:var(--ac);color:#fff;border-color:var(--ac);width:100%;font-size:16px;padding:13px;margin-top:8px;font-weight:600}
+.top{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:6px;flex-wrap:wrap}
+.tbar{height:8px;background:var(--bd);border-radius:4px;overflow:hidden;margin-bottom:8px}.tbar div{height:100%;background:var(--ac);transition:width .1s linear}.tbar.low div{background:var(--bad)}
+canvas{width:100%;height:auto;display:block;border-radius:8px;background:var(--bg)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.st{background:var(--bg);border-radius:8px;padding:6px 4px;text-align:center;font-size:12px;color:var(--mut)}.st b{display:block;font-size:16px;color:var(--fg)}
+.st.ok b{color:var(--ac)}.st.no b{color:var(--bad)}
+.act{display:flex;gap:10px;align-items:center;width:100%;text-align:left;margin-top:6px;padding:10px;animation:sl .2s}
+.act .ic{font-size:24px;flex:none;width:34px;text-align:center}.act small{display:block;color:var(--mut);font-size:12px}.act .co{margin-left:auto;font-size:12px;color:var(--mut);white-space:nowrap}
+@keyframes sl{from{transform:translateX(16px);opacity:0}to{transform:none;opacity:1}}
+.note{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--bg);margin-top:8px;border-left:3px solid var(--warn)}
+.res{border-left:4px solid var(--ac)}.res.bad{border-left-color:var(--bad)}
+.row{display:flex;gap:8px}.row button{flex:1}
+ul{padding-left:20px;margin:6px 0}li{margin:3px 0}
+.big{font-size:34px;text-align:center;margin:4px 0}
+.mut{color:var(--mut);font-size:13px}
+</style></head><body><main>
+<h1>🏹 Arquero Sigma</h1>
+<div id="app"></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+var AU=null;
+function beep(f,d,t){try{AU=AU||new(window.AudioContext||window.webkitAudioContext)();if(AU.state=="suspended")AU.resume();const o=AU.createOscillator(),g=AU.createGain();o.type=t||"square";o.frequency.value=f;g.gain.value=.04;o.connect(g);g.connect(AU.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AU.currentTime+d);o.stop(AU.currentTime+d)}catch(e){}}
+function tune(a){a.forEach((f,i)=>setTimeout(()=>beep(f,.14),i*110))}
+function fmt(x,d){return (+x).toFixed(d==null?2:d).replace(".",",")}
+function erf(x){var s=x<0?-1:1;x=Math.abs(x);var t=1/(1+.3275911*x);var y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);return s*y}
+function Phi(z){return .5*(1+erf(z/Math.SQRT2))}
+function cp(m,s,L,U){return (U-L)/(6*s)}
+function cpk(m,s,L,U){return Math.min(m-L,U-m)/(3*s)}
+function ppm(m,s,L,U){return (Phi((L-m)/s)+1-Phi((U-m)/s))*1e6}
+function fppm(v){return v<1?"menos de 1":Math.round(v).toLocaleString("es-CR").replace(/,/g,".")}
+
+/* casos: lv nivel, t objetivo de Cpk */
+const CASES=[
+{lv:1,t:1.33,n:"Espesor de capa",u:"mm",L:4,U:6,m:5,s:.45,why:"Estaba centrado, pero la variación era demasiado grande (Cp = Cpk = 0,74). Centrar no habría cambiado nada: había que reducir la variación."},
+{lv:1,t:1.33,n:"Peso de pieza",u:"g",L:95,U:105,m:102.4,s:1,why:"El Cp era excelente (1,67) pero el Cpk bajo (0,87): el proceso estaba corrido hacia el límite superior. Bastaba con centrarlo, sin gastar en reducir variación."},
+{lv:1,t:1.33,n:"Largo de corte",u:"mm",L:98,U:102,m:100,s:.25,why:"Cp y Cpk ya eran 2,67. La decisión correcta era no tocar el proceso y seguir vigilándolo con una carta de control."},
+{lv:2,t:1.33,n:"Temperatura de curado",u:"°C",L:170,U:190,m:178,s:2.2,why:"Cp = 1,52 pero Cpk = 1,21: variación aceptable, media descentrada. Centrar al nominal resolvía el problema."},
+{lv:2,t:1.33,n:"Presión de inyección",u:"bar",L:8,U:12,m:11.3,s:.55,why:"Cp = 1,21 y Cpk = 0,42: había variación de sobra Y descentrado. Hacían falta las dos acciones: centrar y reducir variación."},
+{lv:2,t:1.33,n:"Diámetro de eje",u:"mm",L:24.9,U:25.1,m:25,s:.02,why:"Cp y Cpk valían 1,67, por encima del objetivo. Cualquier ajuste era gasto innecesario."},
+{lv:3,t:1.5,n:"Humedad del material",u:"%",L:2,U:8,m:5,s:.9,why:"Centrado pero con mucha variación (Cp = Cpk = 1,11). La palanca era reducir la variación."},
+{lv:3,t:1.5,n:"Viscosidad de mezcla",u:"cP",L:400,U:600,m:560,s:20,why:"Cp = 1,67 pero Cpk = 0,67: un simple centrado lo llevaba a 1,67. Reducir variación era gastar de más."},
+{lv:3,t:1.5,n:"Fuerza de adhesión",u:"N",L:50,U:90,m:80,s:6,why:"Cp = 1,11 y Cpk = 0,56: había que centrar y además reducir la variación para llegar al objetivo de 1,5."}
+];
+const LV={1:{name:"Nivel 1 · Con pistas",time:35,hid:false,msg:"Verás Cp y Cpk calculados. Úsalos para decidir."},2:{name:"Nivel 2 · Sin pistas",time:30,hid:true,pen:5,msg:"Cp y Cpk ahora están ocultos. Medirlos cuesta 5 segundos."},3:{name:"Nivel 3 · Exigente",time:25,hid:true,pen:8,msg:"Objetivo Cpk ≥ 1,5 y medir cuesta 8 segundos."}};
+const COST={c:1,r:3,w:2,i:2};
+const ACTS=[
+{id:"c",ic:"🎯",t:"Centrar el proceso",d:"Ajustar el punto de ajuste hasta el valor nominal",},
+{id:"r",ic:"🔧",t:"Reducir la variación",d:"Mejorar equipo o método para que las piezas se parezcan más",},
+{id:"w",ic:"📏",t:"Ampliar la tolerancia",d:"Pedir que los límites de especificación sean más amplios",},
+{id:"i",ic:"🔍",t:"Inspeccionar el 100 %",d:"Revisar todas las piezas al final de la línea",}
+];
+function center(c){return (c.L+c.U)/2}
+function best(c){
+  var bestc=1e9,seq=null;
+  function go(m,s,cost,acts,path){
+    if(cpk(m,s,c.L,c.U)>=c.t-1e-9){if(cost<bestc){bestc=cost;seq=path}return}
+    if(acts==0)return;
+    go(center(c),s,cost+COST.c,acts-1,path.concat("c"));
+    go(m,s*.55,cost+COST.r,acts-1,path.concat("r"));
+  }
+  go(c.m,c.s,0,3,[]);
+  return {cost:bestc,seq:seq};
+}
+CASES.forEach(c=>{var b=best(c);c.opt=b.cost;c.seq=b.seq});
+
+var G=null,TM=null,cv=null,cx=null,view=null,dots=[],tween=null,RAF=0;
+function newGame(){G={r:0,lives:3,stars:0,id:Date.now(),phase:"start"};dots=[];stopTimer();render()}
+function stopTimer(){if(TM){clearInterval(TM);TM=null}if(RAF){cancelAnimationFrame(RAF);RAF=0}}
+
+function render(){
+  var a=$("app");
+  if(G.phase=="start"){
+    a.innerHTML=`<div class="card"><h2>Hazte cargo del proceso</h2>
+    <p>En cada ronda recibes un proceso con sus límites de especificación (LSL y USL). Debes dejarlo con un <b>Cpk igual o mayor al objetivo</b> gastando lo mínimo y antes de que se acabe el tiempo.</p>
+    <ul><li>Cada acción tiene un costo. Entrega el lote cuando estés listo.</li><li>Si entregas un lote que no cumple, pierdes una vida ❤️.</li><li>Hay 9 rondas en 3 niveles. Cada vez empiezas desde la ronda 1.</li></ul>
+    <p class="mut">${bestTxt()}</p>
+    <button class="main" id="go">Empezar</button>
+    <button style="width:100%;margin-top:8px" id="gd">📖 Guía rápida de Cp y Cpk</button></div>`;
+    $("go").onclick=()=>{beep(520,.1);G.r=0;startRound()};$("gd").onclick=showGuide;
+  }
+  else if(G.phase=="end")endScreen();
+}
+function bestTxt(){try{var b=localStorage.getItem("arquero_best");return b?"Tu mejor puntaje en este navegador: "+b+" de 27 estrellas.":""}catch(e){return ""}}
+function showGuide(){
+  var a=$("app");if(G.phase=="play"){stopTimer();G.left-=5}
+  a.innerHTML=`<div class="card"><h2>Guía rápida</h2>
+  <p><b>Cp</b> = (USL − LSL) / 6σ. Mide si la variación cabe en la tolerancia, suponiendo el proceso centrado.</p>
+  <p><b>Cpk</b> = menor de (μ − LSL) / 3σ y (USL − μ) / 3σ. Igual que Cp, pero castiga el descentrado.</p>
+  <h3>Cómo decidir</h3>
+  <ul><li><b>Cp bajo:</b> hay demasiada variación. Reducirla.</li><li><b>Cp alto, Cpk bajo:</b> el proceso está corrido. Centrarlo.</li><li><b>Ambos bajos:</b> hay que hacer las dos cosas.</li><li><b>Ambos por encima del objetivo:</b> no toques nada.</li></ul>
+  <p class="mut">${G.phase=="play"?"Consultar la guía durante una ronda cuesta 5 segundos. ":""}Ampliar la tolerancia no se puede: la fija el cliente. Inspeccionar al 100 % no mejora el proceso, solo filtra el resultado.</p>
+  <button class="main" id="bk">Entendido</button></div>`;
+  $("bk").onclick=()=>{if(G.phase=="start")render();else playUI()};
+}
+
+function startRound(){
+  stopTimer();
+  var c=CASES[G.r],lv=LV[c.lv];
+  G.c=c;G.m=c.m;G.s=c.s;G.spent=0;G.n=0;G.msg="";G.reveal=!lv.hid;G.left=lv.time;G.done=false;G.phase="play";dots=[];
+  var first=(G.r==0||CASES[G.r-1].lv!=c.lv);
+  if(first){
+    $("app").innerHTML=`<div class="card"><h2>${lv.name}</h2><p>${lv.msg}</p><p class="mut">Tiempo por ronda: ${lv.time} s. Objetivo de Cpk: ${fmt(c.t,2)} o más.</p><button class="main" id="ok">Vamos</button></div>`;
+    $("ok").onclick=()=>{beep(600,.1);playUI()};
+  }else playUI();
+}
+function playUI(){
+  stopTimer();var c=G.c,lv=LV[c.lv];
+  $("app").innerHTML=`<div class="top"><span>Ronda ${G.r+1} de 9 · ${lv.name.split(" · ")[0]}</span><span id="lv">${"❤️".repeat(G.lives)||"💔"}</span><span>⭐ ${G.stars}</span></div>
+  <div class="tbar" id="tb"><div id="tf" style="width:100%"></div></div>
+  <div class="card"><b>${c.n}</b> <span class="mut">(${c.u}) · LSL ${fmt(c.L,c.L%1?1:0)} · USL ${fmt(c.U,c.U%1?1:0)} · Objetivo Cpk ≥ ${fmt(c.t,2)}</span>
+  <canvas id="cv" width="520" height="190"></canvas>
+  <div class="stats" id="stats"></div>
+  <div id="meas"></div>
+  <div id="acts"></div>
+  <div id="msg"></div>
+  <button class="main" id="dl">Entregar lote ✔</button>
+  <button style="width:100%;margin-top:8px" id="gd">📖 Guía</button></div>`;
+  cv=$("cv");cx=cv.getContext("2d");view={m:G.m,s:G.s};
+  $("gd").onclick=showGuide;
+  $("dl").onclick=()=>deliver(false);
+  drawAll();updateStats();buildActs();
+  TM=setInterval(tick,100);
+}
+function tick(){
+  if(G.done)return;
+  G.left-=.1;
+  var lv=LV[G.c.lv],p=Math.max(0,G.left/lv.time);
+  var tf=$("tf");if(tf){tf.style.width=(p*100)+"%";$("tb").className="tbar"+(G.left<8?" low":"")}
+  if(G.left<=0){deliver(true)}
+}
+function buildActs(){
+  var h="";
+  ACTS.forEach(a=>{h+=`<button class="act" data-a="${a.id}"><span class="ic">${a.ic}</span><span>${a.t}<small>${a.d}</small></span><span class="co">costo ${COST[a.id]}</span></button>`});
+  $("acts").innerHTML=h;
+  [...document.querySelectorAll(".act")].forEach(b=>b.onclick=()=>doAct(b.dataset.a));
+  if(!G.reveal){
+    var lv=LV[G.c.lv];
+    $("meas").innerHTML=`<button style="width:100%;margin-top:6px" id="ms">🧮 Medir capacidad (−${lv.pen} s)</button>`;
+    $("ms").onclick=()=>{G.reveal=true;G.left-=lv.pen;beep(440,.1);$("meas").innerHTML="";updateStats()};
+  }else $("meas").innerHTML="";
+}
+function updateStats(){
+  var c=G.c,k=cpk(G.m,G.s,c.L,c.U),p=cp(G.m,G.s,c.L,c.U);
+  var h=`<div class="st">μ<b>${fmt(G.m,2)}</b></div><div class="st">σ<b>${fmt(G.s,3)}</b></div>`;
+  if(G.reveal){h+=`<div class="st">Cp<b>${fmt(p,2)}</b></div><div class="st ${k>=c.t-1e-9?"ok":"no"}">Cpk<b>${fmt(k,2)}</b></div>`}
+  else h+=`<div class="st">Cp<b>?</b></div><div class="st">Cpk<b>?</b></div>`;
+  $("stats").innerHTML=h;
+  $("msg").innerHTML=G.msg?`<div class="note">${G.msg}</div>`:"";
+}
+function doAct(id){
+  if(G.done)return;
+  var c=G.c;G.n++;G.spent+=COST[id];
+  if(id=="c"){
+    if(Math.abs(G.m-center(c))<1e-9)G.msg="El proceso ya estaba centrado. Ese gasto no mejoró nada.";else G.msg="Centraste el proceso en el valor nominal.";
+    tweenTo(center(c),G.s);beep(660,.1);
+  }else if(id=="r"){
+    G.msg="Redujiste la variación: σ bajó a un 55 % del valor anterior.";
+    tweenTo(G.m,G.s*.55);beep(740,.1);
+  }else if(id=="w"){
+    G.msg="El cliente rechazó cambiar la especificación. Las tolerancias no se negocian para que el proceso se vea mejor. Perdiste ese gasto.";beep(180,.25,"sawtooth");
+  }else{
+    G.msg="Inspeccionar al 100 % filtró algunas piezas malas, pero el proceso sigue igual y cuesta cada vez que lo repites.";beep(220,.2,"sawtooth");
+  }
+  G.m=(id=="c")?center(c):G.m;if(id=="r")G.s=G.s*.55;
+  updateStats();
+  if(G.n>=4||G.spent>=9){G.msg+=" Llegaste al límite de acciones: se entrega el lote.";updateStats();setTimeout(()=>deliver(false),600)}
+}
+function tweenTo(m,s){
+  var f={m:view.m,s:view.s},t0=performance.now(),id=G.id;
+  if(RAF)cancelAnimationFrame(RAF);
+  (function step(now){
+    if(G.id!=id||!cx)return;
+    var k=Math.min(1,(now-t0)/450);k=1-Math.pow(1-k,3);
+    view.m=f.m+(m-f.m)*k;view.s=f.s+(s-f.s)*k;drawAll();
+    if(k<1)RAF=requestAnimationFrame(step);else RAF=0;
+  })(t0);
+}
+function drawAll(){
+  if(!cx)return;
+  var c=G.c,W=cv.width,H=cv.height,w=c.U-c.L,x0=c.L-w*.55,x1=c.U+w*.55;
+  var X=v=>(v-x0)/(x1-x0)*W,base=H-26;
+  cx.clearRect(0,0,W,H);
+  var css=getComputedStyle(document.body);
+  var fg=css.color,mut=css.getPropertyValue("--mut")||"#667085";
+  var ymax=1/(c.s*.5*Math.sqrt(2*Math.PI));
+  function pdf(x){return Math.exp(-.5*Math.pow((x-view.m)/view.s,2))/(view.s*Math.sqrt(2*Math.PI))}
+  function Y(x){return base-pdf(x)/ymax*(base-14)}
+  var N=160,i,x;
+  // zonas dentro y fuera
+  function area(a,b,col){cx.beginPath();cx.moveTo(X(a),base);for(i=0;i<=N;i++){x=a+(b-a)*i/N;cx.lineTo(X(x),Y(x))}cx.lineTo(X(b),base);cx.closePath();cx.fillStyle=col;cx.fill()}
+  area(x0,c.L,"rgba(192,57,43,.45)");area(c.L,c.U,"rgba(10,125,90,.28)");area(c.U,x1,"rgba(192,57,43,.45)");
+  cx.beginPath();for(i=0;i<=N;i++){x=x0+(x1-x0)*i/N;if(i)cx.lineTo(X(x),Y(x));else cx.moveTo(X(x),Y(x))}
+  cx.strokeStyle="#0a7d5a";cx.lineWidth=2.5;cx.stroke();
+  // muros
+  cx.setLineDash([6,4]);cx.lineWidth=2;cx.strokeStyle="#c0392b";
+  [c.L,c.U].forEach(v=>{cx.beginPath();cx.moveTo(X(v),8);cx.lineTo(X(v),base);cx.stroke()});
+  cx.setLineDash([2,4]);cx.strokeStyle=mut.trim()||"#667085";cx.beginPath();cx.moveTo(X(center(c)),8);cx.lineTo(X(center(c)),base);cx.stroke();cx.setLineDash([]);
+  cx.fillStyle="#c0392b";cx.font="bold 13px system-ui";cx.textAlign="center";
+  cx.fillText("LSL",X(c.L),H-8);cx.fillText("USL",X(c.U),H-8);
+  cx.fillStyle=mut.trim()||"#667085";cx.fillText("nominal",X(center(c)),H-8);
+  cx.beginPath();cx.moveTo(X(view.m),base);cx.lineTo(X(view.m),base+6);cx.strokeStyle=fg;cx.lineWidth=2;cx.stroke();
+  // flechas disparadas
+  dots.forEach(d=>{cx.beginPath();cx.arc(X(d.x),d.y,4,0,7);cx.fillStyle=d.ok?"#0a7d5a":"#c0392b";cx.fill()});
+}
+function randn(){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function deliver(timeout){
+  if(G.done)return;G.done=true;stopTimer();
+  var c=G.c,m=G.m,s=G.s,k=cpk(m,s,c.L,c.U),pass=k>=c.t-1e-9;
+  var wasted=G.spent-c.opt,st=!pass?0:wasted<=0?3:wasted<=2?2:1;
+  G.stars+=st;if(!pass)G.lives--;
+  view={m:m,s:s};drawAll();
+  var bins={},cnt=0,H=cv.height,id=G.id;
+  var N=40,bad=0;
+  var lo=c.L-(c.U-c.L)*.55,hi=c.U+(c.U-c.L)*.55;
+  for(var j=0;j<N;j++)(function(j){
+    setTimeout(()=>{
+      if(G.id!=id||G.phase!="play"||!cx)return;
+      var x=m+randn()*s;x=Math.max(lo+.01*(hi-lo),Math.min(hi-.01*(hi-lo),x));
+      var b=Math.round((x-lo)/(hi-lo)*60);bins[b]=(bins[b]||0)+1;
+      var ok=x>=c.L&&x<=c.U;if(!ok)bad++;
+      dots.push({x:x,y:H-30-bins[b]*8,ok:ok});drawAll();
+    },j*35);
+  })(j);
+  beep(pass?880:200,.2,pass?"square":"sawtooth");
+  setTimeout(()=>{if(G.id!=id)return;showResult(pass,k,st,wasted,timeout,s,m)},N*35+500);
+}
+function showResult(pass,k,st,wasted,timeout,s,m){
+  var c=G.c;
+  var out=ppm(m,s,c.L,c.U);
+  var msg=pass?(st==3?"¡Decisión perfecta!":st==2?"Cumpliste, pero gastaste algo de más.":"Cumpliste, pero con mucho gasto innecesario."):"El lote no cumple el objetivo.";
+  var over=G.lives<=0;
+  var h=`<div class="card res ${pass?"":"bad"}"><div class="big">${pass?"✅":"❌"} ${"⭐".repeat(st)||"—"}</div>
+  <p><b>${msg}</b>${timeout?" (se acabó el tiempo)":""}</p>
+  <p class="mut">Cpk final: <b>${fmt(k,2)}</b> (objetivo ${fmt(c.t,2)}) · Defectos esperados: ${fppm(out)} por millón · Gasto: ${G.spent} (óptimo: ${c.opt}).</p>
+  <div class="note">${c.why}</div>
+  <button class="main" id="nx">${over?"Ver resultado":G.r>=8?"Ver resultado final":"Siguiente ronda"}</button></div>`;
+  $("acts").innerHTML="";$("meas").innerHTML="";
+  var d=document.createElement("div");d.innerHTML=h;$("app").appendChild(d);
+  $("dl").style.display="none";$("gd").style.display="none";
+  $("lv").textContent="❤️".repeat(Math.max(0,G.lives))||"💔";
+  $("nx").onclick=()=>{
+    beep(520,.08);
+    if(over||G.r>=8){G.phase="end";render();return}
+    G.r++;startRound();
+  };
+  $("nx").scrollIntoView({behavior:"smooth",block:"center"});
+}
+function endScreen(){
+  stopTimer();
+  var over=G.lives<=0,tot=G.stars,rank=tot>=24?"Arquero Seis Sigma 🏆":tot>=17?"Ingeniero de procesos sólido 👍":tot>=9?"Aprendiz en camino 🌱":"A practicar el diagnóstico 📖";
+  try{var b=+localStorage.getItem("arquero_best")||0;if(tot>b)localStorage.setItem("arquero_best",String(tot))}catch(e){}
+  $("app").innerHTML=`<div class="card"><div class="big">${over?"💔":"🎯"}</div><h2>${over?"Te quedaste sin vidas":"Terminaste las 9 rondas"}</h2>
+  <p><b>${tot} de 27 estrellas</b> · ${rank}</p>
+  <h3>Lo que te llevas</h3>
+  <ul><li>Mira siempre Cp y Cpk juntos: la diferencia entre ambos revela si el problema es de centrado o de variación.</li><li>No toques un proceso que ya cumple.</li><li>Inspeccionar y ampliar tolerancias no mejoran el proceso.</li></ul>
+  <p class="mut">Datos ficticios con fines didácticos.</p>
+  <button class="main" id="again">Jugar de nuevo desde la ronda 1</button></div>`;
+  $("again").onclick=newGame;
+}
+newGame();
+</script></body></html>
