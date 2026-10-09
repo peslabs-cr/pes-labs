@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Planta PES Motors 3D</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#232b33;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff;touch-action:none;-webkit-user-select:none;user-select:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+.hud{position:fixed;z-index:5}
+#mis{top:calc(8px + env(safe-area-inset-top,0px));left:8px;background:rgba(15,20,26,.74);border-radius:10px;padding:8px 10px;font-size:12.5px;max-width:min(290px,58vw)}
+#mis h4{margin:0 0 4px;font-size:13px;display:flex;justify-content:space-between;gap:10px;cursor:pointer}
+#mis ul{margin:0;padding:0}#mis.min ul{display:none}#misnext{display:none;color:#ffd34d;font-size:12px;line-height:1.25}#mis.min #misnext{display:block}
+#mis li{margin:4px 0;list-style:none;padding-left:18px;position:relative;color:#d7dee6;line-height:1.25}
+#mis li:before{content:"○";position:absolute;left:0;color:#9aa5b1}
+#mis li.ok{color:#7ee2b8}#mis li.ok:before{content:"✔";color:#34d399}#mis li.sec{padding-left:0;margin-top:8px;color:#f2c21b;font-weight:700}#mis li.sec:before,#mis li.hint:before{content:""}#mis li.hint{padding-left:0;color:#9aa5b1;font-style:italic}.say{background:#141a20;border-radius:10px;padding:10px 12px;margin:8px 0}
+#inst{top:calc(8px + env(safe-area-inset-top,0px));right:8px;display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
+.pill{background:rgba(15,20,26,.74);border-radius:10px;padding:5px 9px;font-size:11px;text-align:right;color:#c9d2db}
+.pill b{font-size:17px;display:block;color:#fff}
+#map{width:162px;height:108px;border-radius:8px;border:1px solid rgba(255,255,255,.25)}
+#tools{left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));display:flex;gap:6px}
+#tools button{background:rgba(15,20,26,.74);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:9px;padding:7px 10px;font-size:13px}
+#act{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:6;background:#f2b705;color:#1b1f24;border:0;border-radius:40px;padding:15px 20px;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.45);display:none;max-width:62vw}
+#toast{position:fixed;left:50%;top:24%;transform:translateX(-50%);z-index:7;background:rgba(15,20,26,.9);padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.35;width:min(440px,86vw);text-align:center;display:none;border-left:4px solid #f2b705;pointer-events:none}
+#joyb{position:fixed;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);z-index:4;display:none;pointer-events:none;transform:translate(-50%,-50%)}
+#joyk{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.55)}
+.lbl{position:fixed;z-index:3;transform:translate(-50%,-50%);font-size:11px;font-weight:700;letter-spacing:.07em;background:rgba(0,0,0,.5);padding:2px 7px;border-radius:5px;pointer-events:none;white-space:nowrap;display:none}
+#ov{position:fixed;inset:0;z-index:10;background:rgba(10,14,18,.82);display:flex;align-items:center;justify-content:center;padding:14px}
+#ov[hidden]{display:none}
+.panel{background:#1d242c;border:1px solid #34404c;border-radius:14px;max-width:540px;width:100%;padding:18px;max-height:88vh;overflow:auto;font-size:14.5px;line-height:1.45}
+.panel h1{font-size:22px;margin:0 0 6px}.panel h2{font-size:18px;margin:0 0 8px}.panel h3{font-size:15px;margin:12px 0 4px;color:#f2c21b}
+.panel ul{padding-left:20px;margin:6px 0}.panel li{margin:3px 0}
+.mut{color:#9aa5b1;font-size:13px}
+.btn{display:block;width:100%;margin-top:10px;padding:13px;border-radius:10px;border:0;background:#0a7d5a;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.btn.o{background:transparent;border:1px solid #4a5866;color:#e6ebef}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;background:#141a20;border-radius:10px;padding:10px;margin:8px 0}
+.kv b{text-align:right}
+@media (max-width:600px){#toast{top:34%}#map{width:124px;height:83px}#mis{font-size:11.5px}.pill b{font-size:15px}}
+</style></head><body>
+<canvas id="gl" tabindex="0"></canvas>
+<div id="mis" class="hud"><h4 id="mish"><span>Misiones ▾</span><span id="misn">0/5</span></h4><div id="misnext"></div><ul id="misl"></ul></div>
+<div id="inst" class="hud">
+<canvas id="map" width="162" height="108"></canvas>
+<div class="pill">Nivel de ruido<b id="dbv">-- dB</b><span id="dbs"></span></div>
+<div class="pill">Detector ultrasónico de fugas<b><span id="dtar" style="display:inline-block;transition:transform .15s">⬆</span> <span id="dtv">▯▯▯▯▯</span></b><span id="dtd"></span></div>
+<div class="pill">Casi accidentes<b id="nmv">0</b></div>
+</div>
+<div id="tools" class="hud"><button id="bsnd">🔊</button><button id="bhelp">❔ Ayuda</button></div>
+<button id="act"></button>
+<div id="toast"></div>
+<div id="joyb"><div id="joyk"></div></div>
+<div id="labels"></div>
+<div id="ov"><div class="panel" id="pan"></div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const cv=$("#gl");
+const gl=cv.getContext("webgl2",{antialias:true,powerPreference:"high-performance"});
+if(!gl){$("#pan").innerHTML="<h2>Tu navegador no soporta WebGL 2</h2><p>Prueba con una versión reciente de Chrome, Edge, Firefox o Safari.</p>";throw new Error("no webgl2")}
+
+/* ---------- matemáticas ---------- */
+function trs(o,x,y,z,ry,rx,rz,kx,ky,kz){
+  const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx),cz=Math.cos(rz),sz=Math.sin(rz);
+  const r00=cy*cz+sy*sx*sz,r01=-cy*sz+sy*sx*cz,r02=sy*cx,r10=cx*sz,r11=cx*cz,r12=-sx,r20=-sy*cz+cy*sx*sz,r21=sy*sz+cy*sx*cz,r22=cy*cx;
+  o[0]=r00*kx;o[1]=r10*kx;o[2]=r20*kx;o[3]=0;o[4]=r01*ky;o[5]=r11*ky;o[6]=r21*ky;o[7]=0;
+  o[8]=r02*kz;o[9]=r12*kz;o[10]=r22*kz;o[11]=0;o[12]=x;o[13]=y;o[14]=z;o[15]=1;return o}
+function mul(o,a,b){for(let c=0;c<4;c++)for(let r=0;r<4;r++){o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3]}return o}
+function normalMat(n,m){
+  const a=m[0],b=m[4],c=m[8],d=m[1],e=m[5],f=m[9],g=m[2],h=m[6],i=m[10];
+  const C00=e*i-f*h,C01=-(d*i-f*g),C02=d*h-e*g,C10=-(b*i-c*h),C11=a*i-c*g,C12=-(a*h-b*g),C20=b*f-c*e,C21=-(a*f-c*d),C22=a*e-b*d;
+  let det=a*C00+b*C01+c*C02;if(Math.abs(det)<1e-12)det=1e-12;const k=1/det;
+  n[0]=C00*k;n[1]=C10*k;n[2]=C20*k;n[3]=C01*k;n[4]=C11*k;n[5]=C21*k;n[6]=C02*k;n[7]=C12*k;n[8]=C22*k;return n}
+function persp(o,fy,a,n,f){const t=1/Math.tan(fy/2);o.fill(0);o[0]=t/a;o[5]=t;o[10]=(f+n)/(n-f);o[11]=-1;o[14]=2*f*n/(n-f);return o}
+function lookAt(o,e,t,u){let zx=e[0]-t[0],zy=e[1]-t[1],zz=e[2]-t[2];let l=Math.hypot(zx,zy,zz);zx/=l;zy/=l;zz/=l;
+  let xx=u[1]*zz-u[2]*zy,xy=u[2]*zx-u[0]*zz,xz=u[0]*zy-u[1]*zx;l=Math.hypot(xx,xy,xz);xx/=l;xy/=l;xz/=l;
+  const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+  o[0]=xx;o[1]=yx;o[2]=zx;o[3]=0;o[4]=xy;o[5]=yy;o[6]=zy;o[7]=0;o[8]=xz;o[9]=yz;o[10]=zz;o[11]=0;
+  o[12]=-(xx*e[0]+xy*e[1]+xz*e[2]);o[13]=-(yx*e[0]+yy*e[1]+yz*e[2]);o[14]=-(zx*e[0]+zy*e[1]+zz*e[2]);o[15]=1;return o}
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+function angDiff(a,b){let d=b-a;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d}
+let seed=7;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}
+const CC={};function C(h){if(typeof h!=="string")return h;if(CC[h])return CC[h];return CC[h]=[parseInt(h.slice(1,3),16)/255,parseInt(h.slice(3,5),16)/255,parseInt(h.slice(5,7),16)/255]}
+
+/* ---------- geometría ---------- */
+function boxTris(){const out=[];for(let a=0;a<3;a++)for(const s of[-1,1]){const u=(a+1)%3,v=(a+2)%3;const n=[0,0,0];n[a]=s;
+  const c=[[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].map(([p,q])=>{const r=[0,0,0];r[a]=.5*s;r[u]=p;r[v]=q;return r});
+  for(const i of[0,1,2,0,2,3])out.push(...c[i],...n)}return out}
+function cylTris(seg){const out=[];for(let i=0;i<seg;i++){const a0=i/seg*Math.PI*2,a1=(i+1)/seg*Math.PI*2;
+  const c0=Math.cos(a0),s0=Math.sin(a0),c1=Math.cos(a1),s1=Math.sin(a1),x0=c0*.5,z0=s0*.5,x1=c1*.5,z1=s1*.5;
+  out.push(x0,-.5,z0,c0,0,s0,x1,-.5,z1,c1,0,s1,x1,.5,z1,c1,0,s1,x0,-.5,z0,c0,0,s0,x1,.5,z1,c1,0,s1,x0,.5,z0,c0,0,s0);
+  out.push(0,.5,0,0,1,0,x0,.5,z0,0,1,0,x1,.5,z1,0,1,0,0,-.5,0,0,-1,0,x1,-.5,z1,0,-1,0,x0,-.5,z0,0,-1,0)}return out}
+function sphTris(la,lo){const pt=(i,j)=>{const t=i/la*Math.PI,p=j/lo*Math.PI*2;return[Math.sin(t)*Math.cos(p)*.5,Math.cos(t)*.5,Math.sin(t)*Math.sin(p)*.5]};
+  const out=[];for(let i=0;i<la;i++)for(let j=0;j<lo;j++){const a=pt(i,j),b=pt(i+1,j),c=pt(i+1,j+1),d=pt(i,j+1);for(const q of[a,b,c,a,c,d])out.push(...q,q[0]*2,q[1]*2,q[2]*2)}return out}
+const BOX=boxTris(),CYL=cylTris(14),SPH=sphTris(7,12);
+
+/* ---------- shaders ---------- */
+const VS=`#version 300 es
+layout(location=0) in vec3 aP;layout(location=1) in vec3 aN;layout(location=2) in vec3 aC;
+uniform mat4 uVP,uM;uniform mat3 uNM;out vec3 vN,vC,vW;
+void main(){vec4 w=uM*vec4(aP,1.);vW=w.xyz;vN=uNM*aN;vC=aC;gl_Position=uVP*w;}`;
+const FS=`#version 300 es
+precision highp float;in vec3 vN,vC,vW;uniform vec3 uCol,uEm,uCam,uFogC,uL;uniform float uA;uniform vec2 uFog;out vec4 o;
+void main(){vec3 n=normalize(vN);vec3 b=vC*uCol;float h=n.y*.5+.5;vec3 amb=mix(vec3(.34,.35,.37),vec3(.80,.84,.90),h);
+float d=max(dot(n,uL),0.);vec3 c=b*(amb*.64+d*vec3(1.,.97,.92)*.58)+uEm;
+float f=smoothstep(uFog.x,uFog.y,distance(vW,uCam));o=vec4(mix(c,uFogC,f),uA);}`;
+function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x}
+const PR=gl.createProgram();gl.attachShader(PR,sh(gl.VERTEX_SHADER,VS));gl.attachShader(PR,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(PR);
+if(!gl.getProgramParameter(PR,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(PR));
+gl.useProgram(PR);
+const U={};for(const n of["uVP","uM","uNM","uCol","uEm","uCam","uFogC","uL","uA","uFog"])U[n]=gl.getUniformLocation(PR,n);
+gl.vertexAttrib3f(2,1,1,1);
+function mkMesh(arr,col){const vao=gl.createVertexArray();gl.bindVertexArray(vao);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,arr instanceof Float32Array?arr:new Float32Array(arr),gl.STATIC_DRAW);const st=(col?9:6)*4;
+  gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,st,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,st,12);
+  if(col){gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,3,gl.FLOAT,false,st,24)}else gl.disableVertexAttribArray(2);
+  gl.bindVertexArray(null);return{vao,n:arr.length/(col?9:6)}}
+const BOXM=mkMesh(BOX),CYLM=mkMesh(CYL),SPHM=mkMesh(SPH);
+
+/* ---------- escena estática (horneada) ---------- */
+const SV=[],SVT=[],OB=[];const TM=new Float32Array(16),NMb=new Float32Array(9);
+function bake(dst,tris,m,col){normalMat(NMb,m);for(let i=0;i<tris.length;i+=6){const x=tris[i],y=tris[i+1],z=tris[i+2],nx=tris[i+3],ny=tris[i+4],nz=tris[i+5];
+  dst.push(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14]);
+  const a=NMb[0]*nx+NMb[3]*ny+NMb[6]*nz,b=NMb[1]*nx+NMb[4]*ny+NMb[7]*nz,c=NMb[2]*nx+NMb[5]*ny+NMb[8]*nz,l=Math.hypot(a,b,c)||1;
+  dst.push(a/l,b/l,c/l,col[0],col[1],col[2])}}
+function B(x,y,z,w,h,d,col,ry=0,dst=SV){bake(dst,BOX,trs(TM,x,y,z,ry,0,0,w,h,d),C(col))}
+function Bf(x,z,w,h,d,col,ry=0,y0=0,dst=SV){B(x,y0+h/2,z,w,h,d,col,ry,dst)}
+function Cy(x,y,z,r,h,col,rx=0,rz=0,ry=0){bake(SV,CYL,trs(TM,x,y,z,ry,rx,rz,r*2,h,r*2),C(col))}
+function Sp(x,y,z,kx,ky,kz,col){bake(SV,SPH,trs(TM,x,y,z,0,0,0,kx,ky,kz),C(col))}
+function ob(x,z,w,d,h){OB.push([x-w/2,x+w/2,z-d/2,z+d/2,h])}
+
+/* posiciones clave */
+const SX=[-16,-10,-4,2,8,26,32,38,44,49];
+const ST_NAMES=["Arneses eléctricos","Tablero de instrumentos","Líneas de freno y combustible","Vidrios y sellos","Puertas","Matrimonio (chasis + carrocería)","Escape y suspensión","Llantas y ruedas","Asientos","Fluidos y prueba final"];
+const ST_REAL=[52,55,57,54,56,71,53,50,55,49];const TAKT=60,BOT=5,ST0=ST_REAL.slice();
+const PRESSES=[[-20,-27,0],[-11,-27,.9],[-2,-27,1.8]];
+const CELLS=[[24,-26],[44,-26]];
+const LEAKS=[{x:46.9,y:1.0,z:35.4,n:"Tanque de aire comprimido"},{x:-7.6,y:1.2,z:-23.0,n:"Alimentación de la prensa 2"},{x:17.4,y:1.4,z:-19.2,n:"Bajante neumática de la celda 1"},{x:-13,y:1.3,z:3.5,n:"Herramienta entre las estaciones 1 y 2"},{x:-36,y:1.4,z:-8.2,n:"Unidad FRL del almacén"}];
+LEAKS.forEach(l=>l.tag=false);
+const NOISE=[];PRESSES.forEach(p=>NOISE.push([p[0],p[1],100]));CELLS.forEach(c=>NOISE.push([c[0],c[1],90]));NOISE.push([50,33,95],[54.5,33,95]);SX.forEach(x=>NOISE.push([x,0,78]));
+
+function staticCar(x,z,ry,col){const m0=trs(new Float32Array(16),x,0,z,ry,0,0,1,1,1);const t=new Float32Array(16),q=new Float32Array(16);
+  const p=(lx,ly,lz,kx,ky,kz,c,mesh,rz=0)=>{trs(t,lx,ly,lz,0,0,rz,kx,ky,kz);mul(q,m0,t);bake(SV,mesh,q,C(c))};
+  p(0,.62,0,1.8,.62,4.2,col,BOX);p(0,1.14,-.2,1.62,.5,2.1,"#26313b",BOX);p(0,1.42,-.2,1.5,.08,1.9,col,BOX);
+  for(const sx of[-1,1])for(const sz of[-1,1])p(sx*.85,.34,sz*1.35,.68,.26,.68,"#1d2126",CYL,Math.PI/2);
+  p(.6,.7,2.11,.35,.12,.04,[2.2,2.2,2],BOX);p(-.6,.7,2.11,.35,.12,.04,[2.2,2.2,2],BOX)}
+
+function buildWorld(){
+  // piso y zonas
+  Bf(0,0,121,.1,81,"#979da4",0,-.1);
+  Bf(-45,-23,30,.012,34,"#a19b8a");Bf(-11,-27.5,30,.012,25,"#7c838b");Bf(34,-26,46,.012,28,"#89909a");Bf(17.5,0,79,.012,14,"#a6acb2");Bf(49,33.75,18,.012,11.5,"#868c92");
+  // paredes
+  const wc="#c5ccd3",wb="#56636f";
+  Bf(0,-40.25,121,9,.5,wc);Bf(0,40.25,121,9,.5,wc);Bf(-60.25,0,.5,9,81,wc);Bf(60.25,0,.5,9,81,wc);
+  Bf(0,-39.97,120,1.3,.06,wb);Bf(0,39.97,120,1.3,.06,wb);Bf(-59.97,0,.06,1.3,80,wb);Bf(59.97,0,.06,1.3,80,wb);
+  for(let x=-52;x<=52;x+=13){Bf(x,-39.94,9,1.8,.08,"#a9d6f5",0,6.2);Bf(x,39.94,9,1.8,.08,"#a9d6f5",0,6.2)}
+  for(let z=-30;z<=30;z+=15){Bf(-59.94,z,.08,1.8,10,"#a9d6f5",0,6.2);Bf(59.94,z,.08,1.8,10,"#a9d6f5",0,6.2)}
+  for(let z=-35;z<=35;z+=10)B(0,10.6,z,120,.35,.35,"#56606b");
+  for(let x=-50;x<=50;x+=12.5)for(let z=-30;z<=30;z+=15)B(x,9.4,z,2.2,.15,.5,[2.3,2.2,1.9]);
+  // pasillos peatonales y rutas
+  const G="#3e9a5d",Y="#e9c31b",WH="#eef0f2";
+  const strip=(x0,z0,x1,z1,w,c,y0=.013,h=.02)=>{if(z0===z1)Bf((x0+x1)/2,z0,Math.abs(x1-x0),h,w,c,0,y0);else Bf(x0,(z0+z1)/2,w,h,Math.abs(z1-z0),c,0,y0)};
+  strip(-58,24,58,24,2.4,G);strip(-40,24,-40,-5,2.4,G);strip(-24,24,-24,-14,2.4,G);strip(20,24,20,6,2.4,G);strip(20,-6,20,-12,2.4,G);
+  strip(-24,5,57,5,1.8,G);strip(-24,-5,57,-5,1.8,G);
+  strip(-30,7.6,54,7.6,.14,Y,.03,.012);strip(-30,13.4,54,13.4,.14,Y,.03,.012);strip(-33,15,56,15,.14,Y,.03,.012);strip(-33,18.4,56,18.4,.14,Y,.03,.012);
+  strip(-32.7,-9,-32.7,18.4,.14,Y,.03,.012);strip(-28.3,-9,-28.3,15,.14,Y,.03,.012);strip(5.2,-39,5.2,-6.3,.14,Y,.03,.012);strip(9.8,-39,9.8,-6.3,.14,Y,.03,.012);strip(5.2,-6.3,9.8,-6.3,.14,Y,.03,.012);
+  for(const zx of[-24,20])for(const [a,b] of[[7.8,13.2],[15.2,18.2]])for(let z=a;z<b;z+=.8)Bf(zx,z+.2,2.4,.02,.4,WH,0,.035);
+  // columnas
+  for(const x of[-45,-15,15,45]){Bf(x,21.2,.6,9,.6,"#d9a227");ob(x,21.2,.8,.8,9)}
+  // oficina y caseta de EPP
+  Bf(-52.5,34.5,14,3.6,10,"#d9dee3");Bf(-52.5,29.47,12.5,1.4,.08,"#8fc7ef",0,1.5);Bf(-48,29.47,1.4,2.4,.1,"#4a5561");Bf(-52.5,34.5,14.4,.2,10.4,"#7d8894",0,3.6);ob(-52.5,34.5,14,10,3.8);
+  Bf(-43,32.6,2.6,2.2,1,"#2f855a");B(-43,3.0,32.6,2.6,.9,.1,"#f4f6f8");Bf(-43,32.05,2.4,.08,.2,"#1f6f4a",0,1.3);
+  Sp(-43.7,1.5,32.1,.38,.24,.4,"#f2c21b");Sp(-43,1.5,32.1,.38,.24,.4,"#f4f6f8");Sp(-42.3,1.5,32.1,.38,.24,.4,"#2f6db5");ob(-43,32.6,2.6,1,2.2);
+  // almacén: racks
+  const rack=(xc,w)=>{const z0=-36,z1=-12;for(let z=z0;z<=z1+.01;z+=2.67){for(const s of[-1,1])Bf(xc+s*w/2,z,.1,6,.1,"#2c5aa0")}
+    for(const y of[1.6,3.2,4.8])for(const s of[-1,1])B(xc+s*w/2,y,(z0+z1)/2,.1,.14,z1-z0,"#e07a1f");
+    for(let z=z0+1.33;z<z1;z+=2.67)for(const y of[0,1.67,3.27,4.87]){if(rnd()<.22)continue;Bf(xc,z,w*.9,.14,2.2,"#b08a5a",0,y);
+      const pal=["#c69c6d","#b5835a","#d6b88e","#7a9cc6","#9aa5b1","#c96b4f"];Bf(xc,z,w*.82,.9+rnd()*.5,2.0,pal[Math.floor(rnd()*pal.length)],0,y+.14)}
+    ob(xc,(z0+z1)/2,w+.3,z1-z0+.3,6.2)};
+  rack(-56.6,1.2);rack(-49,2.4);rack(-41,2.4);rack(-34.6,1.2);
+  // estampado: prensas
+  PRESSES.forEach(([x,z])=>{Bf(x,z,6.4,1.2,7,"#3d4a57");Bf(x,z,4.6,.4,4.6,"#58636e",0,1.2);
+    for(const sx of[-1,1])for(const sz of[-1,1])Bf(x+sx*2.6,z+sz*2.9,1,6,1,"#2f6db5",0,1.2);Bf(x,z,6.4,1.8,7,"#2f6db5",0,7.2);
+    for(const sx of[-1,1])Bf(x+sx*2.3,z+3.8,.15,2,.15,"#f2c21b");
+    for(const [dx,dz,ww,dd] of[[0,4.6,8.4,.25],[0,-4.6,8.4,.25],[4.1,0,.25,9.4],[-4.1,0,.25,9.4]])for(let k=0;k<1;k++)Bf(x+dx,z+dz,ww,.02,dd,"#e8c21a",0,.03);
+    ob(x,z,6.4,7,9)});
+  for(const x of[-22,-17,-12,-7,-2])Cy(x,.9,-37.6,.9,1.0,"#a2a9b1",Math.PI/2);
+  // carrocería: celdas robóticas
+  CELLS.forEach(([cx,cz])=>{const w=14,d=12;
+    for(let x=cx-w/2;x<=cx+w/2+.01;x+=2){Bf(x,cz-d/2,.12,2.2,.12,"#f2c21b");Bf(x,cz+d/2,.12,2.2,.12,"#f2c21b")}
+    for(let z=cz-d/2;z<=cz+d/2+.01;z+=2){Bf(cx-w/2,z,.12,2.2,.12,"#f2c21b");Bf(cx+w/2,z,.12,2.2,.12,"#f2c21b")}
+    for(const s of[-1,1]){B(cx,2.2,cz+s*d/2,w,.1,.1,"#f2c21b");B(cx+s*w/2,2.2,cz,.1,.1,d,"#f2c21b");
+      Bf(cx,cz+s*d/2,w,2.1,.04,"#8e98a3",0,.05,SVT);Bf(cx+s*w/2,cz,.04,2.1,d,"#8e98a3",0,.05,SVT)}
+    Bf(cx,cz,2.4,.5,5,"#4a535c");Bf(cx,cz,1.7,.55,4.0,"#c4cad1",0,.5);Bf(cx,cz-.2,1.55,.55,2.0,"#b8bfc7",0,1.05);
+    for(const sx of[-1,1])for(const sz of[-1,1])Cy(cx+sx*3.4,.35,cz+sz*2.8,.45,.7,"#3b4048");
+    ob(cx,cz,w+.3,d+.3,3)});
+  Bf(34,-26,6,.4,2.2,"#4a535c");ob(34,-26,6,2.2,.4);
+  // línea de ensamble final
+  Bf(-1.5,0,37,.5,2.8,"#4a535c");Bf(39,0,32,.5,2.8,"#4a535c");Bf(20,0,6,.5,2.8,"#4a535c");
+  for(let x=-19.5;x<55;x+=1)Bf(x,0,.08,.02,2.6,"#6b7681",0,.5);
+  for(const s of[-1,1])Bf(17.5,s*1.45,75,.25,.1,"#f2c21b",0,.5);
+  ob(-1.5,0,37,3,.55);ob(39,0,32,3,.55);ob(17.75,0,1.5,3,.55);ob(22.25,0,1.5,3,.55);
+  // puente peatonal
+  B(20,2.34,0,3,.12,5.2,"#7d8894");for(const s of[-1,1]){B(18.5,3.0,0,.08,1.1,5.2,"#f2c21b");B(21.5,3.0,0,.08,1.1,5.2,"#f2c21b");
+    for(let k=0;k<6;k++){const zz=s*(2.6+k*.57+.28),hh=2.4*(1-(k+.5)/6);Bf(20,zz,3,hh,.57,"#7d8894")}}
+  // estaciones
+  SX.forEach((x,i)=>{Bf(x+1.6,3.6,.8,1.0,.6,"#3a4652");Bf(x+1.6,3.6,.7,.25,.5,["#c0392b","#2f6db5","#2f855a"][i%3],0,1.0);
+    Bf(x,-1.9,.12,3.2,.12,"#56636f");B(x,3.5,-1.9,1.8,.7,.08,"#1f2a33")});
+  for(const x of[52,53.5,55]){for(const s of[-1,1])Bf(x,s*1.8,.18,3,.18,"#e6ebef");B(x,3.1,0,.2,.2,3.8,[2.5,2.5,2.4])}
+  // pintura, calidad, compresores
+  Bf(-5,33.5,30,6,9,"#e3e7eb");Bf(-5,28.97,26,1.4,.08,"#9fd4f5",0,2.2);Bf(-5,28.97,3,2.6,.1,"#56636f");ob(-5,33.5,30,9,6);
+  Bf(25,34,9,.2,6.4,"#3a4450");staticCar(25,34,Math.PI/2,"#c0392b");
+  for(const x of[22,25,28]){for(const s of[-1,1])Bf(x,34+s*2.8,.2,3.2,.2,"#dfe5ea");B(x,3.25,34,.22,.22,5.8,[2.4,2.4,2.3])}ob(25,34,9.2,6.6,3.4);
+  Bf(41.5,28,3,4,.3,"#b9c1c9");Bf(52,28,12,4,.3,"#b9c1c9");Bf(40,34,.3,4,12,"#b9c1c9");ob(41.5,28,3,.4,4);ob(52,28,12,.4,4);ob(40,34,.4,12,4);
+  for(const x of[50,54.5]){Bf(x,33,3,2.2,2,"#3b6ea5");Bf(x,33,2.4,.6,.06,"#22303d",0,1.4);ob(x,33,3.1,2.1,2.3)}
+  Cy(46,1.7,36.5,.95,3.4,"#d3d9df");ob(46,36.5,1.9,1.9,3.5);Bf(43.4,38.4,1.6,1.8,1.2,"#7d8894");ob(43.4,38.4,1.6,1.2,1.9);
+  // bajantes de aire (algunas con fuga)
+  const drops=[...LEAKS.map(l=>[l.x,l.y,l.z]),[-21,1.3,-22.8],[-1.2,1.3,-22.8],[38.6,1.4,-19.2],[-4.9,1.3,3.5],[7.1,1.3,3.5],[31.1,1.3,3.5],[43.1,1.3,3.5],[-45,1.4,-8.2]];
+  drops.forEach(([x,y,z])=>{Cy(x,(9.6+y)/2,z,.06,9.6-y,"#2b6cb0");B(x,y+.1,z,.26,.38,.22,"#6b7785")});
+  B(0,9.6,-22.8,60,.14,.14,"#2b6cb0");
+  const exitD=(x,z,ry)=>{Bf(x,z,1.8,2.5,.1,"#5b6672",ry);const sx=Math.sin(ry),cz=Math.cos(ry);B(x,2.95,z,1.0,.35,.06,[.3,2.2,.6],ry)};
+  exitD(59.86,-8,Math.PI/2);exitD(-59.86,2,Math.PI/2);exitD(40,-39.86,0);exitD(35,39.86,0);
+  for(let x=-34;x<=-30;x+=1){Bf(x,32.5,.08,2,.08,"#c0392b");Bf(x,35.5,.08,2,.08,"#c0392b")}for(let z=32.5;z<=35.5;z+=1){Bf(-34,z,.08,2,.08,"#c0392b");Bf(-30,z,.08,2,.08,"#c0392b")}
+  for(const s of[-1,1]){B(-32,2,34+s*1.5,4,.08,.08,"#c0392b");B(-32+s*2,2,34,.08,.08,3,"#c0392b")}Bf(-32,34,4,.02,3,"#7a2a24",0,.02);ob(-32,34,4.2,3.2,2);B(10,9.6,3.5,60,.14,.14,"#2b6cb0");B(28,9.6,-19.2,24,.14,.14,"#2b6cb0");
+}
+buildWorld();
+const STAT=mkMesh(new Float32Array(SV),true),STATT=mkMesh(new Float32Array(SVT),true);
+
+/* ---------- estado ---------- */
+const st={ppe:false,leaks:0,noise:null,bottle:false,unsafe:false,near:0,expo:0,expoWarn:false,ppeWarn:0,t:0,done:false,started:false,ended:false};
+const pl={x:-44,z:28,y:0,h:Math.PI,ph:0,mv:0};
+const cam={yaw:0,pitch:.5,dist:7.5,dcur:7.5,e:[0,10,20],t:[0,0,0]};
+let running=false,muted=false;
+
+/* vehículos */
+function veh(type,pts,vmax,col){return{type,pts,i:1,x:pts[0][0],z:pts[0][1],h:0,v:0,vmax,col,cool:0,trail:[],load:rnd()<.6}}
+const VEH=[
+  veh("fl",[[-53.1,-9.5],[-53.1,-37.6],[-45,-37.6],[-45,-9.5]],3.0),
+  veh("fl",[[-28,9.2],[52,9.2],[53,10.6],[52,12],[-28,12],[-29,10.6]],3.4),
+  veh("fl",[[6.4,-7.4],[6.4,-37],[7.5,-38],[8.6,-37],[8.6,-7.4],[7.5,-6.9]],2.8),
+  veh("tug",[[-31.6,-8],[-31.6,17.6],[54,17.6],[55,16.7],[54,15.8],[-29.4,15.8],[-29.4,-8],[-30.5,-9]],2.4)];
+VEH[1].x=10;VEH[1].z=9.2;
+/* peatones */
+function walker(pts,sp,o,h){return{pts,i:pts.length>1?1:0,x:pts[0][0],z:pts[0][1],h:h||0,sp,ph:rnd()*6,o,wait:0}}
+const NPC={unsafe:walker([[26,10.6],[40,10.6]],1.2,{shirt:"#4b5563",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b"}),
+  sup:walker([[-50,24],[50,24]],1.3,{shirt:"#f4f6f8",pants:"#2d3540",helm:"#2f6db5",vest:"#f28c28"}),
+  pick:walker([[-37.5,-11],[-37.5,-34]],1.1,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b"}),
+  qa:walker([[46,-4.9],[55,-4.9]],.9,{shirt:"#f4f6f8",pants:"#3a4450",helm:"#f4f6f8",vest:null}),
+  boss:walker([[12,6.6]],1.2,{shirt:"#f4f6f8",pants:"#1f2933",helm:"#f4f6f8",vest:null,skin:"#e3b48f",hair:"#3b2a1d"},Math.PI),
+  aud:walker([[25,29.6]],1.2,{shirt:"#8fc7ef",pants:"#2d3540",helm:"#f4f6f8",vest:null},Math.PI),
+  ehs:walker([[-47,27.4]],1.2,{shirt:"#2f855a",pants:"#2d3540",helm:"#2f855a",vest:"#d6f21b",skin:"#e3b48f"},Math.PI),
+  mec:walker([[-2,-22.2]],1.6,{shirt:"#2b4c7e",pants:"#2b4c7e",helm:"#d64545",vest:null,arm:.9},Math.PI)};
+const SIDE={boss:{s:0,nm:"Marta",rol:"Jefa de producción"},aud:{s:0,nm:"Andrés",rol:"Auditor de calidad",n:0},kai:{s:0,nm:"José",rol:"Operador de la estación 6"},mec:{s:0,nm:"Luis",rol:"Mecánico de mantenimiento"},ehs:{s:0,nm:"Carla",rol:"Supervisora de seguridad (EHS)"}};
+const NC=[{x:-36.3,z:-20,on:true},{x:41,z:-3.6,on:true},{x:-9.5,z:-35.2,on:true}];NC.forEach(c=>{c.ob=[c.x-.6,c.x+.6,c.z-.55,c.z+.55,1];OB.push(c.ob)});
+const EXITB={on:true,ob:[57.6,59.6,-9.8,-6.2,1.6]};OB.push(EXITB.ob);
+const MLEAK={x:1.5,y:1.2,z:-23.0,on:false,tag:false,n:"Prensa 3 (después del mantenimiento)"};
+let timing=null;
+/* autos en la línea */
+const CARS=[];const PAL=["#c0392b","#e8ecef","#2f5fa8","#9aa3ad","#1f2329","#d9822b"];
+let spawnT=0;
+function lineUpdate(dt){
+  spawnT-=dt;const last=CARS[CARS.length-1];
+  if(spawnT<=0&&(!last||last.x>-20+5.2)){CARS.push({x:-20,s:0,work:0,col:PAL[Math.floor(rnd()*PAL.length)]});spawnT=TAKT/10}
+  for(let i=0;i<CARS.length;i++){const c=CARS[i],ahead=i>0?CARS[i-1]:null;
+    if(c.work>0){c.work-=dt;if(c.work<=0){c.work=0;c.s++}continue}
+    const lim=ahead?ahead.x-5:1e9,sx=c.s<SX.length?SX[c.s]:1e9;
+    let nx=Math.min(c.x+2.2*dt,lim,sx);if(nx<c.x)nx=c.x;c.x=nx;
+    if(c.s<SX.length&&Math.abs(c.x-sx)<1e-3)c.work=ST_REAL[c.s]/10}
+  while(CARS.length&&CARS[0].x>54.5)CARS.shift();
+  if(CARS.length&&CARS[0].s>=SX.length&&CARS[0].x>=54.4)CARS.shift()}
+function queueBefore(k){return CARS.filter(c=>c.s===k&&c.work===0&&c.x<SX[k]-.01&&c.x>(k?SX[k-1]:-21)).length}
+for(let k=0;k<1400;k++)lineUpdate(.1);
+for(const v of VEH)for(let k=0;k<200;k++)vehUpdate(v,.1,true);
+
+/* partículas */
+const PT=[];function puff(x,y,z,kind){if(PT.length>170)return;PT.push(kind==="s"?{x,y,z,vx:(rnd()-.5)*3,vy:rnd()*2.5,vz:(rnd()-.5)*3,l:.5,m:.5,k:"s"}:{x,y,z,vx:(rnd()-.5)*.6,vy:.3+rnd()*.4,vz:(rnd()-.5)*.6+.6,l:1.3,m:1.3,k:"p"})}
+
+/* ---------- audio ---------- */
+let AC=null,hum=null,hiss=null,mg=null;
+function audioInit(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=muted?0:.9;mg.connect(AC.destination);
+  const len=AC.sampleRate*2,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  const n1=AC.createBufferSource();n1.buffer=buf;n1.loop=true;const lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=240;hum=AC.createGain();hum.gain.value=0;n1.connect(lp);lp.connect(hum);hum.connect(mg);n1.start();
+  const n2=AC.createBufferSource();n2.buffer=buf;n2.loop=true;const hp=AC.createBiquadFilter();hp.type="highpass";hp.frequency.value=4500;hiss=AC.createGain();hiss.gain.value=0;n2.connect(hp);hp.connect(hiss);hiss.connect(mg);n2.start()}catch(e){AC=null}}
+function tone(f,d,v,type){if(!AC||muted)return;try{const o=AC.createOscillator(),g=AC.createGain();o.type=type||"square";o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(mg);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d+.02)}catch(e){}}
+
+/* ---------- dibujo ---------- */
+const POOL=[];let pi=0;function pm(){if(pi>=POOL.length)POOL.push(new Float32Array(16));return POOL[pi++]}
+const TMP=new Float32Array(16),NMt=new Float32Array(9),IDT=trs(new Float32Array(16),0,0,0,0,0,0,1,1,1),WHITE=[1,1,1],ZERO=[0,0,0];
+function P(par,x,y,z,ry=0,rx=0,rz=0,kx=1,ky=1,kz=1){const o=pm();trs(TMP,x,y,z,ry,rx,rz,kx,ky,kz);if(par)mul(o,par,TMP);else o.set(TMP);return o}
+let curV=null;const TQ=[];
+function draw(m,mesh,col,em,a){normalMat(NMt,m);gl.uniformMatrix4fv(U.uM,false,m);gl.uniformMatrix3fv(U.uNM,false,NMt);gl.uniform3fv(U.uCol,col);gl.uniform3fv(U.uEm,em||ZERO);gl.uniform1f(U.uA,a);
+  if(curV!==mesh){gl.bindVertexArray(mesh.vao);curV=mesh}gl.drawArrays(gl.TRIANGLES,0,mesh.n)}
+function part(mesh,par,x,y,z,kx,ky,kz,col,em,ry=0,rx=0,rz=0,a=1){const m=P(par,x,y,z,ry,rx,rz,kx,ky,kz);
+  if(a<1){const dx=m[12]-cam.e[0],dy=m[13]-cam.e[1],dz=m[14]-cam.e[2];TQ.push([m,mesh,C(col),em,a,dx*dx+dy*dy+dz*dz])}else draw(m,mesh,C(col),em,1)}
+function shadow(x,z,kx,kz,y=0){part(CYLM,null,x,y+.025,z,kx,.01,kz,"#000000",null,0,0,0,.26)}
+const EMB=[.1,.35,1],EMO=[1.6,.7,.1],EMY=[1.2,.9,.1],EMR=[1.3,.1,.1],EMG=[.1,1.0,.3],EMW=[.9,.9,.9];
+
+function person(x,y,z,h,o){const b=P(null,x,y,z,h);const sw=Math.sin(o.ph||0)*.55*(o.mv||0),sk=o.skin||"#d9a77e";
+  for(const s of[-1,1]){const J=P(b,s*.12,.86,0,0,sw*s,0);part(BOXM,J,0,-.4,0,.18,.8,.22,o.pants);part(BOXM,J,0,-.83,.05,.2,.1,.32,"#22272e")}
+  part(BOXM,b,0,1.2,0,.5,.66,.28,o.shirt);if(o.vest){part(BOXM,b,0,1.22,0,.53,.46,.31,o.vest);part(BOXM,b,0,1.14,0,.54,.06,.32,"#e8ecef")}
+  for(const s of[-1,1]){const J=P(b,s*.33,1.48,0,0,-sw*s+(o.arm||0),0);part(BOXM,J,0,-.3,0,.14,.62,.16,o.shirt);part(SPHM,J,0,-.64,0,.13,.13,.13,sk)}
+  part(SPHM,b,0,1.75,0,.32,.34,.32,sk);
+  if(o.helm){part(SPHM,b,0,1.86,0,.37,.24,.39,o.helm);part(BOXM,b,0,1.83,.18,.3,.03,.1,o.helm)}else part(SPHM,b,0,1.83,-.02,.33,.2,.33,o.hair||"#2a2018");
+  if(o.ppe){part(BOXM,b,0,1.76,.155,.28,.07,.04,"#1f2a33");for(const s of[-1,1])part(CYLM,b,s*.17,1.75,0,.13,.08,.13,"#d64545",null,0,0,Math.PI/2)}
+  shadow(x,z,.9,.9,y)}
+function forklift(v,t){const b=P(null,v.x,0,v.z,v.h);const o="#f28c28";
+  part(BOXM,b,0,.65,-.1,1.2,.9,1.9,o);part(BOXM,b,0,.62,-1.15,1.2,.85,.5,"#3b4048");
+  for(const sx of[-1,1])for(const z of[.5,-.7])part(BOXM,b,sx*.55,1.65,z,.07,1.3,.07,"#2b3036");part(BOXM,b,0,2.3,-.1,1.2,.06,1.4,"#2b3036");
+  part(BOXM,b,0,1.25,-.4,.6,.3,.5,"#1d2126");
+  const d=P(b,0,.35,-.4);part(BOXM,d,0,1.2,0,.45,.55,.3,"#d6f21b");part(SPHM,d,0,1.6,0,.3,.32,.3,"#c98d63");part(SPHM,d,0,1.7,0,.34,.22,.36,"#f4f6f8");
+  for(const sx of[-1,1])part(BOXM,b,sx*.4,1.35,1.0,.1,2.4,.12,"#5b6672");
+  const fy=v.load?.35:.15;for(const sx of[-1,1])part(BOXM,b,sx*.3,fy,1.6,.12,.06,1.1,"#2b3036");
+  if(v.load){part(BOXM,b,0,fy+.1,1.6,1.0,.14,1.1,"#b08a5a");part(BOXM,b,0,fy+.6,1.6,.9,.8,1.0,"#c69c6d")}
+  for(const sx of[-1,1])for(const z of[.6,-.8])part(CYLM,b,sx*.62,.3,z,.6,.25,.6,"#1d2126",null,0,0,Math.PI/2);
+  const bl=Math.sin(t*9)>0;part(CYLM,b,0,2.4,-.6,.18,.14,.18,bl?"#5fb4ff":"#2a4d7a",bl?EMB:null);
+  part(CYLM,b,0,.03,3.2,.9,.01,.9,"#3aa0ff",[.2,.5,1.4],0,0,0,.5);shadow(v.x,v.z,1.9,2.8)}
+function tugger(v,t){const b=P(null,v.x,0,v.z,v.h);part(BOXM,b,0,.6,0,1.0,.8,1.4,"#2b6cb0");part(BOXM,b,0,1.15,-.3,.9,.4,.6,"#1d2126");
+  const d=P(b,0,.3,-.3);part(BOXM,d,0,1.2,0,.42,.5,.3,"#d6f21b");part(SPHM,d,0,1.58,0,.28,.3,.28,"#c98d63");part(SPHM,d,0,1.68,0,.32,.2,.34,"#f2c21b");
+  for(const sx of[-1,1])for(const z of[.45,-.45])part(CYLM,b,sx*.52,.25,z,.5,.2,.5,"#1d2126",null,0,0,Math.PI/2);
+  const bl=Math.sin(t*9+1)>0;part(CYLM,b,0,1.5,.5,.16,.12,.16,bl?"#ffb020":"#7a5a20",bl?EMO:null);shadow(v.x,v.z,1.4,1.8);
+  const cols=["#c0392b","#2f6db5","#2f855a"];
+  for(let k=1;k<=3;k++){const idx=v.trail.length-1-Math.round(k*2.7/.25);if(idx<1)continue;const p=v.trail[idx],q=v.trail[idx-1];const h=Math.atan2(p[0]-q[0],p[1]-q[1]);
+    const c=P(null,p[0],0,p[1],h);part(BOXM,c,0,.45,0,1.2,.3,2.2,"#5b6672");part(BOXM,c,0,.85,0,1.0,.5,1.8,cols[k-1]);
+    for(const sx of[-1,1])for(const z of[.7,-.7])part(CYLM,c,sx*.55,.2,z,.4,.15,.4,"#1d2126",null,0,0,Math.PI/2);shadow(p[0],p[1],1.4,2.4)}}
+function car(x,col){const b=P(null,x,.5,0,Math.PI/2);part(BOXM,b,0,.62,0,1.8,.62,4.2,col);part(BOXM,b,0,1.14,-.2,1.62,.5,2.1,"#26313b");part(BOXM,b,0,1.42,-.2,1.5,.08,1.9,col);
+  for(const sx of[-1,1])for(const sz of[-1,1])part(CYLM,b,sx*.85,.34,sz*1.35,.68,.26,.68,"#1d2126",null,0,0,Math.PI/2)}
+function robot(x,z,cx,cz,t,ph){const r0=Math.atan2(cx-x,cz-z)+.5*Math.sin(t*.9+ph);const b=P(null,x,.7,z,r0);
+  part(CYLM,b,0,.25,0,.8,.5,.8,"#f27a1a");const a1=.45+.25*Math.sin(t*1.3+ph),a2=1.1+.3*Math.sin(t*1.1+ph*1.7),a3=.6+.4*Math.sin(t*1.7+ph);
+  const J1=P(b,0,.5,0,0,a1,0);part(BOXM,J1,0,.8,0,.38,1.6,.38,"#f27a1a");const J2=P(J1,0,1.6,0,0,a2,0);part(BOXM,J2,0,.7,0,.3,1.4,.3,"#f27a1a");
+  part(CYLM,J1,0,1.6,0,.42,.42,.42,"#3b4048",null,0,0,Math.PI/2);const J3=P(J2,0,1.4,0,0,a3,0);part(BOXM,J3,0,.25,0,.3,.5,.3,"#3b4048");
+  if(Math.sin(t*1.7+ph)>.55){const tp=P(J3,0,.6,0);part(BOXM,tp,0,0,0,.12,.12,.12,"#ffffff",[3,2.5,1.5]);if(rnd()<.7)puff(tp[12],tp[13],tp[14],"s")}}
+function ring(x,z,t,col,em){const s=1.3+.15*Math.sin(t*4);part(CYLM,null,x,.06,z,s*2,.02,s*2,col,em,0,0,0,.45)}
+
+/* ---------- etiquetas de zona ---------- */
+const LB=[["ALMACÉN",-45,7,-24,80],["ESTAMPADO",-11,10,-27,80],["CARROCERÍA · ROBOTS",34,6,-26,80],["ENSAMBLE FINAL",15,5.5,-1,80],["COMPRESORES",49,5,33,60],["PINTURA",-5,7,33.5,70],["AUDITORÍA DE CALIDAD",25,5,34,60],["OFICINA DE INGENIERÍA",-52.5,5,34.5,60],["CASETA DE EPP",-43,3.9,32.6,30],["MEDICIÓN DE RUIDO",-11,2.2,-20.5,26]];
+SX.forEach((x,i)=>LB.push(["E"+(i+1)+" · "+ST_NAMES[i].split(" (")[0],x,4.3,-1.9,24]));
+const LBE=LB.map(l=>{const d=document.createElement("div");d.className="lbl";d.textContent=l[0];$("#labels").appendChild(d);return d});
+
+/* ---------- minimapa ---------- */
+const MAPB=document.createElement("canvas");MAPB.width=162;MAPB.height=108;
+(function(){const c=MAPB.getContext("2d"),s=1.35,X=x=>(x+60)*s,Z=z=>(z+40)*s;c.fillStyle="#3b434c";c.fillRect(0,0,162,108);
+  c.fillStyle="#46803f";[[-58,22.8,116,2.4],[-41.2,-5,2.4,29],[-25.2,-14,2.4,38],[18.8,6,2.4,18],[18.8,-12,2.4,6],[-24,4.1,81,1.8],[-24,-5.9,81,1.8]].forEach(([x,z,w,d])=>c.fillRect(X(x),Z(z),w*s,d*s));
+  c.fillStyle="#7a6d2a";[[-30,7.6,84,5.8],[-33,15,89,3.4],[5.2,-39,4.6,46.6],[-32.7,-9,4.4,27]].forEach(([x,z,w,d])=>c.fillRect(X(x),Z(z),w*s,d*s));
+  c.fillStyle="#1f252b";OB.forEach(o=>{if(o[4]>.3)c.fillRect(X(o[0]),Z(o[2]),(o[1]-o[0])*s,(o[3]-o[2])*s)});c.fillStyle="#5d6873";c.fillRect(X(-20),Z(-1.4),75*s,2.8*s)})();
+function drawMap(t){const c=$("#map").getContext("2d"),s=1.35,X=x=>(x+60)*s,Z=z=>(z+40)*s;c.drawImage(MAPB,0,0);
+  c.fillStyle="#f28c28";VEH.forEach(v=>{c.fillRect(X(v.x)-2,Z(v.z)-2,4,4)});
+  const tg=[];if(!st.ppe)tg.push([-43,31]);if(st.noise===null)tg.push([-11,-20.5]);if(!st.bottle)tg.push([15,4]);
+  if(Math.sin(t*5)>-.3){c.fillStyle="#ffd34d";tg.forEach(([x,z])=>{c.beginPath();c.arc(X(x),Z(z),3.2,0,7);c.fill()})}
+  LEAKS.forEach(l=>{if(l.tag){c.fillStyle="#f2c21b";c.fillRect(X(l.x)-1.5,Z(l.z)-1.5,3,3)}});
+  if(mainCount()===5&&!st.ended&&Math.sin(t*5)>-.3){c.fillStyle="#ffd34d";c.beginPath();c.arc(X(-48),Z(28.4),3.2,0,7);c.fill()}
+  c.font="bold 10px system-ui";c.fillStyle="#ff9d3d";c.textAlign="center";const N=NPC,gv=[];if(SIDE.boss.s===0||SIDE.boss.s===2)gv.push(N.boss);if(SIDE.aud.s===0)gv.push(N.aud);if(SIDE.ehs.s===0)gv.push(N.ehs);if(SIDE.mec.s===0)gv.push(N.mec);if(st.bottle&&SIDE.kai.s===0)gv.push({x:SX[BOT],z:2.4});
+  gv.forEach(n=>c.fillText("!",X(n.x),Z(n.z)+3.5));
+  c.save();c.translate(X(pl.x),Z(pl.z));c.rotate(-pl.h+Math.PI);c.fillStyle="#fff";c.beginPath();c.moveTo(0,-5);c.lineTo(3.5,4);c.lineTo(-3.5,4);c.closePath();c.fill();c.restore()}
+
+/* ---------- misiones e interacción ---------- */
+const MIS=[["ppe","Recoge tu EPP en la caseta (casco, lentes y protección auditiva)"],["leaks","Encuentra y etiqueta las fugas de aire comprimido"],["noise","Mide el ruido en el punto de Estampado"],["bottle","Identifica el cuello de botella de la línea de ensamble"],["unsafe","Reporta el acto inseguro en la ruta de montacargas"]];
+function misDone(k){return k==="ppe"?st.ppe:k==="leaks"?st.leaks>=LEAKS.length:k==="noise"?st.noise!==null:k==="bottle"?st.bottle:st.unsafe}
+const SIDEK=["boss","aud","kai","mec","ehs"];
+function sideText(k){const S=SIDE[k];switch(k){
+ case"boss":return S.s===1?"Cronometra 5 ciclos en la estación 3 para Marta":S.s===2?"Lleva el promedio a Marta":"Tiempo de ciclo de E3 reportado a Marta";
+ case"aud":return S.s===1?`Separa el material no conforme (${S.n}/3) para Andrés`:"Material no conforme en cuarentena";
+ case"kai":return "Kaizen en la estación 6 con José";
+ case"mec":return S.s===1?"Verifica el trabajo de Luis en la prensa 3":S.s===2?"Luis está corrigiendo la fuga":"Liberación de la prensa 3 verificada";
+ case"ehs":return S.s===1?"Encuentra la salida de emergencia bloqueada":"Salida de emergencia despejada"}}
+function mainCount(){return MIS.filter(m=>misDone(m[0])).length}
+function sideCount(){return SIDEK.filter(k=>SIDE[k].s===3).length}
+let endHinted=false;
+function renderMis(){const n=mainCount(),ns=sideCount();
+  let h=MIS.map(([k,t])=>`<li class="${misDone(k)?"ok":""}">${t}${k==="leaks"?` (${st.leaks}/${LEAKS.length})`:""}</li>`).join("");
+  if(n===5)h+=`<li>Entrega tu reporte en la oficina de ingeniería</li>`;
+  const act=SIDEK.filter(k=>SIDE[k].s>0);
+  h+=`<li class="sec">Secundarias ${ns}/5</li>`+act.map(k=>`<li class="${SIDE[k].s===3?"ok":""}">${sideText(k)}</li>`).join("");
+  if(act.length<5)h+=`<li class="hint">Busca al personal con ❗ para más misiones</li>`;
+  $("#misl").innerHTML=h;$("#misn").textContent=n+"/5 · "+ns+"/5";
+  const nx=MIS.find(m=>!misDone(m[0])),sk=SIDEK.find(k=>SIDE[k].s===1||SIDE[k].s===2);
+  $("#misnext").textContent=nx?"→ "+nx[1]:sk?"→ "+sideText(sk):"→ Entrega tu reporte en la oficina de ingeniería";
+  if(n===5&&!endHinted&&st.started){endHinted=true;setTimeout(()=>toast("<b>¡Misiones principales completas!</b> Entrega tu reporte en la oficina de ingeniería o sigue con las misiones secundarias.",6),2600)}
+  if(n===5&&ns===5&&!st.done){st.done=true;setTimeout(endGame,2600)}}
+$("#mish").onclick=()=>$("#mis").classList.toggle("min");if(innerWidth<600)$("#mis").classList.add("min");
+let toastT=0;function toast(m,sec){const e=$("#toast");e.innerHTML=m;e.style.display="block";toastT=sec||5}
+const INTER=[
+  {x:-43,z:31.0,r:2.6,lab:"Recoger EPP",ok:()=>!st.ppe,go:()=>{st.ppe=true;tone(880,.15,.05);tone(1320,.2,.04);toast("EPP listo: casco, lentes y protección auditiva. Ahora sí, a recorrer la planta (Gemba).",4.5);renderMis()}},
+  ...LEAKS.map((l,i)=>({x:l.x,z:l.z,r:2.4,lab:"Etiquetar fuga de aire",ok:()=>!l.tag,go:()=>{l.tag=true;st.leaks++;tone(990,.12,.05);
+    toast(`<b>Fuga ${st.leaks}/${LEAKS.length} etiquetada:</b> ${l.n}.<br>Una fuga de aire comprimido desperdicia energía todo el día: el compresor trabaja más para mantener la presión. Etiquetar y reparar es una mejora rápida.`,6.5);renderMis()}})),
+  {x:-11,z:-20.5,r:2.8,lab:"Medir ruido",ok:()=>st.noise===null,go:()=>{st.noise=Math.round(curL);tone(700,.12,.05);
+    toast(`<b>Medición registrada: ${st.noise} dB(A).</b><br>Supera 85 dB(A), un valor de referencia común: en esta zona la protección auditiva es obligatoria.`,6.5);renderMis()}},
+  ...SX.map((x,i)=>({x,z:4.1,r:2.3,lab:"Analizar estación "+(i+1),ok:()=>!st.bottle&&!(i===2&&SIDE.boss.s===1),go:()=>stationModal(i)})),
+  {dyn:NPC.unsafe,r:2.6,lab:"Reportar acto inseguro",ok:()=>!st.unsafe,go:()=>{st.unsafe=true;const n=NPC.unsafe;n.pts=[[26,5],[40,5]];n.i=0;tone(880,.15,.05);
+    toast("<b>Acto inseguro reportado.</b> El operador caminaba por la ruta de montacargas. Ahora usa el pasillo peatonal verde. Hablar a tiempo previene accidentes.",6);renderMis()}}];
+function dlg(k,html,btns){running=false;const S=SIDE[k];$("#pan").innerHTML=`<h2>${S.nm} <span class="mut">· ${S.rol}</span></h2><div class="say">${html}</div>${btns.map((b,i)=>`<button class="btn ${b.o?"o":""}" id="db${i}">${b.t}</button>`).join("")}<p id="fb"></p>`;$("#ov").hidden=false;btns.forEach((b,i)=>$("#db"+i).onclick=()=>b.f())}
+function timeModal(){running=false;const base=ST_REAL[2];const r=[0,2,-1,1,-2].map(d=>base+d);const avg=Math.round(r.reduce((a,b)=>a+b)/5);const opts=[avg-2,avg,avg+3].sort(()=>rnd()-.5);
+  $("#pan").innerHTML=`<h2>⏱ Cronometraje · Estación 3</h2><p>Registraste 5 ciclos completos (en segundos):</p><div class="kv">${r.map((v,i)=>`<span>Ciclo ${i+1}</span><b>${v} s</b>`).join("")}</div><p>¿Cuál es el tiempo de ciclo promedio?</p>${opts.map(o=>`<button class="btn o" data-v="${o}">${o} s</button>`).join("")}<p id="fb"></p>`;$("#ov").hidden=false;
+  document.querySelectorAll("#pan [data-v]").forEach(b=>b.onclick=()=>{const v=+b.dataset.v;if(v===avg){timing={avg};SIDE.boss.s=2;renderMis();tone(880,.15,.05);$("#fb").innerHTML=`<b style="color:#34d399">Correcto:</b> (${r.join(" + ")}) / 5 = ${avg} s. Llévale el dato a Marta.`;document.querySelectorAll("#pan [data-v]").forEach(x=>x.disabled=true);setTimeout(closeOv,2300)}
+    else{tone(200,.25,.05,"sawtooth");$("#fb").innerHTML=`<b style="color:#f87171">Revisa la cuenta:</b> suma los 5 ciclos y divide entre 5.`}})}
+function kaizenDlg(){const S=SIDE.kai;dlg("kai","Ingeniero, aquí me agacho a cada rato: el carro con pernos y soportes está lejos y muy bajo. Pierdo varios segundos en cada auto. ¿Qué hacemos?",[
+  {t:"Pedirle que trabaje más rápido",o:1,f:()=>{tone(200,.25,.05,"sawtooth");$("#fb").innerHTML=`<b style="color:#f87171">No funciona:</b> presionar a la persona no cambia el método. El desperdicio está en el diseño del puesto (movimientos innecesarios).`}},
+  {t:"Poner el material en un carro a la altura de la cintura, junto al punto de uso",o:1,f:()=>{S.s=3;ST_REAL[BOT]=58;tone(880,.15,.05);tone(1320,.25,.04);renderMis();
+    $("#fb").innerHTML=`<b style="color:#34d399">¡Kaizen aplicado!</b> El tiempo de ciclo bajó de ${ST0[BOT]} s a 58 s, por debajo del takt de ${TAKT} s. Mira cómo la fila de autos antes de la estación 6 empieza a desaparecer.`;
+    document.querySelectorAll("#pan .btn").forEach(b=>b.remove());const c=document.createElement("button");c.className="btn";c.textContent="Ver la línea";c.onclick=closeOv;$("#pan").appendChild(c)}},
+  {t:"Agregar un inspector al final de la línea",o:1,f:()=>{tone(200,.25,.05,"sawtooth");$("#fb").innerHTML=`<b style="color:#f87171">No funciona:</b> inspeccionar no reduce el tiempo de ciclo de la estación.`}}])}
+INTER.push(
+  {dyn:NPC.boss,r:2.4,lab:"Hablar con Marta",ok:()=>SIDE.boss.s===0||SIDE.boss.s===2,go:()=>{const S=SIDE.boss;
+    if(S.s===0)dlg("boss","Ingeniero, necesito el <b>tiempo de ciclo promedio de la estación 3</b> (líneas de freno y combustible) para el balanceo de la línea. ¿Me ayuda a cronometrar 5 ciclos?",[{t:"Claro, voy",f:()=>{S.s=1;renderMis();closeOv()}}]);
+    else dlg("boss",`Gracias. Con un promedio de <b>${timing.avg} s</b>, la estación 3 está por debajo del takt de ${TAKT} s. Tomar varios ciclos y promediar evita decidir con una sola medición.`,[{t:"Listo",f:()=>{S.s=3;tone(880,.15,.05);tone(1320,.25,.04);renderMis();closeOv()}}])}},
+  {x:SX[2],z:4.1,r:2.3,lab:"Cronometrar 5 ciclos",ok:()=>SIDE.boss.s===1,go:()=>timeModal()},
+  {dyn:NPC.aud,r:2.4,lab:"Hablar con Andrés",ok:()=>SIDE.aud.s===0,go:()=>dlg("aud","Encontré piezas defectuosas mezcladas con material bueno. Hay <b>3 contenedores con franja roja</b>: uno en el almacén, uno en estampado y otro junto a la línea de ensamble. Sepáralos para que no lleguen a producción.",[{t:"Me encargo",f:()=>{SIDE.aud.s=1;renderMis();closeOv()}}])},
+  ...NC.map(c=>({x:c.x,z:c.z,r:2.2,lab:"Separar material no conforme",ok:()=>SIDE.aud.s===1&&c.on,go:()=>{c.on=false;c.ob[4]=0;const S=SIDE.aud;S.n++;tone(990,.12,.05);
+    if(S.n>=3){S.s=3;toast("<b>Andrés:</b> ¡Excelente! Los 3 contenedores están en cuarentena. El material no conforme siempre se identifica y se separa para que nadie lo use por error.",6.5)}else toast(`Contenedor separado y enviado a cuarentena (${S.n}/3).`,3.5);renderMis()}})),
+  {x:SX[BOT],z:4.1,r:2.3,lab:"Hablar con José",ok:()=>st.bottle&&SIDE.kai.s===0,go:()=>kaizenDlg()},
+  {dyn:NPC.mec,r:2.4,lab:"Hablar con Luis",ok:()=>SIDE.mec.s===0,go:()=>dlg("mec","Hola, ingeniero. Acabo de cambiar una manguera en la <b>prensa 3</b> y ya terminé. Me voy a la siguiente orden de trabajo.",[{t:"Gracias, Luis",f:()=>{const S=SIDE.mec,w=NPC.mec;S.s=1;MLEAK.on=true;w.pts=[[-2,-20.6],[-24,-14],[-24,12]];w.i=0;w.once=true;w.face=null;w.o=Object.assign({},w.o,{arm:0});renderMis();closeOv();setTimeout(()=>toast("Luis se fue. ¿Quedó bien el trabajo? Revisar después del mantenimiento evita sorpresas.",5),1500)}}])},
+  {x:MLEAK.x,z:MLEAK.z,r:2.4,lab:"Reportar fuga tras el mantenimiento",ok:()=>SIDE.mec.s===1&&MLEAK.on&&!MLEAK.tag,go:()=>{MLEAK.tag=true;SIDE.mec.s=2;const w=NPC.mec;w.pts=[[-24,-14],[-2,-20.6],[-2,-22.2]];w.i=0;w.once=true;w.arrived=false;w.face=Math.PI;tone(990,.12,.05);toast("Llamaste a Luis por radio: viene a corregir la fuga de la prensa 3.",4.5);renderMis()}},
+  {dyn:NPC.ehs,r:2.4,lab:"Hablar con Carla",ok:()=>SIDE.ehs.s===0,go:()=>dlg("ehs","Ingeniero, en la inspección de esta mañana alguien reportó una <b>salida de emergencia bloqueada</b>. ¿Puede recorrer las salidas (puertas con letrero verde) y pedir que la despejen?",[{t:"Voy a revisar",f:()=>{SIDE.ehs.s=1;renderMis();closeOv()}}])},
+  {x:57.4,z:-8,r:2.8,lab:"Solicitar despeje de la salida",ok:()=>SIDE.ehs.s===1&&EXITB.on,go:()=>{EXITB.on=false;EXITB.ob[4]=0;SIDE.ehs.s=3;tone(880,.15,.05);toast("<b>Carla:</b> ¡Gracias! Logística retiró las tarimas. Las salidas y rutas de evacuación deben estar libres siempre; también es parte de las 5S.",6.5);renderMis()}},
+  {x:-48,z:28.4,r:2.4,lab:"Entregar reporte del Gemba",ok:()=>mainCount()===5&&!st.ended,go:()=>endGame()});
+let curI=null;
+function stationModal(i){running=false;const q=queueBefore(i);
+  $("#pan").innerHTML=`<h2>Estación ${i+1} · ${ST_NAMES[i]}</h2><div class="kv"><span>Tiempo de ciclo</span><b>${ST_REAL[i]} s</b><span>Takt time</span><b>${TAKT} s</b><span>Autos esperando antes de esta estación</span><b>${q}</b></div>
+  <p class="mut">El takt time es el ritmo que pide el cliente: un auto cada ${TAKT} s.</p>
+  <button class="btn" id="bb">Marcar como cuello de botella</button><button class="btn o" id="bc">Cerrar</button><p id="fb"></p>`;$("#ov").hidden=false;
+  $("#bc").onclick=closeOv;
+  $("#bb").onclick=()=>{if(i===BOT){st.bottle=true;renderMis();tone(880,.15,.05);tone(1320,.25,.04);
+      $("#fb").innerHTML=`<b style="color:#34d399">¡Correcto!</b> La estación 6 tarda ${ST_REAL[BOT]} s y el takt es ${TAKT} s: no alcanza el ritmo del cliente. Por eso los autos se acumulan antes y las estaciones siguientes esperan. Opciones típicas: rebalancear tareas, mejorar el método o agregar un recurso. <b>Habla con José, el operador de esta estación.</b>`;$("#bb").remove()}
+    else{tone(200,.25,.05,"sawtooth");$("#fb").innerHTML=`<b style="color:#f87171">No es esta.</b> Su tiempo de ciclo (${ST_REAL[i]} s) está por debajo del takt (${TAKT} s). Busca la estación donde se acumulan autos y su luz andón está en rojo.`}}}
+function closeOv(){$("#ov").hidden=true;if(st.started&&!st.ended)running=true;last=performance.now();cv.focus()}
+function doInteract(){if(curI&&running){curI.go();$("#act").style.display="none"}}
+$("#act").addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();doInteract()});
+
+/* ---------- entrada ---------- */
+const K={};addEventListener("keydown",e=>{K[e.code]=true;if(e.code==="KeyE"||e.code==="Space"||e.code==="Enter"){if(running){e.preventDefault();doInteract()}}if(e.code==="KeyM")toggleSnd()});
+addEventListener("keyup",e=>{K[e.code]=false});
+const joy={id:null,x0:0,y0:0,x:0,y:0},look={id:null,x:0,y:0};
+cv.addEventListener("pointerdown",e=>{if(!running)return;cv.setPointerCapture(e.pointerId);
+  if(e.pointerType!=="mouse"&&e.clientX<innerWidth*.5&&joy.id===null){joy.id=e.pointerId;joy.x0=e.clientX;joy.y0=e.clientY;joy.x=joy.y=0;const jb=$("#joyb");jb.style.left=e.clientX+"px";jb.style.top=e.clientY+"px";jb.style.display="block";$("#joyk").style.transform=""}
+  else if(look.id===null){look.id=e.pointerId;look.x=e.clientX;look.y=e.clientY}});
+cv.addEventListener("pointermove",e=>{if(e.pointerId===joy.id){let dx=e.clientX-joy.x0,dy=e.clientY-joy.y0;const l=Math.hypot(dx,dy),m=50;if(l>m){dx*=m/l;dy*=m/l}joy.x=dx/m;joy.y=dy/m;$("#joyk").style.transform=`translate(${dx}px,${dy}px)`}
+  else if(e.pointerId===look.id){cam.yaw-=(e.clientX-look.x)*.006;cam.pitch=clamp(cam.pitch+(e.clientY-look.y)*.004,.18,1.05);look.x=e.clientX;look.y=e.clientY}});
+function pend(e){if(e.pointerId===joy.id){joy.id=null;joy.x=joy.y=0;$("#joyb").style.display="none"}if(e.pointerId===look.id)look.id=null}
+cv.addEventListener("pointerup",pend);cv.addEventListener("pointercancel",pend);
+cv.addEventListener("wheel",e=>{cam.dist=clamp(cam.dist+e.deltaY*.01,4,14);e.preventDefault()},{passive:false});
+function toggleSnd(){muted=!muted;$("#bsnd").textContent=muted?"🔇":"🔊";if(mg)mg.gain.value=muted?0:.9}
+$("#bsnd").onclick=toggleSnd;$("#bhelp").onclick=()=>{running=false;showHelp(true)};
+
+/* ---------- actualización ---------- */
+function collide(p,r){for(const o of OB){if(p.y>o[4]-.05)continue;const cx=clamp(p.x,o[0],o[1]),cz=clamp(p.z,o[2],o[3]);let dx=p.x-cx,dz=p.z-cz;const d2=dx*dx+dz*dz;
+    if(d2<r*r){if(d2<1e-8){const l=p.x-o[0],rr=o[1]-p.x,u=p.z-o[2],dd=o[3]-p.z,m=Math.min(l,rr,u,dd);if(m===l)p.x=o[0]-r;else if(m===rr)p.x=o[1]+r;else if(m===u)p.z=o[2]-r;else p.z=o[3]+r}
+      else{const d=Math.sqrt(d2);p.x=cx+dx/d*r;p.z=cz+dz/d*r}}}
+  p.x=clamp(p.x,-59.5,59.5);p.z=clamp(p.z,-39.5,39.5)}
+function groundY(x,z){if(Math.abs(x-20)<1.5&&Math.abs(z)<6){const a=Math.abs(z);return a<2.6?2.4:2.4*(1-(a-2.6)/3.4)}return 0}
+function blockers(v){const L=[[pl.x,pl.z,1]];for(const k in NPC)L.push([NPC[k].x,NPC[k].z,0]);for(const w of VEH)if(w!==v)L.push([w.x,w.z,0]);return L}
+function vehUpdate(v,dt,sim){const tg=v.pts[v.i];let dx=tg[0]-v.x,dz=tg[1]-v.z,d=Math.hypot(dx,dz);if(d<.35){v.i=(v.i+1)%v.pts.length;if(rnd()<.3)v.load=!v.load;return}
+  const ht=Math.atan2(dx,dz);v.h+=angDiff(v.h,ht)*Math.min(1,dt*5);
+  let tv=v.vmax;if(!sim){const fx=Math.sin(v.h),fz=Math.cos(v.h);for(const [bx,bz,isP] of blockers(v)){const rx=bx-v.x,rz=bz-v.z,pr=rx*fx+rz*fz,lat=Math.abs(rx*fz-rz*fx);
+      if(pr>0&&pr<5.5&&lat<1.7)tv=Math.min(tv,pr<(isP?1.6:3.2)?0:v.vmax*.35)}}
+  v.v+=(tv-v.v)*Math.min(1,dt*3);const s=Math.min(v.v*dt,d);v.x+=dx/d*s;v.z+=dz/d*s;
+  if(v.type==="tug"){const L=v.trail[v.trail.length-1];if(!L||Math.hypot(L[0]-v.x,L[1]-v.z)>=.25){v.trail.push([v.x,v.z]);if(v.trail.length>80)v.trail.shift()}}}
+function walkerUpdate(w,dt){if(w.wait>0){w.wait-=dt;w.mv=0;return}const tg=w.pts[w.i];const dx=tg[0]-w.x,dz=tg[1]-w.z,d=Math.hypot(dx,dz);
+  if(d<.2){if(w.once&&w.i===w.pts.length-1){w.mv=0;w.arrived=true;if(w.face!=null)w.h+=angDiff(w.h,w.face)*Math.min(1,dt*6);return}if(w.pts.length===1){w.mv=0;return}w.i=(w.i+1)%w.pts.length;w.wait=1+rnd()*2;return}w.h+=angDiff(w.h,Math.atan2(dx,dz))*Math.min(1,dt*6);const s=Math.min(w.sp*dt,d);w.x+=dx/d*s;w.z+=dz/d*s;w.ph+=s*2.8;w.mv=1}
+let curL=55,dbT=0,beepT=0,pressPh=PRESSES.map(p=>p[2]);
+function noiseAt(x,z){let s=Math.pow(10,5.5);for(const [nx,nz,L] of NOISE){const d=Math.max(1,Math.hypot(x-nx,z-nz));s+=Math.pow(10,(L-20*Math.log10(d))/10)}
+  for(const v of VEH){const d=Math.max(1,Math.hypot(x-v.x,z-v.z));s+=Math.pow(10,(76-20*Math.log10(d))/10)}return 10*Math.log10(s)}
+function update(dt,t){
+  st.t+=dt;
+  // jugador
+  let ix=(K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0)+joy.x,iy=(K.KeyW||K.ArrowUp?1:0)-(K.KeyS||K.ArrowDown?1:0)-joy.y;
+  const il=Math.hypot(ix,iy);if(il>1){ix/=il;iy/=il}
+  const fx=-Math.sin(cam.yaw),fz=-Math.cos(cam.yaw),rx=Math.cos(cam.yaw),rz=-Math.sin(cam.yaw);
+  const mx=fx*iy+rx*ix,mz=fz*iy+rz*ix,ml=Math.hypot(mx,mz);
+  if(ml>.05){const sp=4.3*Math.min(1,ml);pl.x+=mx/ml*sp*dt;pl.z+=mz/ml*sp*dt;pl.h+=angDiff(pl.h,Math.atan2(mx,mz))*Math.min(1,dt*10);pl.ph+=sp*dt*2.6;pl.mv=Math.min(1,pl.mv+dt*6)}else pl.mv=Math.max(0,pl.mv-dt*6);
+  collide(pl,.38);pl.y+=(groundY(pl.x,pl.z)-pl.y)*Math.min(1,dt*12);
+  // vehículos y peatones
+  for(const v of VEH){vehUpdate(v,dt,false);v.cool-=dt;const d=Math.hypot(pl.x-v.x,pl.z-v.z);
+    if(d<1.95&&v.v>.25&&pl.y<.3){if(v.cool<=0){st.near++;v.cool=3;tone(330,.3,.06,"sawtooth");toast("<b>¡Casi accidente!</b> Un montacargas pasó demasiado cerca. Camina por los pasillos verdes y cruza por las cebras.",5);$("#nmv").textContent=st.near}
+      const k=1.95/Math.max(d,.01);pl.x=v.x+(pl.x-v.x)*k;pl.z=v.z+(pl.z-v.z)*k}}
+  for(const k in NPC)walkerUpdate(NPC[k],dt);
+  lineUpdate(dt);
+  // prensas
+  PRESSES.forEach((p,i)=>{const o=pressPh[i];pressPh[i]=(o+dt*2.4)%(Math.PI*2);if(o<Math.PI&&pressPh[i]>=Math.PI){const d=Math.hypot(pl.x-p[0],pl.z-p[1]);if(d<38)tone(55,.25,.22*(1-d/38),"sine")}});
+  // partículas
+  for(let i=PT.length-1;i>=0;i--){const q=PT[i];q.l-=dt;if(q.l<=0){PT.splice(i,1);continue}q.x+=q.vx*dt;q.y+=q.vy*dt;q.z+=q.vz*dt;if(q.k==="s")q.vy-=9*dt}
+  LEAKS.forEach(l=>{if(rnd()<dt*9)puff(l.x,l.y,l.z,"p")});if(MLEAK.on&&rnd()<dt*9)puff(MLEAK.x,MLEAK.y,MLEAK.z,"p");
+  if(SIDE.mec.s===2&&NPC.mec.arrived){SIDE.mec.fix=(SIDE.mec.fix||0)+dt;NPC.mec.o.arm=.9+.35*Math.sin(st.t*6);if(SIDE.mec.fix>3.5){MLEAK.on=false;SIDE.mec.s=3;NPC.mec.o.arm=.9;tone(880,.15,.05);tone(1320,.25,.04);
+    toast("<b>Luis:</b> Listo, ya no fuga. Tenía razón: me faltó la prueba final. Todo mantenimiento debe cerrarse con una verificación antes de devolver el equipo a producción.",7);renderMis()}}
+  // ruido y exposición
+  curL=noiseAt(pl.x,pl.z);
+  if(curL>85&&!st.ppe){st.expo+=dt;if(st.expo>1&&!st.expoWarn){st.expoWarn=true;toast("<b>⚠ Más de 85 dB(A) sin protección auditiva.</b> Ve por tu EPP a la caseta antes de seguir en esta zona.",6);tone(440,.2,.05);tone(330,.3,.05)}}
+  // audio
+  if(AC&&!muted){hum.gain.setTargetAtTime(clamp((curL-60)/40,0,1)*.35,AC.currentTime,.15);
+    let hd=99;LEAKS.forEach(l=>{hd=Math.min(hd,Math.hypot(pl.x-l.x,pl.z-l.z))});if(MLEAK.on)hd=Math.min(hd,Math.hypot(pl.x-MLEAK.x,pl.z-MLEAK.z));hiss.gain.setTargetAtTime(Math.pow(clamp(1-hd/12,0,1),2)*.22,AC.currentTime,.1);
+    beepT-=dt;let nf=99;VEH.forEach(v=>{if(v.v>.3)nf=Math.min(nf,Math.hypot(pl.x-v.x,pl.z-v.z))});if(nf<9&&beepT<=0){tone(1150,.08,.05*(1-nf/9));beepT=.7}}
+  // interacción
+  curI=null;let best=1e9;for(const it of INTER){if(!it.ok())continue;const x=it.dyn?it.dyn.x:it.x,z=it.dyn?it.dyn.z:it.z,d=Math.hypot(pl.x-x,pl.z-z);if(d<it.r&&d<best){best=d;curI=it}}
+  const ab=$("#act");if(curI){ab.textContent=(matchMedia("(pointer:fine)").matches?"E · ":"")+curI.lab;ab.style.display="block"}else ab.style.display="none";
+  // HUD
+  dbT-=dt;if(dbT<=0){dbT=.15;const v=Math.round(curL);const e=$("#dbv");e.textContent=v+" dB(A)";e.style.color=v>85?"#f87171":v>80?"#fbbf24":"#fff";
+    $("#dbs").textContent=v>85?(st.ppe?"Con protección auditiva":"¡Sin protección!"):"";
+    let ud=99,nl=null;const cand=LEAKS.filter(l=>!l.tag);if(MLEAK.on&&!MLEAK.tag)cand.push(MLEAK);cand.forEach(l=>{const d=Math.hypot(pl.x-l.x,pl.z-l.z);if(d<ud){ud=d;nl=l}});
+    const lv=Math.round(clamp(1-ud/18,0,1)*5);$("#dtv").textContent="▮".repeat(lv)+"▯".repeat(5-lv);$("#dtv").style.color=lv>=4?"#34d399":"#fff";
+    if(nl){const dx=nl.x-pl.x,dz=nl.z-pl.z,fx=-Math.sin(cam.yaw),fz=-Math.cos(cam.yaw),rx=Math.cos(cam.yaw),rz=-Math.sin(cam.yaw);const a=Math.atan2(dx*rx+dz*rz,dx*fx+dz*fz);
+      $("#dtar").style.transform=`rotate(${a}rad)`;$("#dtar").style.visibility="visible";$("#dtd").textContent="fuga más cercana: "+Math.round(ud)+" m"}else{$("#dtar").style.visibility="hidden";$("#dtd").textContent="sin fugas pendientes"}}
+  if(toastT>0){toastT-=dt;if(toastT<=0)$("#toast").style.display="none"}}
+
+/* ---------- render ---------- */
+const VPm=new Float32Array(16),PJ=new Float32Array(16),VW=new Float32Array(16);
+function resize(){const dpr=Math.min(devicePixelRatio||1,1.6);cv.width=Math.round(innerWidth*dpr);cv.height=Math.round(innerHeight*dpr);gl.viewport(0,0,cv.width,cv.height)}
+addEventListener("resize",resize);resize();
+function camUpdate(dt,t){
+  if(!st.started){const a=t*.05;cam.e=[Math.sin(a)*62,40,Math.cos(a)*48];cam.t=[0,0,0];return}
+  const tx=pl.x,ty=pl.y+1.6,tz=pl.z,cp=Math.cos(cam.pitch);const ex=Math.sin(cam.yaw)*cp,ey=Math.sin(cam.pitch),ez=Math.cos(cam.yaw)*cp;
+  let dmax=cam.dist;for(let k=1;k<=12;k++){const s=k/12*cam.dist,px=tx+ex*s,py=ty+ey*s,pz=tz+ez*s;let hit=false;
+    for(const o of OB){if(py<o[4]&&px>o[0]-.2&&px<o[1]+.2&&pz>o[2]-.2&&pz<o[3]+.2){hit=true;break}}if(hit){dmax=Math.max(1.6,s-cam.dist/12);break}}
+  cam.dcur+=(dmax-cam.dcur)*Math.min(1,dt*(dmax<cam.dcur?12:3));const d=cam.dcur;
+  cam.e=[clamp(tx+ex*d,-59.3,59.3),Math.max(.6,ty+ey*d),clamp(tz+ez*d,-39.3,39.3)];cam.t=[tx,ty,tz]}
+function render(t){
+  pi=0;TQ.length=0;
+  gl.clearColor(.137,.169,.2,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);
+  persp(PJ,55*Math.PI/180,cv.width/cv.height,.1,240);lookAt(VW,cam.e,cam.t,[0,1,0]);mul(VPm,PJ,VW);
+  gl.uniformMatrix4fv(U.uVP,false,VPm);gl.uniform3fv(U.uCam,cam.e);gl.uniform3f(U.uFogC,.137,.169,.2);gl.uniform2f(U.uFog,45,135);
+  const L=[.4,.85,.3],ll=Math.hypot(...L);gl.uniform3f(U.uL,L[0]/ll,L[1]/ll,L[2]/ll);
+  curV=null;draw(IDT,STAT,WHITE,null,1);
+  // dinámico
+  PRESSES.forEach((p,i)=>{const y=3.9+1.35*Math.cos(pressPh[i]);part(BOXM,null,p[0],y,p[1],4.4,1.0,4.4,"#4b5a69");part(BOXM,null,p[0],y-.6,p[1],3.6,.25,3.6,"#9aa5b1")});
+  CELLS.forEach(([cx,cz],ci)=>{let k=0;for(const sx of[-1,1])for(const sz of[-1,1])robot(cx+sx*3.4,cz+sz*2.8,cx,cz,t,ci*1.3+k++*1.7)});
+  CARS.forEach(c=>car(c.x,c.col));
+  SX.forEach((x,i)=>{const busy=CARS.some(c=>c.s===i&&c.work>0),q=queueBefore(i);const red=i===BOT&&q>=1;
+    const col=red?(Math.sin(t*6)>0?"#ff3b30":"#5a1a18"):busy?"#22c55e":"#f2c21b",em=red?(Math.sin(t*6)>0?EMR:null):busy?EMG:EMY;part(CYLM,null,x,3.35,-1.9,.22,.3,.22,col,em);
+    const arm=busy?.9+.35*Math.sin(t*5+i):.15;person(x,0,2.4,Math.PI,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b",arm});
+    if(i%2===0||i===BOT)person(x+(i===BOT?.8:0),0,-2.4,0,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b",arm:busy?.9+.35*Math.sin(t*5+i+1):.15})});
+  VEH.forEach(v=>v.type==="fl"?forklift(v,t):tugger(v,t));
+  for(const k in NPC){const w=NPC[k];person(w.x,0,w.z,w.h,Object.assign({ph:w.ph,mv:w.mv},w.o))}
+  if(st.started)person(pl.x,pl.y,pl.z,pl.h,{shirt:"#2f5fa8",pants:"#2d3540",helm:st.ppe?"#f4f6f8":null,ppe:st.ppe,vest:st.ppe?"#f28c28":null,ph:pl.ph,mv:pl.mv,skin:"#c98d63"});
+  LEAKS.forEach(l=>{if(l.tag)part(BOXM,null,l.x,l.y+.45,l.z,.18,.28,.03,"#f2c21b",EMY)});if(MLEAK.on&&MLEAK.tag)part(BOXM,null,MLEAK.x,MLEAK.y+.45,MLEAK.z,.18,.28,.03,"#f2c21b",EMY);
+  const crate=(x,z)=>{part(BOXM,null,x,.45,z,1.1,.9,1.0,"#6b7785");part(BOXM,null,x,.5,z,1.13,.16,1.03,"#c0392b");part(BOXM,null,x,.8,z+.52,.3,.22,.02,"#ff4d4d",[.5,.05,.05]);shadow(x,z,1.3,1.2)};
+  NC.forEach(c=>{if(c.on)crate(c.x,c.z)});for(let k=0;k<SIDE.aud.n;k++)crate(-33+k*1.2,34);
+  if(EXITB.on){for(const z of[-7.2,-8.9]){part(BOXM,null,58.6,.08,z,1.1,.14,1.4,"#b08a5a");part(BOXM,null,58.6,.75,z,1.0,1.2,1.3,"#c69c6d")}}
+  if(SIDE.kai.s===3){const x=SX[BOT]+.9;part(BOXM,null,x,.5,3.25,.9,1.0,.6,"#3a4652");part(BOXM,null,x,1.08,3.25,.85,.16,.55,"#2f855a",[.05,.25,.1])}
+  const mk=(x,z,y)=>{const b=.08*Math.sin(t*3);part(BOXM,null,x,y+.38+b,z,.14,.44,.14,"#f2c21b",EMY);part(BOXM,null,x,y+b,z,.14,.14,.14,"#f2c21b",EMY)};
+  if(st.started){const N=NPC;if(SIDE.boss.s===0||SIDE.boss.s===2)mk(N.boss.x,N.boss.z,2.45);if(SIDE.aud.s===0)mk(N.aud.x,N.aud.z,2.45);if(SIDE.ehs.s===0)mk(N.ehs.x,N.ehs.z,2.45);if(SIDE.mec.s===0)mk(N.mec.x,N.mec.z,2.45);if(st.bottle&&SIDE.kai.s===0)mk(SX[BOT],2.4,2.45)}
+  PT.forEach(q=>{if(q.k==="s")part(BOXM,null,q.x,q.y,q.z,.06,.06,.06,"#ffd27a",EMO)});
+  if(st.started){if(!st.ppe)ring(-43,31,t,"#f2c21b",EMY);if(st.noise===null)ring(-11,-20.5,t,"#f2c21b",EMY);if(!st.bottle)SX.forEach(x=>ring(x,4.1,t,"#5fb4ff",[.1,.3,.8]))}
+  // transparentes
+  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+  PT.forEach(q=>{if(q.k==="p"){const f=q.l/q.m,s=.15+(1-f)*.7;part(BOXM,null,q.x,q.y,q.z,s,s,s,"#e6edf3",[.3,.3,.3],0,0,0,.45*f)}});
+  gl.uniform1f(U.uA,.32);draw(IDT,STATT,WHITE,null,.32);
+  TQ.sort((a,b)=>b[5]-a[5]);for(const q of TQ)draw(q[0],q[1],q[2],q[3],q[4]);
+  gl.depthMask(true);gl.disable(gl.BLEND);
+  // etiquetas
+  LB.forEach((l,i)=>{const e=LBE[i],x=l[1],y=l[2],z=l[3];const cw=VPm[3]*x+VPm[7]*y+VPm[11]*z+VPm[15];const dd=Math.hypot(cam.e[0]-x,cam.e[2]-z);
+    if(cw<=.1||dd>l[4]){e.style.display="none";return}const cx=(VPm[0]*x+VPm[4]*y+VPm[8]*z+VPm[12])/cw,cy=(VPm[1]*x+VPm[5]*y+VPm[9]*z+VPm[13])/cw;
+    if(Math.abs(cx)>1.1||Math.abs(cy)>1.1){e.style.display="none";return}e.style.display="block";e.style.left=((cx+1)/2*innerWidth)+"px";e.style.top=((1-cy)/2*innerHeight)+"px";e.style.opacity=clamp(1.4-dd/l[4],0,1)})}
+
+/* ---------- pantallas ---------- */
+function showHelp(inGame){$("#pan").innerHTML=`<h1>🏭 Planta PES Motors</h1><p>Eres el <b>ingeniero a cargo</b> de una planta de autos. Es tu primer recorrido por el piso (<i>Gemba walk</i>): observa, mide y reporta.</p>
+  <h3>Misiones</h3><ul>${MIS.map(m=>`<li>${m[1]}</li>`).join("")}</ul>
+  <p class="mut">Además hay <b>5 misiones secundarias</b>: busca al personal con ❗ sobre la cabeza. Al terminar las principales, entrega tu reporte en la oficina de ingeniería.</p><h3>Controles</h3><ul><li><b>Celular:</b> arrastra en la mitad izquierda para caminar y en la derecha para girar la cámara. Usa el botón amarillo para interactuar.</li><li><b>Computadora:</b> WASD o flechas para caminar, arrastra con el mouse para girar, rueda para acercar, <b>E</b> para interactuar, <b>M</b> para silenciar.</li></ul>
+  <h3>Pistas</h3><ul><li>Las fugas silban: sigue el sonido y la flecha del detector ultrasónico.</li><li>Camina por los pasillos verdes; los montacargas tienen prioridad en las rutas amarillas.</li><li>Sobre 85 dB(A) necesitas protección auditiva.</li></ul>
+  <p class="mut">Planta, marcas y datos ficticios con fines didácticos. Un juego de PES Labs.</p>
+  <button class="btn" id="go">${inGame?"Continuar":"Comenzar recorrido"}</button>`;$("#ov").hidden=false;
+  $("#go").onclick=()=>{audioInit();if(AC&&AC.state==="suspended")AC.resume();if(!st.started){st.started=true;cam.yaw=0;renderMis();toast("Empieza en la caseta de EPP, a tu izquierda: sigue el marcador amarillo del mapa.",5)}closeOv()}}
+function endGame(){if(st.ended)return;st.ended=true;running=false;const mm=Math.floor(st.t/60),ss=Math.round(st.t%60);
+  const stars=st.near===0&&st.expo<3?3:st.near<=2&&st.expo<20?2:1;
+  $("#pan").innerHTML=`<h1>📋 Reporte de Gemba</h1><div style="font-size:30px;text-align:center">${"⭐".repeat(stars)}</div>
+  <div class="kv"><span>Tiempo del recorrido</span><b>${mm} min ${ss} s</b><span>Fugas etiquetadas</span><b>${st.leaks} de ${LEAKS.length}</b><span>Ruido medido en Estampado</span><b>${st.noise} dB(A)</b><span>Cuello de botella</span><b>Estación 6 (${ST0[BOT]} s vs. takt ${TAKT} s)</b><span>Actos inseguros reportados</span><b>1</b><span>Casi accidentes con montacargas</span><b>${st.near}</b><span>Tiempo sin protección sobre 85 dB(A)</span><b>${Math.round(st.expo)} s</b><span>Misiones secundarias</span><b>${sideCount()} de 5</b>${SIDE.kai.s===3?`<span>Kaizen estación 6</span><b>${ST0[BOT]} s → ${ST_REAL[BOT]} s</b>`:""}${timing?`<span>Ciclo promedio E3</span><b>${timing.avg} s</b>`:""}</div>
+  <h3>Lo que te llevas</h3><ul><li>El Gemba se recorre con EPP y por los pasillos peatonales: la seguridad va primero.</li><li>Las fugas de aire son desperdicio invisible: se encuentran escuchando y midiendo.</li><li>El cuello de botella es la estación cuyo tiempo de ciclo supera el takt: ahí se acumula el inventario.</li><li>Las mejoras más efectivas cambian el método, no presionan a las personas.</li></ul>
+  <p class="mut">Datos y planta ficticios con fines didácticos. Un juego de PES Labs.</p>
+  <button class="btn" id="again">Jugar de nuevo</button><button class="btn o" id="more">Seguir explorando la planta</button>`;$("#ov").hidden=false;
+  $("#again").onclick=()=>location.reload();$("#more").onclick=()=>{st.ended=false;st.done=true;closeOv()}}
+
+/* ---------- bucle ---------- */
+let last=performance.now();
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+  if(running)update(dt,t);else if(!st.started){for(const v of VEH)vehUpdate(v,dt,true);for(const k in NPC)walkerUpdate(NPC[k],dt);lineUpdate(dt);PRESSES.forEach((p,i)=>pressPh[i]=(pressPh[i]+dt*2.4)%(Math.PI*2))}
+  camUpdate(dt,t);render(t);if(st.started)drawMap(t);requestAnimationFrame(frame)}
+renderMis();showHelp(false);requestAnimationFrame(frame);
+window.__G={st,pl,cam,INTER,LEAKS,NPC,VEH,CARS,doInteract,update,camUpdate,render,queueBefore,setRunning:v=>{running=v}};
+</script></body></html>
