@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Balanceo de línea</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--mut:#667085;--ac:#0a7d5a;--bd:#dde1e6;--bad:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181c;--fg:#e8ebee;--card:#1d2328;--mut:#98a2b3;--ac:#34d399;--bd:#2c343b;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#14181c;--fg:#e8ebee;--card:#1d2328;--mut:#98a2b3;--ac:#34d399;--bd:#2c343b;--bad:#f87171}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:560px;margin:0 auto;padding:14px}
+h1{font-size:20px;margin:0 0 8px}h2{font-size:17px;margin:4px 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+button{font:inherit;font-size:13px;padding:9px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.main{background:var(--ac);color:#fff;border-color:var(--ac);width:100%;font-size:15px;padding:12px;margin-top:10px}
+.bub{display:flex;gap:8px;align-items:flex-start;margin:8px 0}.av{font-size:26px;background:var(--bg);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
+.tx{background:var(--bg);border-radius:10px;padding:8px 10px;font-size:14px}.tx small{color:var(--mut);display:block;font-size:11px;margin-bottom:2px}
+.top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.prob{background:var(--bg);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13px}
+.tbar{height:8px;background:var(--bd);border-radius:4px;overflow:hidden}.tbar div{height:100%;background:var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:8px 0}
+.it{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px;text-align:left}.it small{font-size:11px}
+.it.sel{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac);transform:translateY(-2px)}
+.st{border:1px solid var(--bd);border-radius:10px;padding:8px;margin-top:8px;cursor:pointer}.st.over{border-color:var(--bad)}
+.sh{display:flex;justify-content:space-between;font-size:13px}.wk{display:inline-block;animation:bob .5s infinite alternate}
+@keyframes bob{to{transform:translateY(-3px)}}@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.07)}100%{transform:scale(1)}}
+.bar{position:relative;display:flex;height:28px;background:var(--bg);border-radius:6px;margin-top:6px;overflow:hidden}
+.mk{position:absolute;top:0;bottom:0;width:2px;background:var(--bad);z-index:2}
+.sg{display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;border-right:1px solid rgba(255,255,255,.5)}
+.c0{background:#2563eb}.c1{background:#16a34a}.c2{background:#d97706}.c3{background:#9333ea}.c4{background:#0891b2}
+.msg{color:var(--bad);font-size:13px;min-height:18px}
+.row2{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.opt{display:block;width:100%;text-align:left;margin-top:6px;padding:11px}
+.mcard{text-align:center;font-weight:700;padding:8px;border-radius:10px;box-shadow:0 0 0 3px var(--ac);animation:pop .35s}.mcard.bad{box-shadow:0 0 0 3px var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13px}td{padding:4px 6px;border-bottom:1px solid var(--bd)}
+</style></head><body><main>
+<h1>⚖️ Balanceo de línea</h1>
+<div id="app"></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+var AU=null;
+function beep(f,d,t){try{AU=AU||new(window.AudioContext||window.webkitAudioContext)();if(AU.state=="suspended")AU.resume();const o=AU.createOscillator(),g=AU.createGain();o.type=t||"square";o.frequency.value=f;g.gain.value=.04;o.connect(g);g.connect(AU.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AU.currentTime+d);o.stop(AU.currentTime+d)}catch(e){}}
+function tune(a){a.forEach((f,i)=>setTimeout(()=>beep(f,.14),i*110))}
+const P={mgr:["Marta","Gerente de planta","👩‍💼"],qa:["Carlos","Ing. de Calidad","🧑‍🔬"],pe:["Lucía","Ing. de Procesos","👷‍♀️"],op:["Don Beto","Operador","🧑‍🏭"]};
+function bub(k,t){return `<div class="bub"><div class="av">${P[k][2]}</div><div class="tx"><small>${P[k][0]} · ${P[k][1]}</small>${t}</div></div>`}
+const sh=a=>[...a].sort(()=>Math.random()-.5),L=i=>String.fromCharCode(65+i);
+const TK={
+r1:[["Colocar la base",30,[]],["Instalar el motor",40,[0]],["Atornillar las aspas",35,[1]],["Cablear el interruptor",25,[0]],["Colocar la rejilla",20,[2]],["Inspeccionar y empacar",30,[3,4]]],
+r2:[["Montar la base",40,[]],["Insertar el motor",55,[0]],["Fijar las cuchillas",30,[1]],["Montar la jarra",25,[]],["Conectar los cables",35,[1]],["Colocar la tapa",15,[3]],["Prueba eléctrica",45,[4,2]],["Empacar",30,[5,6]]],
+r3:[["Preparar el chasis",30,[]],["Montar la tarjeta",20,[0]],["Soldar conectores",30,[0]],["Instalar la pantalla",40,[]],["Colocar la batería",15,[3]],["Cablear por dentro",55,[1,2]],["Calibrar sensores",45,[4]],["Prueba funcional",40,[5,6]],["Etiquetar",15,[7]],["Empacar",35,[8]]]};
+const tk_=a=>a.map((x,i)=>({i,n:x[0],t:x[1],p:x[2]}));
+function opt(T,k){const n=T.length,full=(1<<n)-1,memo=new Map(),pm=T.map(x=>x.p.reduce((a,b)=>a|1<<b,0));
+ function f(m){if(m==full)return 0;if(memo.has(m))return memo.get(m);let best=99;const rem=full&~m;
+  for(let s=rem;s;s=(s-1)&rem){let tt=0,ok=1;for(let j=0;j<n;j++)if(s>>j&1){tt+=T[j].t;if(pm[j]&~(m|s)){ok=0;break}}if(ok&&tt<=k)best=Math.min(best,1+f(m|s))}
+  memo.set(m,best);return best}
+ return f(0)}
+let G,BEST=0;
+const D=()=>G.lv==2;
+function tmr(ms,end){clearInterval(G.tm);G.t0=Date.now();G.tl=ms;G.tm=setInterval(()=>{const f=1-(Date.now()-G.t0)/ms,b=$("tb");if(b){b.style.width=Math.max(0,f*100)+"%";b.style.background=f<.3?"#dc2626":""}if(f<=0){clearInterval(G.tm);end()}},100)}
+const left=()=>G.tl?Math.max(0,1-(Date.now()-G.t0)/G.tl):0;
+const TB=()=>`<div class="tbar" style="margin:8px 0"><div id="tb" style="width:${G.tl?left()*100:100}%"></div></div>`;
+function rounds(){const d=D();return[
+ {k:"r1",ti:"Ventilador de escritorio",tk:d?50:60,tm:d?120:180},
+ {k:"r2",ti:"Licuadora",ask:{dm:d?400:360},tm:d?180:240},
+ {k:"r3",ti:"Dispositivo electrónico",tk:d?63:70,tm:d?270:300},
+ {k:"r3",ti:"Dispositivo electrónico: la demanda sube",ask:{dm:450},re:1,tm:d?210:240}]}
+function home(){clearInterval(G&&G.tm);G={};
+ $("app").innerHTML=`<div class="card"><h2>Reparte el trabajo para que nadie sea el cuello de botella</h2>${bub("mgr","La línea tiene operarios saturados y otros esperando. Necesito un reparto equilibrado del trabajo entre estaciones.")}${bub("qa","El <b>takt time</b> es el ritmo que pide el cliente: tiempo disponible ÷ demanda. Cada estación no puede acumular más tiempo que el takt. Meta: usar <b>el menor número de estaciones</b> posible, llenándolas bien.")}${bub("pe","Respeta las precedencias: una tarea solo puede ir en la misma estación que sus requisitos o en una posterior. Toca una tarea y luego la estación. Toca un tramo de color para devolverlo.")}${bub("op","Y si la demanda cambia, ¡hay que rebalancear!")}<button class="main" onclick="start(1)">🟢 Empezar en Normal</button><button class="main" style="background:#b91c1c;border-color:#b91c1c" onclick="start(2)">🔴 Empezar en Experto (takt más ajustado y menos tiempo)</button></div>`}
+function start(l){G={lv:l,pt:0,ri:0,sr:[],carry:null};G.R=rounds();rnd()}
+function rnd(){if(G.ri>=G.R.length)return fin();const R=G.R[G.ri];if(!R.re)G.T=tk_(TK[R.k]);if(R.ask)return askS();G.tk=R.tk;bal()}
+function askS(){const R=G.R[G.ri],dm=R.ask.dm,c=25200/dm,o=sh([[c,1],[28800/dm,0],[21600/dm,2]]);G.ao=o;G.at=c;
+ $("app").innerHTML=`<div class="card"><div class="top"><span>Ronda ${G.ri+1} de ${G.R.length}</span><b>${G.pt} pts</b></div><h2>${R.ti}</h2>${bub("mgr",R.re?`¡Llegó un pedido grande! La demanda sube a <b>${dm} unidades por turno</b>.`:`El cliente pide <b>${dm} unidades por turno</b>.`)}<div class="prob">Un turno dura 8 horas, pero se descuentan 1 hora de comida y paros. ¿Cuál es el nuevo <b>takt time</b>?</div>${o.map((x,i)=>`<button class="opt" onclick="ak(${i})">${Math.round(x[0])} segundos por unidad</button>`).join("")}</div>`}
+function ak(i){const R=G.R[G.ri],dm=R.ask.dm,x=G.ao[i],ok=x[1]==1;G.tk=G.at;if(ok){G.pt+=50;tune([523,659])}else beep(120,.15,"sawtooth");
+ const why=ok?"":x[1]==0?" Olvidaste descontar la hora de comida y paros.":" Descontaste de más: son solo 1 hora de comida y paros.";
+ $("app").innerHTML=`<div class="card"><div class="mcard ${ok?"":"bad"}">${ok?"✅ Correcto +50":"❌ No era esa"}</div>${bub("qa",`Takt = tiempo disponible ÷ demanda = 25,200 s ÷ ${dm} = <b>${G.at} s</b>.${why}`)}<button class="main" onclick="bal()">Empezar a balancear →</button></div>`}
+function bal(){const R=G.R[G.ri];if(R.re&&G.carry)G.as=[...G.carry];else G.as=G.T.map(()=>-1);G.ns=Math.max(1,...G.as.map(x=>x+1));G.sel=-1;G.msg="";G.hint=0;G.opt=opt(G.T,G.tk);G.tl=0;rb();tmr(R.tm*1000,()=>fb(true))}
+const ST=(k)=>G.T.filter(x=>G.as[x.i]==k),SUM=a=>a.reduce((s,x)=>s+x.t,0);
+function rb(){const R=G.R[G.ri],T=G.T,as=G.as,tk=G.tk,sc=tk*1.25,pool=T.filter(x=>as[x.i]<0),used=new Set(as.filter(x=>x>=0)).size,asg=SUM(T.filter(x=>as[x.i]>=0)),sum=SUM(T);
+ $("app").innerHTML=`<div class="card"><div class="top"><span>Ronda ${G.ri+1} de ${G.R.length}</span><span>Takt <b>${tk} s</b></span><b>${G.pt} pts</b></div><h2>${R.ti}</h2>${TB()}<div class="prob">Máximo <b>${tk} s</b> por estación. Estaciones usadas: <b>${used}</b> · Eficiencia: <b>${used?Math.round(asg/(used*tk)*100):0}%</b>${G.hint?` · Mínimo teórico: <b>${Math.ceil(sum/tk)}</b>`:""}</div><div class="msg">${G.msg}</div><b style="font-size:13px">Tareas por asignar (toca una y luego una estación)</b><div class="grid">${pool.map(x=>`<button class="it ${G.sel==x.i?"sel":""}" onclick="sl(${x.i})"><b>${L(x.i)} · ${x.t} s</b><small>${x.n}</small><small style="color:var(--mut)">requiere: ${x.p.length?x.p.map(L).join(", "):"—"}</small></button>`).join("")||"<p>Todas asignadas ✅</p>"}</div>${[...Array(G.ns).keys()].map(k=>{const ts=ST(k),tt=SUM(ts),ov=tt>tk;return `<div class="st ${ov?"over":""}" onclick="put(${k})"><div class="sh"><span class="${ts.length?"wk":""}">🧑‍🏭</span><span>Estación ${k+1}</span><b>${tt}/${tk} s ${ov?"⚠️":""}</b></div><div class="bar"><div class="mk" style="left:${100/1.25}%"></div>${ts.map(x=>`<span class="sg c${x.i%5}" style="width:${x.t/sc*100}%" onclick="event.stopPropagation();rm(${x.i})">${L(x.i)}</span>`).join("")}</div></div>`}).join("")}<div class="row2"><button onclick="addS()" ${G.ns>=8?"disabled":""}>➕ Estación</button><button onclick="delS()" ${G.ns>1&&!ST(G.ns-1).length?"":"disabled"}>➖ Quitar vacía</button><button onclick="hp()" ${G.hint?"disabled":""}>🧑‍🏭 Pista (−30)</button></div><button class="main" onclick="fb(false)">Terminar balanceo</button></div>`}
+function sl(i){G.sel=G.sel==i?-1:i;G.msg="";rb()}
+function put(k){if(G.sel<0)return;const x=G.T[G.sel],bad=x.p.find(p=>G.as[p]<0||G.as[p]>k);
+ if(bad!==undefined){G.msg=`«${L(x.i)}» necesita que antes esté «${L(bad)}» en la misma estación o en una anterior.`;beep(120,.12,"sawtooth");return rb()}
+ G.as[x.i]=k;G.sel=-1;G.msg="";beep(600,.05);rb()}
+function rm(i){if(G.T.some(x=>x.p.includes(i)&&G.as[x.i]>=0)){G.msg="Primero quita las tareas que dependen de esa.";return rb()}G.as[i]=-1;G.msg="";beep(400,.05);rb()}
+function addS(){if(G.ns<8)G.ns++;rb()}function delS(){if(G.ns>1&&!ST(G.ns-1).length)G.ns--;rb()}
+function hp(){G.hint=1;G.pt=Math.max(0,G.pt-30);rb()}
+function fb(to){const R=G.R[G.ri],T=G.T,tk=G.tk,as=G.as,inc=as.some(x=>x<0),ov=[...new Set(as)].some(k=>k>=0&&SUM(ST(k))>tk);
+ if(!to&&inc){G.msg="Faltan tareas por asignar.";return rb()}
+ if(!to&&ov){G.msg="Hay estaciones que superan el takt. Mueve tareas o agrega una estación.";beep(120,.15,"sawtooth");return rb()}
+ clearInterval(G.tm);const bn=Math.round(left()*100),used=new Set(as.filter(x=>x>=0)).size,sum=SUM(T),valid=!inc&&!ov,df=used-G.opt,ex=D()?1:2;
+ const stars=!valid?0:D()?(df==0?3:df==1?1:0):(df==0?3:df==1?2:df==2?1:0),pts=!valid?0:((D()?[100,40]:[100,60,30])[df]||0)+(df<=ex?bn:0),eff=valid&&used?Math.round(sum/(used*tk)*100):0,mn=Math.ceil(sum/tk);
+ G.pt+=pts;G.sr.push({ti:R.ti,used,opt:G.opt,eff,stars,valid});G.carry=valid?[...as]:null;if(stars>=2)tune([523,659,784]);
+ const msg=!valid?`Se acabó el tiempo con el balanceo incompleto o con estaciones por encima del takt.`:`Usaste <b>${used}</b> estaciones; el óptimo es <b>${G.opt}</b>. Eficiencia = ΣT ÷ (N × takt) = ${sum} ÷ (${used} × ${tk}) = <b>${eff}%</b>. Mínimo teórico = ⌈${sum} ÷ ${tk}⌉ = ${mn}${G.opt>mn?`; por las precedencias el óptimo real es ${G.opt}`:""}.${df>0?" Intenta llenar cada estación cerca del takt sin pasarte.":""}`;
+ $("app").innerHTML=`<div class="card"><h2>${R.ti}</h2><div style="font-size:26px">${"⭐".repeat(stars)}${"☆".repeat(3-stars)} <small style="font-size:13px;color:var(--mut)">+${pts} pts</small></div>${bub("qa",msg)}<button class="main" onclick="G.ri++;rnd()">${G.ri>=G.R.length-1?"Ver resultado final":"Siguiente ronda →"}</button></div>`}
+function fin(){clearInterval(G.tm);const t=G.sr.reduce((a,x)=>a+x.stars,0),r=t>=11?"🏆 Maestro del balanceo":t>=8?"🥇 Líder de línea":t>=5?"🥈 Aprendiz":"🥉 Principiante";BEST=Math.max(BEST,G.pt);if(t>=8)tune([523,659,784,1047]);
+ $("app").innerHTML=`<div class="card"><h2>${r} · ${D()?"🔴 Experto":"🟢 Normal"}</h2><div style="font-size:15px"><b>${t}</b> de 12 estrellas · <b>${G.pt}</b> pts <small style="color:var(--mut)">(mejor de la sesión: ${BEST})</small></div><table><tr><td><b>Ronda</b></td><td><b>Usadas / óptimo</b></td><td><b>Efic.</b></td><td></td></tr>${G.sr.map(x=>`<tr><td>${x.ti}</td><td>${x.valid?x.used:"–"} / ${x.opt}</td><td>${x.eff}%</td><td>${"⭐".repeat(x.stars)}</td></tr>`).join("")}</table>${bub("mgr",t>=8?"¡Excelente! La línea quedó equilibrada y lista para el nuevo pedido.":"Buen comienzo. Recuerden: llenar cada estación cerca del takt y respetar las precedencias reduce el número de estaciones.")}<button class="main" onclick="home()">🔄 Jugar de nuevo</button></div>`}
+home();
+</script></body></html>

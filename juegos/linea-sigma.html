@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Línea Sigma</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--mut:#667085;--ac:#0a7d5a;--bd:#dde1e6;--bar:#d97706;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181c;--fg:#e8ebee;--card:#1d2328;--mut:#98a2b3;--ac:#34d399;--bd:#2c343b;--bar:#fbbf24}}
+:root[data-theme="dark"]{--bg:#14181c;--fg:#e8ebee;--card:#1d2328;--mut:#98a2b3;--ac:#34d399;--bd:#2c343b;--bar:#fbbf24}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:14px}
+h1{font-size:20px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+canvas{width:100%;aspect-ratio:360/220;display:block}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.kpis b{display:block;font-size:18px}.kpis span{font-size:11px;color:var(--mut)}
+.dm{display:flex;gap:4px;margin:8px 0}.dm i{flex:1;text-align:center;font-style:normal;font-size:11px;padding:4px 0;border-radius:6px;background:var(--bd);color:var(--mut)}
+.dm i.on{background:var(--ac);color:#fff}
+.hint{border-left:4px solid var(--bar);font-size:14px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.st{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px}
+.st b{font-size:14px}
+button{font:inherit;font-size:13px;padding:8px 6px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.main{background:var(--ac);color:#fff;border-color:var(--ac);width:100%;font-size:15px;padding:12px;margin-bottom:10px}
+button.on{border-color:var(--ac);color:var(--ac)}
+details{font-size:13px}summary{font-weight:600;cursor:pointer;font-size:14px}
+details ol,details ul{margin:6px 0;padding-left:20px}
+.log{font-size:13px;color:var(--mut);max-height:110px;overflow-y:auto}.log p{margin:3px 0}
+[hidden]{display:none!important}
+.tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1;padding:10px;font-weight:600}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+h2{font-size:17px;margin:4px 0 8px}#guide p{margin:6px 0}
+#guide .q{margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)}#guide .q button{display:block;width:100%;text-align:left;margin-top:6px;padding:10px}
+#guide .dm i{cursor:pointer}#fb{margin-top:8px;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}td,th{padding:4px 6px;border-bottom:1px solid var(--bd);text-align:left}
+.nav{display:flex;gap:8px;margin-top:12px}.nav button{flex:1;padding:11px}
+.box{background:var(--bg);border-radius:8px;padding:8px;margin:8px 0;font-size:14px}
+.bub{display:flex;gap:8px;align-items:flex-start;margin:8px 0}.av{font-size:26px;background:var(--bg);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
+.tx{background:var(--bg);border-radius:10px;padding:8px 10px;font-size:14px}.tx small{color:var(--mut);display:block;font-size:11px;margin-bottom:2px}
+.row{grid-template-columns:repeat(4,1fr)}.row button{font-size:12px;padding:8px 2px}
+.dm i.cur{outline:2px solid var(--fg);outline-offset:1px;font-weight:700}@keyframes mv{from{background-position:0 0}to{background-position:24px 0}}@keyframes slin{from{transform:translateX(-110%);opacity:0}to{transform:none;opacity:1}}@keyframes shk{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.belt{height:10px;border-radius:5px;background:repeating-linear-gradient(90deg,var(--mut) 0 12px,var(--bd) 12px 24px);background-size:24px 10px;animation:mv .8s linear infinite}
+.mc{animation:slin .45s ease-out}.mc.bad{animation:shk .35s;box-shadow:0 0 0 3px #dc2626}.mc.ok{animation:pop .35s;box-shadow:0 0 0 3px var(--ac)}
+.tbar{height:8px;background:var(--bd);border-radius:4px;overflow:hidden}.tbar div{height:100%;background:var(--ac);transition:width .1s linear}
+.wg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.wg button{text-align:left;padding:10px 8px;font-size:13px}
+</style></head><body><main>
+<h1>🏭 Línea Sigma</h1>
+<div class="tabs"><button id="tg">📘 Aprender</button><button id="ts">🏭 Simular</button><button id="tm">🎯 Mini-juego</button></div>
+<div id="guide"></div>
+<div id="mj" hidden></div>
+<div id="game"><div class="tabs" id="lvs"></div><div id="eco" style="font-size:12px;color:var(--mut);margin:-4px 0 8px"></div>
+<div class="card"><canvas id="cv"></canvas><div class="kpis" id="k" style="margin-top:8px"></div><div class="dm" id="dm"></div></div>
+<div class="card hint" id="hint"></div>
+<button class="main" id="run"></button>
+<div class="card" id="end" hidden></div><div class="card" id="det"></div><div id="sts"></div>
+<div class="card"><button id="par" style="width:100%">📊 Pareto</button><button id="tb" style="width:100%;margin-top:6px"></button><button id="sb" style="width:100%;margin-top:6px"></button></div>
+<div class="card"><details open><summary>Cómo se juega</summary>
+<ol><li><b>Medir:</b> pulsa «Correr turno». Se producen 1,000 unidades; en pantalla verás una muestra de 40 pasando por la línea.</li>
+<li><b>Analizar:</b> 📊 Pareto ordena las estaciones por defectos para atacar la peor. 🔎 Ishikawa revela la causa raíz.</li>
+<li><b>Mejorar:</b> 🔧 aplica la solución. Sin conocer la causa, solo aciertas 1 de 4 veces.</li>
+<li><b>Controlar:</b> 🛡️ evita que la estación vuelva a empeorar con el tiempo.</li></ol>
+<ul><li>Tienes pocas acciones por turno y 10 turnos para llegar a <b>4σ</b> (≈6,210 DPMO).</li>
+<li>Cajas azules = buenas, rojas = defectuosas (caen al bote). Color de la máquina: verde, ámbar o rojo según sus defectos.</li>
+<li><b>¿Los defectos reaparecen?</b> No se reinicia nada: cada mejora baja la tasa de defectos de forma permanente (▼ = menos que el turno anterior). Lo que cambia entre turnos es el azar de la muestra, la degradación de las estaciones sin 🛡️ control, los eventos, y que tras mejorar queda otra causa menor por descubrir. Eso es mejora continua: el ciclo DMAIC se repite.</li><li><b>Interacción:</b> toca una máquina para ver su carta de control. Toca a un personaje para pedirle consejo. Arrastra a Carlos (Ishikawa), a Don Beto (pista gratis) a Lucía (mejora o control) o a Marta (presentar logros: +$300) hasta una máquina. 🤝 Trabajo en equipo: si la pista de Don Beto coincide con el Ishikawa de Carlos, la mejora de Lucía baja los defectos 85% en vez de 75%.</li><li><b>Mini-juegos:</b> «Armar el Pareto» ordena las barras de mayor a menor (+$100 por turno). Al mandar a Carlos, un Ishikawa te pide hallar la causa que más se repite (si aciertas te devuelven $75).</li><li><b>Plantas:</b> hay 3 niveles de dificultad creciente (más defectos al inicio, economía más ajustada y más eventos). Ganar una desbloquea la siguiente.</li><li><b>Reglas avanzadas:</b> el Ishikawa y Don Beto pueden equivocarse; cada estación puede tener dos causas; cada 🛡️ cuesta $60 por turno y puede anularse; los defectos se encadenan de una estación a la siguiente; y mejorar una estación en control con pocos defectos es reaccionar al ruido (empeora).</li><li>DPMO = defectos por millón de oportunidades. Cada unidad tiene 4 oportunidades de fallar.</li></ul></details></div>
+<div class="card"><div class="log" id="log"></div></div>
+</div></main>
+<div id="mg" hidden style="position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:14px;z-index:9"><div class="card" id="mgc" style="width:100%;max-width:420px;margin:0;max-height:90vh;overflow:auto"></div></div>
+<script>
+const N=["Corte","Ensamble","Pintura","Inspección"],ICON=["🪚","⚙️","🎨","🔍"],C=["Hombre","Máquina","Método","Material"];
+const SOL={Hombre:"capacitación",Máquina:"mantenimiento (TPM)",Método:"estandarización (5S)",Material:"auditoría de proveedor"};
+let GOAL=4;const TURNS=10,W=360,H=220,ST=[50,135,220,305],DPR=Math.min(2,window.devicePixelRatio||1);
+const $=id=>document.getElementById(id),cv=$("cv"),run_=$("run"),par=$("par");
+cv.width=W*DPR;cv.height=H*DPR;
+let S,pareto=false,phase=0,items=[],spawn=0,spawnLeft=0,anim=false,good=0,scrap=0,flash=[0,0,0,0],last=performance.now();
+const z=p=>{const t=Math.sqrt(-2*Math.log(p));return t-(2.515517+.802853*t+.010328*t*t)/(1+1.432788*t+.189269*t*t+.001308*t**3)};
+const sigma=d=>z(Math.max(d,1)/1e6)+1.5;
+function init(){GOAL=LVS[LV].g;S={t:0,cash:LVS[LV].c,ap:0,done:false,dpmo:0,hist:[],log:[],st:N.map((n,i)=>({n,i,p:LVS[LV].p[0]+Math.random()*LVS[LV].p[1],...MK(),known:false,ctl:false,d:null}))};pareto=false;phase=0;items=[];anim=false;spawnLeft=0;good=scrap=0;say("Meta: "+GOAL+"σ. Empieza midiendo.")}
+function say(m){S.log.unshift(m);S.log=S.log.slice(0,12)}
+function runTurn(){
+ if(S.done){init();return draw()}
+ S.t++;beep(220,.1);S.talk=null;S.choice=null;let tot=0;evento();
+ let up=0;S.st.forEach(s=>{s.pd=s.d;if(!s.ctl)s.p*=1+Math.random()*.12;const pe=Math.min(.5,s.p*(1+3*up));s.pe=pe;up=pe;let d=0;for(let i=0;i<1000;i++)if(Math.random()<pe)d++;s.d=d;(s.h=s.h||[]).push(d);tot+=d});
+ S.alm=null;S.st.forEach(s=>{const L=lims(s);if(!L)return;if(s.d>L.u)S.alm=["qa",`⚠️ La carta de control de ${s.n} marca un punto fuera del límite superior (${s.d} > ${L.u.toFixed(0)}). Algo cambió: investiguemos la causa.`];else if(s.d<L.l&&!S.alm)S.alm=["qa",`📉 ${s.n} bajó del límite inferior de su carta: la mejora es real, no azar.`]});S.dpmo=tot/4000*1e6;S.hist.push(sigma(S.dpmo));S.cash+=LVS[LV].r-tot*LVS[LV].d-60*S.st.filter(s=>s.ctl).length;S.ap=Math.max(1,LVS[LV].ap-(S.apPen||0));S.apPen=0;phase=1;
+ say(`Turno ${S.t}: ${tot} defectos, ${S.dpmo.toFixed(0)} DPMO, ${sigma(S.dpmo).toFixed(2)}σ. Mala calidad: $${tot*LVS[LV].d}.`);
+ if(S.cash<0){S.bust=1;S.cash=0}if(S.bust||sigma(S.dpmo)>=GOAL||S.t>=TURNS){S.done=true;S.ap=0;phase=4;say(S.bust?"💥 Quiebra: la planta se quedó sin caja.":sigma(S.dpmo)>=GOAL?"¡Meta lograda! 🎉":"Se acabaron los turnos.")}
+ if(!S.done&&S.t>=2&&Math.random()<.5){const u=S.used||(S.used=[]),av=DIL.map((_,i)=>i).filter(i=>!u.includes(i));if(av.length){const id=av[Math.random()*av.length|0];u.push(id);S.dil={id};tune([392,523])}}items=[];spawnLeft=40;spawn=0;good=scrap=0;anim=true;draw()}
+function spend(c){S.cash-=c;S.ap--;beep(660,.08);S.talk=null;S.choice=null}
+function ish0(i,ok,cl){const s=S.st[i];go("qa",i,"look");spend(150);if(ok){S.cash+=75;say("🎯 Ishikawa acertado: te devuelven $75.")}s.known=true;s.ic=cl||s.c;phase=2;say(`Ishikawa en ${s.n}: apunta a "${s.ic}".`+(s.clue?(s.clue===s.ic?" 🤝 Coincide con la pista de Don Beto.":" ⚠️ No coincide con la pista de Don Beto: repite el Ishikawa o decide."):""));draw()}
+function fix(i){const s=S.st[i];go("pe",i,"fix");spend(500);phase=3;
+ if(s.known){const tm=s.clue===s.c;s.p*=tm?.15:.25;if(tm){S.team=(S.team||0)+1}if(tm)say("🤝 ¡Trabajo en equipo! La pista de Don Beto coincidió con el Ishikawa de Carlos: la mejora rinde más (−85%).");say(`${s.n}: ${SOL[s.c]} funcionó: la tasa de defectos baja y se mantiene. Quedan causas menores; el ciclo sigue.`)}
+ else{const g=s.clue||C[Math.random()*4|0];if(g===s.c){s.p*=.25;say(`Suerte: ${SOL[g]} acertó en ${s.n}.`)}else{s.p*=.92;S.bad=(S.bad||0)+1;say(`${s.n}: ${SOL[g]} no atacó la causa. Usa Ishikawa primero.`)}}
+ s.c=C[Math.random()*4|0];s.known=false;s.clue=null;s.b=(s.h||[]).length;draw()}
+function ctl(i){const s=S.st[i];go("pe",i,"shield");spend(300);s.ctl=true;phase=4;say(`Control en ${s.n}: ya no se degrada.`);draw()}
+function hint(){
+ if(S.done)return !S.bust&&S.hist[S.hist.length-1]>=GOAL?"🎉 ¡Alcanzaste 4σ! Juega de nuevo para mejorar tu puntaje.":"Fin del juego. Intenta de nuevo priorizando con Pareto.";
+ if(!S.t)return "👉 Pulsa «Correr turno» para medir el proceso.";
+ if(S.ap<=0)return "Sin acciones este turno. Corre el siguiente turno.";
+ const w=[...S.st].sort((a,b)=>b.d-a.d)[0];
+ if(!w.known)return `📊 ${w.n} es la estación con más defectos. Usa 🔎 Ishikawa para hallar su causa.`;
+ return `🔧 Ya conoces la causa en ${w.n} (${w.c}). Aplica la mejora (${SOL[w.c]}).`+(w.ctl?"":" Luego instala 🛡️ control.")}
+function draw(){
+ const sg=S.t?sigma(S.dpmo):0;
+ $("k").innerHTML=`<div><b>${S.t}/${TURNS}</b><span>Turno</span></div><div><b>$${S.cash}</b><span>Caja</span></div><div><b>${S.t?S.dpmo.toFixed(0):"–"}</b><span>DPMO</span></div><div><b>${S.t?sg.toFixed(2):"–"}σ</b><span>Sigma</span></div>`;
+ $("dm").innerHTML=["Definir","Medir","Analizar","Mejorar","Controlar"].map((x,i)=>`<i class="${i<=phase&&S.t?"on":""}">${x}</i>`).join("");
+ {const x=hint();$("hint").innerHTML=bub(x[0],x[1])+(S.dil?`<div class="row" style="grid-template-columns:1fr 1fr">${DIL[S.dil.id].o.map((o,i)=>`<button onclick="dec(${i})">${o.t}</button>`).join("")}</div>`:"")+(S.choice!=null?`<div class="row" style="grid-template-columns:1fr 1fr"><button onclick="fix(${S.choice})" ${S.cash<500?"disabled":""}>🔧 Mejorar $500</button><button onclick="ctl(${S.choice})">🛡️ Control $300 (+$60/turno)</button></div>`:"")}
+ let o=[...S.st];if(pareto&&S.t)o.sort((a,b)=>b.d-a.d);
+ const can=S.t&&S.ap>0&&!S.done;
+ $("sts").innerHTML=o.map(s=>`<div class="card"><div class="st"><b>${ICON[s.i]} ${s.n}</b><span>${s.d===null?"sin medir":s.d+" defectos"+(s.pd!=null&&s.d!=s.pd?(s.d<s.pd?" ▼":" ▲"):"")} · Ishikawa: ${s.ic||"?"} ${s.ctl?"· 🛡️":""}${s.ic&&s.clue===s.ic?"· 🤝":""}</span></div>${s.clue?`<div class="box">🧑‍🏭 «${CLUE[s.clue]}»${s.ic&&s.ic!==s.clue?" <b>⚠️ No coincide con el Ishikawa</b>":""}</div>`:""}
+ ${showB?`<div class="row"><button onclick="ask(${s.i})" ${can&&!s.clue?"":"disabled"}>🧑‍🏭 Operador<br>gratis</button><button onclick="ish(${s.i})" ${can&&S.cash>=150?"":"disabled"}>🔎 Ishikawa<br>$150</button><button onclick="fix(${s.i})" ${can&&S.cash>=500?"":"disabled"}>🔧 Mejorar<br>$500</button><button onclick="ctl(${s.i})" ${can&&S.cash>=300&&!s.ctl?"":"disabled"}>🛡️ Control<br>$300+$60/t</button></div>`:""}</div>`).join("");
+ run_.textContent=S.done?"Jugar de nuevo":(S.t?`Correr turno ${S.t+1} · acciones: ${S.ap}`:"Correr turno 1 (Medir)");
+ run_.disabled=anim||!!S.dil;det();endc();lvr();$("tb").textContent=showB?"🔘 Ocultar botones de respaldo":"🔘 Mostrar botones de respaldo";$("sb").textContent=SND?"🔊 Sonido activado":"🔇 Sonido desactivado";par.disabled=!S.t;par.className=pareto?"on":"";par.textContent=pareto?"📊 Pareto activo (toca para quitar)":"📊 Armar el Pareto (mini-juego, +$100)";
+ $("log").innerHTML=S.log.map(m=>`<p>${m}</p>`).join("")}
+function frame(now){
+ const dt=Math.min(.05,(now-last)/1000);last=now;
+ if(spawnLeft>0){spawn-=dt;if(spawn<=0){spawn=.06;spawnLeft--;items.push({x:-10,y:128,vy:0,f:false,hit:[0,0,0,0],d:S.st.map(s=>Math.random()<(s.pe||s.p))})}}
+ items.forEach(it=>{
+  if(!it.f){it.x+=170*dt;ST.forEach((sx,i)=>{if(!it.hit[i]&&it.x>=sx){it.hit[i]=1;if(it.d[i]){it.f=true;flash[i]=1;sBad()}}});if(it.x>W+10){it.gone=1;good++}}
+  else{it.vy+=600*dt;it.y+=it.vy*dt;it.x+=30*dt;if(it.y>196){it.gone=1;scrap++}}});
+ items=items.filter(i=>!i.gone);upd(dt);
+ if(anim&&!spawnLeft&&!items.length){anim=false;draw();react()}
+ render(now);requestAnimationFrame(frame)}
+const BY=140;let X,FG,parts=[];
+const A={mgr:{hx:30,n:"Marta",c:["#3b2f2f","#7c3aed","#334155"]},qa:{hx:330,n:"Carlos",c:["#e5e7eb","#f8fafc","#334155"]},pe:{hx:110,n:"Lucía",c:["#facc15","#f97316","#334155"]},op:{hx:215,n:"Don Beto",c:["#1e3a8a","#3b82f6","#475569"]}};
+for(const k in A)Object.assign(A[k],{x:A[k].hx,tx:A[k].hx,st:0,w:0,jump:0,shake:0,face:1,job:null});
+function go(k,i,job){const a=A[k];a.tx=ST[i]+(k=="qa"?16:k=="op"?-16:0);a.st=1;a.job=job;a.w=0}
+function upd(dt){for(const k in A){const a=A[k];
+ if(a.st==1||a.st==3){const d=a.tx-a.x;if(Math.abs(d)<3){a.x=a.tx;a.w=0;a.st=a.st==1?2:0}else{a.x+=Math.sign(d)*85*dt;a.face=Math.sign(d)}}
+ else if(a.st==2){a.w+=dt;if(a.w>1.4){a.st=3;a.tx=a.hx;a.job=null}}
+ a.jump=Math.max(0,a.jump-dt);a.shake=Math.max(0,a.shake-dt)}
+ parts.forEach(q=>{q.y+=q.v*dt;q.x+=Math.sin(q.y/9+q.s)*12*dt});parts=parts.filter(q=>q.y<H)}
+function react(){const h=S.hist;if(!h.length)return;const l=h[h.length-1],up=h.length<2||l>h[h.length-2];
+ if(S.done&&!S.bust&&l>=GOAL){tune([523,659,784,1047,784,1047]);for(const k in A)A[k].jump=1.2;parts=Array.from({length:50},()=>({x:Math.random()*W,y:-Math.random()*60,v:50+Math.random()*50,s:Math.random()*6,c:["#f43f5e","#facc15","#22c55e","#3b82f6"][Math.random()*4|0]}))}
+ else if(up){tune([523,659,784]);A.mgr.jump=.8;A.qa.jump=.5}else{tune([220,165]);A.mgr.shake=1}}
+function poly(p,f){X.beginPath();p.forEach((q,j)=>j?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1]));X.closePath();X.fillStyle=f;X.fill()}
+function cube(x,y,w,h,d,c){poly([[x,y],[x+w,y],[x+w,y+h],[x,y+h]],c);poly([[x+w,y],[x+w+d,y-d],[x+w+d,y+h-d],[x+w,y+h]],c);poly([[x+w,y],[x+w+d,y-d],[x+w+d,y+h-d],[x+w,y+h]],"rgba(0,0,0,.3)");poly([[x,y],[x+d,y-d],[x+w+d,y-d],[x+w,y]],c);poly([[x,y],[x+d,y-d],[x+w+d,y-d],[x+w,y]],"rgba(255,255,255,.3)")}
+function doll(k,t){const a=A[k],f=Math.floor(t/150)%2,walk=a.st==1||a.st==3,work=a.st==2,[hat,sh,pt]=a.c;
+ const x=a.x+(a.shake>0?Math.sin(t/30)*3:0),y=196+(a.dy||0)-(a.jump>0?Math.abs(Math.sin(a.jump*8))*12:0),b=f&&!work?-1:0,d=a.face<0?-1:1;
+ X.fillStyle="rgba(0,0,0,.25)";X.beginPath();X.ellipse(a.x+4,197,13,3,0,0,7);X.fill();
+ const l1=walk&&f?3:0,l2=walk&&!f?3:0;
+ cube(x-6,y-10-l1,5,10+l1,3,pt);cube(x+1,y-10-l2,5,10+l2,3,pt);
+ cube(x-12,y-25+b+(walk?(f?2:-2):0),4,12,3,sh);
+ cube(x-8,y-26+b,16,16,4,sh);
+ cube(x+8,work?y-35+(f?-4:0):y-25+b+(walk?(f?-2:2):0),4,12,3,sh);
+ cube(x-7,y-40+b,14,13,4,"#f1c8a0");X.fillStyle="#111";X.fillRect(x-4+d,y-35+b,2,2);X.fillRect(x+2+d,y-35+b,2,2);
+ if(k=="qa"){X.strokeStyle="#111";X.lineWidth=1;X.strokeRect(x-5+d,y-36+b,5,4);X.strokeRect(x+1+d,y-36+b,5,4)}
+ cube(x-8,y-46+b,16,7,4,hat);
+ X.font="8px system-ui";X.textAlign="center";X.fillStyle=FG;X.fillText(a.n+" · "+ROLE[k],a.x,208);
+ if(work){X.font="15px serif";X.fillText({look:"🔎",talk:"💬",fix:"🔧",shield:"🛡️",alert:"❗"}[a.job]||"…",x,y-54+(f?-2:0));
+  if(a.job=="fix"||a.job=="shield"){X.fillStyle="#fde047";for(let i=0;i<6;i++)X.fillRect(x+d*16+Math.sin(t/40+i*2)*10,120+Math.cos(t/50+i*3)*12,2,2)}}}
+function render(t){X=cv.getContext("2d");const cs=getComputedStyle(document.documentElement),g=n=>cs.getPropertyValue(n).trim();
+ FG=g("--fg");const bd=g("--bd"),mut=g("--mut");
+ X.setTransform(DPR,0,0,DPR,0,0);X.clearRect(0,0,W,H);
+ X.fillStyle=bd;X.fillRect(0,156,W,H-156);X.fillStyle="rgba(0,0,0,.07)";for(let i=0;i<16;i++)for(let j=0;j<3;j++)if((i+j)%2)X.fillRect(i*24,156+j*22,24,22);
+ S.st.forEach((s,i)=>{const cx=ST[i];flash[i]*=.93;
+  const col=s.d===null?"#94a3b8":s.d<15?"#22c55e":s.d<40?"#f59e0b":"#ef4444";
+  poly([[cx-26,78],[cx+26,78],[cx+26,BY],[cx-26,BY]],"#64748b");poly([[cx+26,78],[cx+38,68],[cx+38,130],[cx+26,BY]],"#475569");poly([[cx-26,78],[cx-14,68],[cx+38,68],[cx+26,78]],"#94a3b8");
+  if(flash[i]>.05)poly([[cx-26,78],[cx+26,78],[cx+26,BY],[cx-26,BY]],`rgba(239,68,68,${flash[i]*.6})`);
+  if(anim){const off=Math.sin(t/90+i*2)*5;X.fillStyle="#cbd5e1";X.fillRect(cx-2,48+off,4,22);X.fillStyle="#94a3b8";X.fillRect(cx-9,64+off,18,6);
+   for(let k=0;k<3;k++){const u=((t/35+k*14)%42);X.fillStyle=`rgba(148,163,184,${.5-u/90})`;X.beginPath();X.arc(cx+24+Math.sin(u/6+k)*4,62-u,3+u/14,0,7);X.fill()}}
+  if(i==sel){X.strokeStyle="#38bdf8";X.lineWidth=2;X.strokeRect(cx-30,56,72,86)}X.fillStyle="#0f172a";X.fillRect(cx-18,84,36,22);X.fillStyle=col;X.font="bold 13px monospace";X.textAlign="center";X.fillText(s.d===null?"--":s.d,cx,100);
+  X.fillStyle="#e2e8f0";X.font="9px system-ui";X.fillText(s.n,cx,118);X.font="15px serif";X.fillText(ICON[i],cx,134);
+  X.fillStyle=col;X.globalAlpha=s.d>=40?(.5+.5*Math.sin(t/120)):1;X.beginPath();X.arc(cx+6,62,4,0,7);X.fill();X.globalAlpha=1;
+  X.font="13px serif";if(s.ctl)X.fillText("🛡️",cx+34,58);if(s.known)X.fillText("🔎",cx-30,58)});
+ X.fillStyle="#475569";X.fillRect(0,BY,W,12);X.strokeStyle="#94a3b8";X.lineWidth=2;X.setLineDash([6,8]);X.lineDashOffset=-(t*.17%14);X.beginPath();X.moveTo(0,BY+6);X.lineTo(W,BY+6);X.stroke();X.setLineDash([]);
+ items.forEach(it=>cube(it.x-6,it.y,11,11,3,it.f?"#dc2626":"#3b82f6"));
+ for(const k in A)doll(k,t);
+ parts.forEach(q=>{X.fillStyle=q.c;X.fillRect(q.x,q.y,4,4)});
+ X.font="11px system-ui";X.fillStyle=FG;X.textAlign="left";X.fillText("🗑️ "+scrap,6,14);X.textAlign="right";X.fillText("📦 "+good+"/40",W-6,14);X.textAlign="center";X.fillStyle=mut;X.font="10px system-ui";X.fillText("muestra de 40 unidades",W/2,14)}
+$("tb").onclick=()=>{showB=!showB;draw()};$("sb").onclick=()=>{SND=!SND;draw()};run_.onclick=runTurn;par.onclick=()=>{if(!pareto&&S.t&&!S.done)return mgPar();pareto=!pareto;if(S.t&&!S.done)phase=Math.max(phase,2);draw()};
+var P={mgr:{n:"Marta",r:"Gerente de planta",e:"👩‍💼"},qa:{n:"Carlos",r:"Ing. de Calidad",e:"🧑‍🔬"},pe:{n:"Lucía",r:"Ing. de Procesos",e:"👷‍♀️"},op:{n:"Don Beto",r:"Operador",e:"🧑‍🏭"}};
+var CLUE={Hombre:"Los compañeros nuevos no han recibido entrenamiento, cada quien improvisa.",Máquina:"La máquina hace ruidos raros y se desajusta; hace rato no le dan mantenimiento.",Método:"Aquí cada operario lo hace a su manera, no hay un estándar.",Material:"Las piezas de este lote vienen distintas, como si el proveedor hubiera cambiado algo."};
+function bub(k,t){return `<div class="bub"><div class="av">${P[k].e}</div><div class="tx"><small>${P[k].n} · ${P[k].r}</small>${t}</div></div>`}
+function ask(i){const s=S.st[i];go("op",i,"talk");S.talk=null;S.choice=null;S.ap--;s.clue=Math.random()<.7?s.c:C[(C.indexOf(s.c)+1+Math.random()*3|0)%4];phase=Math.max(phase,2);say(`Don Beto sobre ${s.n}: «${CLUE[s.clue]}»`);draw()}
+function evento(){S.evt=null;if(S.t>=4&&Math.random()<.25){const c=S.st.filter(s=>s.ctl);if(c.length){const s=c[Math.random()*c.length|0];s.ctl=false;go("op",s.i,"alert");S.evt=["pe",`Cambio de producto: el control de ${s.n} ya no aplica. Hay que reinstalarlo.`];say("📢 "+S.evt[1])}}if(S.t>=3&&Math.random()<(LV==3?.5:.35)){const c=S.st.filter(s=>!s.ctl);if(c.length){const s=c[Math.random()*c.length|0],r=["hubo rotación de personal","llegó un lote de material distinto","se aflojó un ajuste"][Math.random()*3|0];s.p*=1.4;go("op",s.i,"alert");S.evt=["op",`¡Jefa! En ${s.n} ${r} y empezó a fallar más. Lo que tiene 🛡️ control no se afecta.`];say("📢 "+S.evt[1])}}}
+function hint(){
+ if(!S.t)return["mgr","Bienvenidos al turno 1. Corramos la línea para tener datos de base. Meta: "+GOAL+"σ en 10 turnos. Puedes tocar las máquinas y arrastrar a los personajes hasta ellas."];
+ if(S.done)return S.hist[S.hist.length-1]>=GOAL?["mgr","¡Lo logramos! 4σ y clientes contentos. Excelente trabajo, equipo. 🎉"]:["mgr",S.bust?"Nos quedamos sin caja y la dirección cerró la planta. Hay que cuidar el efectivo, no solo la calidad.":"No llegamos a la meta. Revisemos qué priorizamos mal e intentemos otra vez."];
+ if(S.dil)return["mgr","📋 Decisión de gerencia: "+DIL[S.dil.id].q];if(S.talk)return S.talk;if(S.evt&&S.ap==2)return S.evt;if(S.alm&&S.ap==2)return S.alm;
+ if(S.ap<=0)return["mgr",`Sin acciones por este turno. Caja actual: $${S.cash}. Corramos el siguiente turno.`];
+ if(S.cash<600)return["mgr",`Ojo con la caja: $${S.cash}. Si queda en negativo, la planta quiebra. Prioricen acciones baratas, como preguntarle a Don Beto.`];
+ const w=[...S.st].sort((a,b)=>b.d-a.d)[0];
+ if(!w.known&&!w.clue)return["qa",`${w.n} concentra más defectos (Pareto). Pregúntale a Don Beto (gratis) o haz un Ishikawa ($150) para tener la causa con datos.`];
+ if(!w.known)return["qa",`Don Beto sospecha de «${w.clue}», pero es una opinión, no un dato. Un Ishikawa lo confirma; si no, apuesta con Mejorar.`];
+ return["pe",`Causa confirmada en ${w.n}: ${w.c}. Aplico ${SOL[w.c]}.${w.clue===w.c?" 🤝 La pista de Don Beto coincide: habrá bono de equipo (−85%).":""}`+(w.ctl?"":" Después hay que instalar control para que no se degrade.")]}
+let sel=0,drag=null,moved=0;
+function lims(s){const p=(s.h||[]).slice(s.b||0,-1);if(p.length<3)return null;const m=p.reduce((a,b)=>a+b,0)/p.length,sd=Math.sqrt(Math.max(m,1));return{m,u:m+3*sd,l:Math.max(0,m-3*sd)}}
+function det(){const s=S.st[sel],h=s.h||[],e=$("det");
+ if(!h.length){e.innerHTML=`<b>📈 Carta de control · ${s.n}</b><div style="font-size:13px;color:var(--mut);margin-top:6px">Toca una máquina para elegirla. Cuando corras el primer turno empezará a dibujarse su carta de control.</div>`;return}
+ const L=lims(s),b=s.b||0,v=h[h.length-1],mx=Math.max(10,...h,L?L.u:0)*1.15,sx=i=>20+i*260/Math.max(9,h.length-1),sy=q=>84-q/mx*74;
+ const ln=(q,c)=>`<line x1="${sx(b)}" x2="300" y1="${sy(q)}" y2="${sy(q)}" stroke="${c}" stroke-dasharray="4"/>`;
+ const out=L&&(v>L.u||v<L.l);
+ const msg=!L?"Se necesitan 3 turnos desde la última mejora para fijar los límites de control.":v>L.u?`🔴 <b>Fuera de control:</b> ${v} supera el límite superior (${L.u.toFixed(0)}). Algo cambió; investiga la causa.`:v<L.l?`🟢 <b>Mejora real:</b> ${v} está bajo el límite inferior (${L.l.toFixed(0)}); no es solo azar.`:`🟢 <b>Dentro de control:</b> ${v} defectos; la variación es normal (límites ${L.l.toFixed(0)} a ${L.u.toFixed(0)}).`;
+ e.innerHTML=`<b>📈 Carta de control · ${s.n}</b> <span style="font-size:12px;color:var(--mut)">(toca otra máquina para cambiarla)</span><svg viewBox="0 0 300 90" style="width:100%;height:auto;background:var(--bg);border-radius:8px;margin-top:6px">${L?ln(L.u,"#dc2626")+ln(L.l,"#dc2626")+ln(L.m,"var(--mut)"):""}${b>0?`<line x1="${sx(b)-6}" x2="${sx(b)-6}" y1="4" y2="86" stroke="var(--ac)" stroke-dasharray="2"/>`:""}<polyline fill="none" stroke="var(--bar)" stroke-width="2" points="${h.map((q,i)=>sx(i)+","+sy(q)).join(" ")}"/>${h.map((q,i)=>`<circle cx="${sx(i)}" cy="${sy(q)}" r="3.5" fill="${i==h.length-1&&out?"#dc2626":"var(--bar)"}"/>`).join("")}</svg><div style="font-size:13px;margin-top:6px">${msg}</div>${b>0?`<div style="font-size:11px;color:var(--mut)">Línea verde punteada = última mejora aplicada.</div>`:""}`}
+const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
+function hitA(px,py){for(const k in A)if(Math.abs(px-A[k].x)<15&&py>148&&py<205)return k;return null}
+function hitS(px,py){for(let i=0;i<4;i++)if(Math.abs(px-ST[i])<34&&py>56&&py<144)return i;return null}
+function back(k,m){const a=A[k];a.tx=a.hx;a.st=3;S.talk=[k,m];S.choice=null;draw()}
+function talkTo(k){const w=S.t?[...S.st].sort((a,b)=>b.d-a.d)[0]:null,m={
+ mgr:`Meta: ${GOAL}σ. Vamos en ${S.t?sigma(S.dpmo).toFixed(2):"–"}σ, caja $${S.cash}, quedan ${TURNS-S.t} turnos. Arrástrame a una estación con menos de 15 defectos para presentar su logro (+$300).`,
+ qa:w?`${w.n} tiene más defectos (${w.d}). ${w.ic?"Ya hay un diagnóstico (puede fallar).":"Aún no sabemos su causa: arrástrame hasta la máquina para un Ishikawa, o pregúntale a Don Beto."} Toca una máquina para ver su carta de control.`:"Corre el turno 1 para tener datos que analizar.",
+ pe:w?(w.ic?`Si la causa es «${w.ic}», la solución es ${SOL[w.ic]}. Arrástrame hasta ${w.n}.`:"Necesito conocer la causa antes de mejorar. Arrastra primero a Carlos o a Don Beto hasta la máquina."):"Cuando haya datos te ayudo a elegir qué mejorar.",
+ op:"Arrástrame hasta una máquina y te cuento lo que he visto. Es gratis, pero no siempre acierto."}[k];S.talk=[k,m];draw()}
+function dropAct(k,i){const s=S.st[i],a=A[k];
+ if(!S.t||S.ap<=0||S.done)return back("mgr",!S.t?"Primero corre el turno 1 para medir.":S.done?"El juego ya terminó.":"Sin acciones en este turno. Corre el siguiente.");
+ if(k=="mgr"){if(s.rev)return back("mgr",`Ya presenté los resultados de ${s.n}.`);if(s.d>=15)return back("mgr",`${s.n} aún tiene ${s.d} defectos. Cuando baje de 15 tendré un logro que presentar a la dirección.`);s.rev=1;S.ap--;S.cash+=300;S.talk=null;S.choice=null;go("mgr",i,"talk");say(`Marta presentó el logro de ${s.n} a la dirección: +$300 de presupuesto.`);return draw()}
+ if(k=="op"){if(s.clue)return back("op",`De ${s.n} ya les dije lo que sé.`);return ask(i)}
+ if(k=="qa"){if(S.cash<150)return back("qa","No alcanza la caja para un Ishikawa ($150).");return ish(i)}
+ if(S.cash<300)return back("pe","No alcanza la caja ni para un control ($300).");
+ a.tx=a.hx;a.st=3;S.choice=i;S.talk=["pe",`En ${s.n}, ¿mejoro o instalo control?`+(quiet(s)?" Ojo: está en control y con pocos defectos; mejorarla sería reaccionar al ruido.":"")];draw()}
+cv.style.touchAction="none";
+cv.onpointerdown=e=>{const[px,py]=pt(e),k=hitA(px,py);if(k){drag={k,x:px,y:py};moved=0;cv.setPointerCapture(e.pointerId);A[k].st=0;return}const i=hitS(px,py);if(i!=null){sel=i;draw()}};
+cv.onpointermove=e=>{if(!drag)return;const[px,py]=pt(e),a=A[drag.k];moved=Math.max(moved,Math.hypot(px-drag.x,py-drag.y));if(moved>6){a.x=Math.max(12,Math.min(W-12,px));a.dy=Math.max(-130,Math.min(0,py+22-196))}};
+cv.onpointerup=cv.onpointercancel=e=>{if(!drag)return;const[px,py]=pt(e),k=drag.k,a=A[k];drag=null;a.dy=0;
+ if(moved<6)return talkTo(k);
+ const i=hitS(px,py);if(i==null){a.tx=a.hx;a.st=3;return}sel=i;dropAct(k,i)};
+var ROLE={mgr:"Reporta",qa:"Analiza",pe:"Mejora",op:"Pista"},showB=false;
+var DIL=[
+{q:"El cliente pide más producción este turno. ¿Aceptas?",o:[{t:"Aceptar (+$800; todas las estaciones se desgastan 12%)",f:()=>{S.cash+=800;S.st.forEach(s=>s.p*=1.12);return"Aceptamos el pedido: +$800, pero la sobrecarga desgastó todas las estaciones, incluso las controladas."}},{t:"Rechazar (−$1,000 en ventas perdidas)",f:()=>{S.cash-=1000;return"Rechazamos el pedido: −$1,000 en ventas perdidas, pero protegimos la calidad."}}]},
+{q:"La dirección anuncia un recorte de presupuesto. ¿Cómo respondes?",o:[{t:"Aceptar (−$400)",f:()=>{S.cash-=400;return"Aceptamos el recorte: −$400."}},{t:"Negociar (50% nada / 50% −$900)",f:()=>{if(Math.random()<.5)return"¡Negociación exitosa! No hay recorte.";S.cash-=900;return"La negociación falló: −$900."}}]},
+{q:"Llegó un operador nuevo sin entrenamiento. ¿Qué haces?",o:[{t:"Ponerlo ya en línea (+1 acción, riesgo)",f:()=>{S.ap++;const c=S.st.filter(s=>!s.ctl).sort((a,b)=>b.d-a.d)[0];if(c){c.p*=1.2;return`Tenemos +1 acción, pero ${c.n} empeoró por la falta de entrenamiento.`}return"Tenemos +1 acción y, gracias al control, sin consecuencias."}},{t:"Capacitarlo primero (−$200)",f:()=>{S.cash-=200;return"Capacitación hecha: −$200 y sin riesgo."}}]},
+{q:"El cliente visita la planta. ¿Se la muestras?",o:[{t:"Mostrarla (+$600 si ≥3.5σ, −$400 si no)",f:()=>{if(sigma(S.dpmo)>=3.5){S.cash+=600;return"¡Quedaron impresionados! +$600."}S.cash-=400;return"Vieron demasiados defectos: −$400."}},{t:"Posponer la visita",f:()=>"Visita pospuesta. Sin cambios."}]},{q:"La dirección pide una auditoría del cliente. ¿Cómo la enfrentas?",o:[{t:"Prepararla (−$300; +$900 si hay 2+ controles)",f:()=>{S.cash-=300;if(S.st.filter(s=>s.ctl).length>=2){S.cash+=900;return"Auditoría superada gracias a los controles: +$900 (neto +$600)."}return"Preparamos la auditoría, pero sin suficientes controles no hubo premio: −$300."}},{t:"Confiar en lo que hay (+$700 con 3+ controles; si no, −$900)",f:()=>{if(S.st.filter(s=>s.ctl).length>=3){S.cash+=700;return"Auditoría superada sin preparación: +$700."}S.cash-=900;return"La auditoría encontró fallas de control: multa de −$900."}}]},
+{q:"Un proveedor ofrece material más barato. ¿Lo aceptas?",o:[{t:"Aceptar (+$600; riesgo en la peor estación)",f:()=>{S.cash+=600;const w=[...S.st].sort((a,b)=>b.d-a.d)[0];if(w.ctl)return"Material barato aceptado: +$600, sin consecuencias porque "+w.n+" tiene control.";w.p*=1.25;return`Material barato aceptado: +$600, pero ${w.n} empeoró 25%.`}},{t:"Mantener al proveedor actual",f:()=>"Seguimos con el proveedor actual. Sin cambios."}]},
+{q:"Hay presupuesto para una máquina nueva (−$1,500). ¿La compras?",o:[{t:"Comprarla (la peor estación baja 40%)",f:()=>{if(S.cash<1500)return"No alcanza la caja para la máquina. Se pospone.";S.cash-=1500;const w=[...S.st].sort((a,b)=>b.d-a.d)[0];w.p*=.6;return`Máquina nueva en ${w.n}: −$1,500 y sus defectos bajan 40%.`}},{t:"Posponer la compra",f:()=>"Compra pospuesta. Sin cambios."}]},
+{q:"Recursos Humanos ofrece capacitar a todo el personal (−$800).",o:[{t:"Capacitar (todas las estaciones −10% defectos)",f:()=>{S.cash-=800;S.st.forEach(s=>s.p*=.9);return"Capacitación general: −$800 y todas las estaciones mejoran 10%."}},{t:"Posponer",f:()=>"Capacitación pospuesta. Sin cambios."}]},
+{q:"Llega un pedido urgente de un cliente grande.",o:[{t:"Aceptar (+$1,000; 1 acción menos el próximo turno)",f:()=>{S.cash+=1000;S.apPen=1;return"Pedido urgente aceptado: +$1,000, pero el equipo tendrá 1 acción menos el próximo turno."}},{t:"Rechazar (−$500 en ventas)",f:()=>{S.cash-=500;return"Pedido urgente rechazado: −$500 en ventas perdidas."}}]},
+{q:"Un cliente reclama por un lote defectuoso.",o:[{t:"Compensarlo (−$500)",f:()=>{S.cash-=500;return"Compensamos al cliente: −$500."}},{t:"Defender la calidad (+$300 si ≥3.8σ; si no, −$1,200)",f:()=>{if(sigma(S.dpmo)>=3.8){S.cash+=300;return"Los datos respaldaron nuestra calidad: +$300."}S.cash-=1200;return"Los datos no respaldaron nuestra postura: −$1,200."}}]}];
+
+function dec(i){const m=DIL[S.dil.id].o[i].f();S.dil=null;say("📋 "+m);S.talk=["mgr",m];draw()}
+function endc(){const e=$("end");if(!S.done){e.hidden=true;return}
+ const w=!S.bust&&S.hist[S.hist.length-1]>=GOAL,n=S.t,ctl=S.st.filter(s=>s.ctl).length,st=[w,w&&n<=8,w&&S.cash>=8000&&ctl>=3];
+ const AC=[["🤝","Equipo perfecto","Usa el trabajo en equipo",!!S.team],["🛡️","Cero sorpresas","Termina con las 4 estaciones con control",ctl==4],["⚡","Meta exprés","Llega a 4σ en 6 turnos o menos",w&&n<=6],["💰","Caja sana","Termina con $10,000 o más",S.cash>=10000],["🧠","Sin adivinar","Gana sin mejoras a ciegas",w&&!S.bad]];
+ let sv=[];try{sv=JSON.parse(localStorage.getItem("ls_ach")||"[]")}catch(x){}
+ if(w&&LV<3&&MAXLV<LV+1){MAXLV=LV+1;try{localStorage.setItem("ls_lv",MAXLV)}catch(x){}}AC.forEach((a,i)=>{if(a[3]&&!sv.includes(i))sv.push(i)});try{localStorage.setItem("ls_ach",JSON.stringify(sv))}catch(x){}
+ const T=[];if(S.tamp)T.push(`Reaccionaste al ruido ${S.tamp} vez(ces): no mejores estaciones que están en control y con pocos defectos.`);if(S.bust)T.push("Te quedaste sin caja: evita mejoras que no puedas sostener y pon control para no perder lo logrado.");if(!w)T.push("Prioriza con Pareto la estación con más defectos en cada turno.");if(S.bad)T.push(`Hiciste ${S.bad} mejora(s) a ciegas. Usa Ishikawa o la pista de Don Beto antes de mejorar.`);if(ctl<4)T.push("Instala control antes: sin 🛡️ las estaciones se degradan y los eventos te afectan.");if(!S.team)T.push("Prueba el trabajo en equipo 🤝: pista de Don Beto + Ishikawa + mejora de Lucía rinde 85%.");
+ e.hidden=false;e.innerHTML=`<h2 style="margin:0 0 6px">${w?"🎉 ¡Meta lograda!":S.bust?"💥 Quiebra":"Fin de la partida"}</h2><div style="font-size:24px">${st.map(v=>v?"⭐":"☆").join("")}</div>${w&&LV<3?`<p style="margin:6px 0">🔓 <b>¡Planta ${LV+1} desbloqueada!</b> Elígela arriba.</p>`:""}<div style="font-size:12px;color:var(--mut)">⭐ meta ${GOAL}σ · ⭐ en 8 turnos o menos · ⭐ caja ≥ $8,000 y 3+ controles</div>
+ <p style="margin:8px 0 4px"><b>Antes → después</b> (sigma ${S.hist[0].toFixed(2)} → ${S.hist[S.hist.length-1].toFixed(2)})</p><table>${S.st.map(s=>{const a=s.h[0],b=s.h[s.h.length-1];return`<tr><td>${s.n}</td><td>${a} → ${b} defectos</td><td>${a?Math.round((1-b/a)*100):0}%</td></tr>`}).join("")}</table>
+ <p style="margin:8px 0 4px"><b>🏆 Logros</b> (${sv.length}/${AC.length})</p>${AC.map((a,i)=>`<div style="font-size:13px;opacity:${sv.includes(i)?1:.45}">${sv.includes(i)?a[0]:"🔒"} <b>${a[1]}</b>${a[3]?" · ¡conseguido ahora!":""} <span style="color:var(--mut)">${a[2]}</span></div>`).join("")}
+ ${T.length?`<p style="margin:8px 0 4px"><b>Qué hacer distinto</b></p><ul style="margin:0;padding-left:18px;font-size:13px">${T.slice(0,3).map(t=>`<li>${t}</li>`).join("")}</ul>`:""}`}
+var LV=1,MAXLV=1,AU=null,SND=true,PG=null,IG=null,lastB=0;try{MAXLV=+localStorage.getItem("ls_lv")||1}catch(e){}
+var LVS={1:{g:4,c:1000,p:[.02,.03],r:3200,d:16,ap:3},2:{g:4.1,c:800,p:[.02,.02],r:3400,d:16,ap:3},3:{g:4.2,c:600,p:[.02,.02],r:3400,d:16,ap:3}};
+var FIND={Hombre:"operarios sin capacitación o con fatiga",Máquina:"desajustes y paros de la máquina",Método:"pasos distintos según el operario",Material:"lotes fuera de especificación"};
+function setLv(n){LV=n;init();draw()}
+function lvr(){const L=LVS[LV];$("eco").textContent=`Ingreso $${L.r}/turno · cada defecto cuesta $${L.d} · cada control $60/turno · ${L.ap} acciones por turno · caja negativa = quiebra`;$("lvs").innerHTML=[1,2,3].map(n=>`<button class="${n==LV?"on":""}" ${n>MAXLV?"disabled":""} onclick="setLv(${n})">${n>MAXLV?"🔒 ":""}Planta ${n} · ${LVS[n].g}σ</button>`).join("")}
+function beep(f,d,t){if(!SND)return;try{AU=AU||new(window.AudioContext||window.webkitAudioContext)();if(AU.state=="suspended")AU.resume();const o=AU.createOscillator(),g=AU.createGain();o.type=t||"square";o.frequency.value=f;g.gain.value=.04;o.connect(g);g.connect(AU.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AU.currentTime+d);o.stop(AU.currentTime+d)}catch(e){}}
+function tune(a){a.forEach((f,i)=>setTimeout(()=>beep(f,.14),i*110))}
+function sBad(){const n=Date.now();if(n-lastB>90){lastB=n;beep(110,.08,"sawtooth")}}
+function mgShow(){$("mg").hidden=false}function mgClose(){$("mg").hidden=true}
+function mgPar(){const o=[...S.st].sort(()=>Math.random()-.5);PG={o,seq:[],done:false,msg:"Toca las barras de la mayor a la menor cantidad de defectos."};parR();mgShow()}
+function parR(){const mx=Math.max(...PG.o.map(s=>s.d),1);
+ $("mgc").innerHTML=`<h2>📊 Arma el Pareto</h2><div style="display:flex;gap:8px;align-items:flex-end;height:130px">${PG.o.map(s=>`<button onclick="parPick(${s.i})" style="flex:1;height:${Math.max(14,s.d/mx*120)}px;background:var(--bar);border:0;color:#000;font-weight:700">${PG.seq.includes(s)?PG.seq.indexOf(s)+1:""}</button>`).join("")}</div><div style="display:flex;gap:8px">${PG.o.map(s=>`<div style="flex:1;text-align:center;font-size:12px">${s.n}${PG.done?"<br>"+s.d:""}</div>`).join("")}</div><p style="font-size:14px">${PG.msg}</p><button onclick="mgClose()" style="width:100%">Cerrar</button>`}
+function parPick(i){const s=S.st[i];if(PG.done||PG.seq.includes(s))return;const rem=PG.o.filter(x=>!PG.seq.includes(x));
+ if(s.d>=Math.max(...rem.map(x=>x.d))){PG.seq.push(s);beep(660,.06)}else{PG.seq=[];PG.msg="❌ Ese no es el mayor. Compara las alturas e inténtalo de nuevo.";beep(120,.15,"sawtooth");return parR()}
+ if(PG.seq.length==4){PG.done=true;pareto=true;phase=Math.max(phase,2);tune([523,659,784]);PG.msg="✅ ¡Pareto correcto! Atacar la barra más alta da el mayor retorno."+(S.pk!==S.t?" Bono de priorización: +$100.":"");if(S.pk!==S.t){S.pk=S.t;S.cash+=100;say("📊 Pareto armado correctamente: +$100 por priorizar bien.")}draw()}
+ else PG.msg="Bien, sigue con la siguiente.";parR()}
+function ish(i){const s=S.st[i],cs=[...C].sort(()=>Math.random()-.5);IG=i;
+ $("mgc").innerHTML=`<h2>🐟 Espina de pescado · ${s.n}</h2><p style="font-size:14px">Carlos revisó los registros de defectos. ¿Cuál es la <b>causa raíz</b>? (La que más se repite.) Costo $150; si aciertas te devuelven $75.</p>${cs.map(c=>`<button onclick="ishPick('${c}')" style="display:block;width:100%;text-align:left;margin:6px 0;padding:10px"><b>${c}:</b> ${FIND[c]} <span style="color:var(--mut)">(${c===s.c?60+(Math.random()*12|0):4+(Math.random()*8|0)}% de los defectos)</span></button>`).join("")}<button onclick="mgClose()" style="width:100%">Cancelar</button>`;mgShow()}
+function ishPick(c){const ok=c===S.st[IG].c;mgClose();ish0(IG,ok,c);if(!ok){say("Carlos: ojo, los registros pueden engañar. Si dudas, repite el Ishikawa o contrasta con Don Beto.");draw()}}
+function MK(){const a=C[Math.random()*4|0],b=C.filter(x=>x!==a)[Math.random()*3|0],sh=.6+Math.random()*.15;return{k:[[a,sh],[b,1-sh]],c:a}}
+function quiet(s){const L=lims(s);return!!L&&s.d>=L.l&&s.d<=L.u&&s.p<=.0125}
+function ish(i){const s=S.st[i],sh={};C.forEach(c=>sh[c]=3+(Math.random()*5|0));s.k.forEach(q=>sh[q[0]]=Math.round(q[1]*70));
+ if(Math.random()<.15){const a=s.k[0][0],b=s.k[1][0],t=sh[a];sh[a]=sh[b];sh[b]=t}
+ const cs=[...C].sort(()=>Math.random()-.5);IG=i;
+ $("mgc").innerHTML=`<h2>🐟 Espina de pescado · ${s.n}</h2><p style="font-size:14px">Carlos revisó los registros. ¿Cuál es la <b>causa que más se repite</b>? Ojo: los registros pueden ser imperfectos. Costo $150; si aciertas te devuelven $75.</p>${cs.map(c=>`<button onclick="ishPick('${c}')" style="display:block;width:100%;text-align:left;margin:6px 0;padding:10px"><b>${c}:</b> ${FIND[c]} <span style="color:var(--mut)">(${sh[c]}% de los defectos clasificados)</span></button>`).join("")}<button onclick="mgClose()" style="width:100%">Cancelar</button>`;mgShow()}
+function fix(i){const s=S.st[i];go("pe",i,"fix");spend(500);phase=3;
+ const g=s.ic||s.clue||C[Math.random()*4|0],tm=!!s.ic&&s.clue===s.ic,e=tm?.98:.95,x=s.k.find(q=>q[0]===g),sh=x?x[1]:0;
+ if(quiet(s)){s.p*=1.25;S.tamp=(S.tamp||0)+1;say(`⚠️ ${s.n} estaba en control y con pocos defectos: reaccionaste al ruido. El sobreajuste empeoró el proceso.`)}
+ else{if(tm)S.team=(S.team||0)+1;
+  if(sh>0){s.p*=1-sh*e;say(`${s.n}: ${SOL[g]} atacó "${g}" (${Math.round(sh*100)}% de sus defectos). Bajan ~${Math.round(sh*e*100)}%.`+(tm?" 🤝 Trabajo en equipo: mejora más precisa.":"")+(s.k.length>1?" Aún queda otra causa.":""))}
+  else{s.p*=.97;S.bad=(S.bad||0)+1;say(`${s.n}: ${SOL[g]} no atacó una causa real. Casi no cambió. Contrasta mejor las pistas.`)}
+  s.k=s.k.filter(q=>q[0]!==g)}
+ if(s.k.length<2){const o=C.filter(c=>!s.k.some(q=>q[0]===c)&&c!==g);s.k.push([o[Math.random()*o.length|0],.12])}
+ const t=s.k.reduce((a,q)=>a+q[1],0);s.k=s.k.map(q=>[q[0],q[1]/t]).sort((a,b)=>b[1]-a[1]);s.c=s.k[0][0];
+ s.ic=null;s.known=false;s.clue=null;s.b=(s.h||[]).length;draw()}
+function hint(){
+ if(!S.t)return["mgr","Bienvenidos al turno 1. Corramos la línea para tener datos de base. Meta: "+GOAL+"σ en 10 turnos. Puedes tocar las máquinas y arrastrar a los personajes hasta ellas."];
+ if(S.done)return !S.bust&&S.hist[S.hist.length-1]>=GOAL?["mgr","¡Lo logramos! Meta cumplida y clientes contentos. Excelente trabajo, equipo. 🎉"]:["mgr",S.bust?"Nos quedamos sin caja y la dirección cerró la planta. Hay que cuidar el efectivo, no solo la calidad.":"No llegamos a la meta. Revisemos qué priorizamos mal e intentemos otra vez."];
+ if(S.dil)return["mgr","📋 Decisión de gerencia: "+DIL[S.dil.id].q];
+ if(S.talk)return S.talk;
+ if(S.evt&&S.ap==2)return S.evt;
+ if(S.alm&&S.ap==2)return S.alm;
+ if(S.ap<=0)return["mgr",`Sin acciones por este turno. Caja actual: $${S.cash}. Corramos el siguiente turno.`];
+ if(S.cash<600)return["mgr",`Ojo con la caja: $${S.cash}. Si queda en negativo, la planta quiebra. Prioricen acciones baratas, como preguntarle a Don Beto.`];
+ const o=[...S.st].sort((a,b)=>b.d-a.d),w=o.find(s=>!quiet(s));
+ if(!w)return["qa","Todo está en control y con pocos defectos. No reaccionemos al ruido: sigamos midiendo."];
+ if(!w.clue&&!w.ic)return["qa",`${w.n} concentra más defectos (Pareto). Pregunta a Don Beto (gratis) o haz un Ishikawa ($150). Ninguno es infalible: compáralos.`];
+ if(w.clue&&!w.ic)return["qa",`Don Beto sospecha de «${w.clue}», pero puede equivocarse (acierta ~70%). Confírmalo con un Ishikawa (~85%).`];
+ if(w.ic&&!w.clue)return["qa",`Mi Ishikawa apunta a «${w.ic}», pero puedo equivocarme (~15%). Pídele a Don Beto su opinión para contrastar.`];
+ if(w.clue!==w.ic)return["qa",`Don Beto dice «${w.clue}» y mi Ishikawa dice «${w.ic}». No coinciden: repite el Ishikawa para desempatar o decide con cuidado.`];
+ return["pe",`Coinciden Don Beto y Calidad en ${w.n}: ${w.ic}. Aplico ${SOL[w.ic]}. 🤝 Habrá bono de equipo.`+(w.ctl?"":" Luego hay que instalar control.")]}
+var MG={};
+var MD=[["Sobreproducción","📦","Producir más, antes o más rápido de lo que pide el cliente."],["Espera","⏳","Tiempo muerto de personas o máquinas esperando algo."],["Transporte","🚚","Mover material de más entre procesos."],["Sobreprocesamiento","🔧","Hacer más trabajo del que el cliente valora."],["Inventario","🗄️","Material o producto acumulado que no se necesita todavía."],["Movimiento","🚶","Desplazamientos innecesarios de las personas."],["Defectos","❌","Productos que hay que repetir, reparar o desechar."],["Talento no utilizado","🧠","No aprovechar las ideas y habilidades del personal."]];
+var MS=[[0,"📦","Se fabrican 500 piezas aunque el pedido es de 300."],[0,"🏭","El empaque corre a toda velocidad aunque el siguiente proceso está lleno."],[0,"🏷️","Se imprimen 200 etiquetas extra «por si acaso»."],
+[1,"⏳","La operaria espera 15 minutos a que llegue el material."],[1,"🛑","Una máquina está parada esperando que mantenimiento termine otra reparación."],[1,"✍️","El operador espera la aprobación del supervisor para seguir."],
+[2,"🚚","Las piezas viajan 80 metros entre dos procesos que podrían estar juntos."],[2,"📦","Se mueve el mismo pallet dos veces antes de usarlo."],[2,"🚜","Un montacargas lleva material a la bodega y luego otra vez a la línea."],
+[3,"🧽","Se pule una superficie interna que el cliente nunca ve."],[3,"🗂️","Se piden tres firmas para aprobar un cambio menor."],[3,"🔬","Se usa una máquina de precisión de 0.001 mm para una pieza que tolera 1 mm."],
+[4,"🗄️","Hay material para tres meses acumulado junto a la línea."],[4,"📚","Cajas de producto terminado esperan semanas en la bodega."],[4,"🧱","Pallets de piezas a medio terminar bloquean el pasillo."],
+[5,"🚶","El operador camina 20 pasos para buscar una herramienta."],[5,"🙆","La operaria se estira y se agacha para alcanzar las piezas."],[5,"🔑","Hay que abrir tres gabinetes para encontrar la llave correcta."],
+[6,"❌","Un lote de 50 piezas sale con rayones y debe repetirse."],[6,"🔍","La inspección final encuentra un error de ensamble."],[6,"↩️","Un cliente devuelve productos con piezas faltantes."],
+[7,"🧠","Un operador propone una mejora y nadie lo escucha."],[7,"🧑‍🔧","Un técnico con mucha experiencia solo hace tareas de limpieza."],[7,"🤐","Nunca se pide opinión a quienes conocen mejor la máquina."]];
+function mjHome(){clearInterval(MG.tm);$("mj").innerHTML=`<div class="card"><h2>🎯 Caza desperdicios</h2><p>En manufactura esbelta (Lean), el <b>muda</b> es todo lo que consume recursos y no agrega valor para el cliente. Hay 8 tipos. Don Beto te reportará situaciones de la planta; identifica el desperdicio antes de que se acabe el tiempo.</p><table>${MD.map(m=>`<tr><td>${m[1]} <b>${m[0]}</b></td><td style="color:var(--mut)">${m[2]}</td></tr>`).join("")}</table><button class="main" onclick="mjStart()">Jugar (10 rondas)</button></div>`}
+function mjStart(){MG={q:[...MS].sort(()=>Math.random()-.5).slice(0,10),r:0,sc:0,lv:3,cb:0,ok:0,miss:[],best:MG.best||0};mjNext()}
+function mjNext(){if(MG.r>=10||MG.lv<=0)return mjEnd();const s=MG.q[MG.r];MG.t0=Date.now();
+ $("mj").innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Ronda ${MG.r+1}/10</span><span>${"❤️".repeat(MG.lv)}</span><span>🔥 ${MG.cb}</span><b>${MG.sc} pts</b></div><div class="tbar" style="margin:8px 0"><div id="tb2" style="width:100%"></div></div><div class="belt"></div><div class="mc card" style="margin:10px 0 0"><div style="font-size:40px;text-align:center">${s[1]}</div>${bub("op","Jefe, mire esto: "+s[2])}</div><p style="font-size:13px;color:var(--mut);margin:8px 0 4px">¿Qué tipo de desperdicio es?</p><div class="wg">${MD.map((m,i)=>`<button onclick="mjAns(${i})">${m[1]} ${m[0]}</button>`).join("")}</div></div>`;
+ clearInterval(MG.tm);MG.tm=setInterval(()=>{const f=1-(Date.now()-MG.t0)/12000,b=$("tb2");if(b){b.style.width=Math.max(0,f*100)+"%";b.style.background=f<.3?"#dc2626":f<.6?"#f59e0b":""}if(f<=0)mjAns(-1)},100)}
+function mjAns(i){clearInterval(MG.tm);const s=MG.q[MG.r],good=i===s[0],bn=Math.max(0,Math.round((12000-(Date.now()-MG.t0))/12000*50)),m=MD[s[0]];let gain=0;
+ if(good){MG.cb++;gain=100+bn+(MG.cb>1?(MG.cb-1)*10:0);MG.sc+=gain;MG.ok++;tune([523,659])}else{MG.lv--;MG.cb=0;MG.miss.push(s[0]);beep(120,.15,"sawtooth")}
+ $("mj").innerHTML=`<div class="card"><div class="mc ${good?"ok":"bad"} card" style="margin:0 0 8px"><div style="font-size:34px;text-align:center">${good?"✅":i<0?"⏰":"❌"}</div><div style="text-align:center;font-weight:700">${good?`¡Correcto! +${gain} pts`:`${i<0?"Se acabó el tiempo. ":""}Era: ${m[1]} ${m[0]}`}</div></div>${bub("qa",`<b>${m[0]}:</b> ${m[2]}`)}<div style="font-size:13px;color:var(--mut)">${MG.sc} pts · 🔥 ${MG.cb} · ${"❤️".repeat(MG.lv)}</div><button class="main" style="margin-top:10px" onclick="MG.r++;mjNext()">${MG.r>=9||MG.lv<=0?"Ver resultado":"Siguiente →"}</button></div>`}
+function mjEnd(){clearInterval(MG.tm);MG.best=Math.max(MG.best||0,MG.sc);const k=MG.ok,st=k>=10?3:k>=8?2:k>=6?1:0,u=[...new Set(MG.miss)];if(k>=8)tune([523,659,784,1047]);
+ $("mj").innerHTML=`<div class="card"><h2>${MG.lv<=0?"💥 Te quedaste sin vidas":"🏁 Fin del turno"}</h2><div style="font-size:26px">${"⭐".repeat(st)}${"☆".repeat(3-st)}</div><p>Aciertos: <b>${k}/10</b> · Puntaje: <b>${MG.sc}</b> · Mejor de esta sesión: <b>${MG.best}</b></p>${u.length?`<p style="margin:6px 0 4px"><b>Repasa estos desperdicios</b></p><table>${u.map(j=>`<tr><td>${MD[j][1]} <b>${MD[j][0]}</b></td><td style="color:var(--mut)">${MD[j][2]}</td></tr>`).join("")}</table>`:"<p>🎉 ¡Los identificaste todos!</p>"}<div class="nav"><button onclick="mjStart()">🔄 Jugar otra vez</button><button onclick="view('s')">🏭 Ir a Simular</button></div></div>`}
+init();draw();requestAnimationFrame(frame);
+const CH=`<svg viewBox="0 0 300 80" style="width:100%;height:auto;background:var(--bg);border-radius:8px"><line x1="0" x2="300" y1="16" y2="16" stroke="#dc2626" stroke-dasharray="4"/><line x1="0" x2="300" y1="64" y2="64" stroke="#dc2626" stroke-dasharray="4"/><line x1="0" x2="300" y1="40" y2="40" stroke="var(--mut)"/><polyline fill="none" stroke="var(--bar)" stroke-width="2" points="${[30,34,28,32,36,31,29,33,35,10,30,32].map((y,i)=>15+i*24+","+y).join(" ")}"/><circle cx="231" cy="10" r="5" fill="#dc2626"/><text x="4" y="12" font-size="9" fill="#dc2626">LSC</text><text x="4" y="76" font-size="9" fill="#dc2626">LIC</text></svg>`;
+const STEPS=[
+{t:"1 · ¿Qué es Six Sigma?",b:`<p>Es un método para que un proceso falle casi nunca. <b>Sigma (σ)</b> mide qué tan bien trabaja: más sigma, menos defectos. Se trabaja con el ciclo <b>DMAIC</b>: Definir, Medir, Analizar, Mejorar y Controlar. Lo recorrerás paso a paso.</p><table><tr><th>Nivel</th><th>Defectos por millón (DPMO)</th></tr><tr><td>2σ</td><td>308,537</td></tr><tr><td>3σ</td><td>66,807</td></tr><tr><td>4σ</td><td>6,210 ← tu meta</td></tr><tr><td>5σ</td><td>233</td></tr><tr><td>6σ</td><td>3.4</td></tr></table>`,q:{x:"Un proceso de 6σ comparado con uno de 3σ tiene…",o:["Más defectos","Muchísimos menos defectos","Los mismos defectos"],a:1,w:"Cada nivel de sigma recorta los defectos de forma drástica."}},
+{t:"2 · Definir",b:`<p>Primero se define <b>qué problema hay, para quién y qué meta se busca</b>. Lo que más le importa al cliente se llama <b>CTQ</b> (crítico para la calidad). En tu línea: el cliente rechaza piezas con defectos.</p><div class="box">Una buena definición es medible y tiene meta: cuánto, dónde y para cuándo.</div>`,q:{x:"¿Cuál es una buena definición del problema?",o:["La planta funciona mal","El 22% de las unidades sale defectuoso; la meta es llegar a 4σ en 10 turnos","Hay que comprar máquinas nuevas"],a:1,w:"Tiene dato actual, meta y plazo. Las otras son opiniones o soluciones prematuras."}},
+{t:"3 · Medir",b:`<p>No se puede mejorar lo que no se mide. Se calcula el <b>DPMO</b>:</p><div class="box">DPMO = defectos ÷ (unidades × oportunidades por unidad) × 1,000,000</div><p>Tu línea tiene 4 oportunidades de fallar por unidad (una por estación). Prueba con el deslizador:</p><input type="range" id="sl" min="1" max="300" value="40" oninput="dm2()" style="width:100%"><div class="box" id="o2"></div>`,af:()=>dm2(),q:{x:"Con 20 defectos en 1,000 unidades y 4 oportunidades, ¿cuál es el DPMO?",o:["20,000","5,000","500"],a:1,w:"20 ÷ 4,000 × 1,000,000 = 5,000 DPMO, que equivale a ≈4.1σ."}},
+{t:"4 · Analizar",b:`<p>Dos herramientas clave:</p><p><b>📊 Pareto:</b> unos pocos problemas causan la mayoría de los defectos (regla 80/20). Se ordenan de mayor a menor para atacar el principal.</p><div class="box">Pintura 60% · Corte 25% · Ensamble 10% · Inspección 5%</div><p><b>🔎 Ishikawa (espina de pescado):</b> busca la causa raíz en 4 familias. Toca una:</p><div class="btns" style="display:flex;gap:6px;flex-wrap:wrap">${C.map(c=>`<button onclick="ex('${c}')">${c}</button>`).join("")}</div><div class="box" id="ex">Toca una familia para ver ejemplos.</div>`,q:{x:"Según el Pareto de arriba, ¿por dónde empiezas?",o:["Inspección, por ser la más fácil","Pintura, aporta el 60%","Todas a la vez"],a:1,w:"Atacar la mayor causa da el mayor retorno con menos esfuerzo."}},
+{t:"5 · Mejorar",b:`<p>Se aplica la solución que ataca la <b>causa raíz</b>. Si adivinas, pierdes tiempo y dinero (como en el juego).</p><table><tr><th>Causa</th><th>Solución típica</th></tr><tr><td>Hombre</td><td>Capacitación, instrucciones de trabajo</td></tr><tr><td>Máquina</td><td>Mantenimiento (TPM)</td></tr><tr><td>Método</td><td>Estandarizar y ordenar (5S)</td></tr><tr><td>Material</td><td>Auditar al proveedor</td></tr></table><p>El <b>Kaizen</b> son mejoras pequeñas y continuas, y el <b>poka-yoke</b> diseña el proceso para que el error sea imposible.</p>`,q:{x:"Las máquinas de Corte se desajustan por falta de mantenimiento. ¿Qué solución aplicas?",o:["Capacitar a los operarios","Mantenimiento preventivo (TPM)","Cambiar de proveedor"],a:1,w:"La causa es la máquina, así que la solución debe atacar la máquina."}},
+{t:"6 · Controlar",b:`<p>Una mejora sin control se pierde con el tiempo. La <b>carta de control</b> vigila el proceso con límites superior (LSC) e inferior (LIC). Un punto fuera de límites es una alarma.</p>${CH}<p>Además se usan poka-yoke, auditorías y un plan de control con responsables.</p>`,q:{x:"Un punto sale de los límites de control. ¿Qué haces?",o:["Lo ignoro, seguro fue casualidad","Investigo la causa y corrijo","Amplío los límites para que quede dentro"],a:1,w:"Fuera de límites indica una causa especial que hay que encontrar."}},
+{t:"7 · ¡A simular!",b:`<p>Ya conoces el ciclo DMAIC. En la simulación usarás las mismas herramientas: mide con cada turno, prioriza con Pareto, busca la causa con Ishikawa, mejora y pon control. Puedes volver a esta guía cuando quieras.</p><ul><li><b>Toca</b> una máquina para ver su carta de control y a un personaje para pedirle consejo.</li><li><b>Arrastra</b> a Carlos, Lucía, Don Beto o Marta hasta una máquina para que actúen.</li><li>🤝 <b>Trabajo en equipo:</b> si la pista de Don Beto coincide con el Ishikawa de Carlos, la mejora de Lucía rinde más (−85%).</li><li>Marta presenta logros de estaciones con menos de 15 defectos (+$300).</li><li>🔎 El Ishikawa (~85%) y Don Beto (~70%) pueden equivocarse. Compáralos y repite el Ishikawa si no coinciden. Cada estación puede tener <b>dos causas</b>: al arreglar una, queda la otra.</li><li>🛡️ Cada control cuesta mantenimiento por turno, y un cambio de producto puede anularlo.</li><li>⛓️ Lo que falla aguas arriba empeora las estaciones siguientes.</li><li>📈 No reacciones al ruido: mejorar una estación en control y con pocos defectos la empeora.</li><li>De vez en cuando Marta te presenta un <b>dilema</b> (producción, presupuesto, visitas) que debes decidir antes de seguir.</li><li>Al terminar verás tus estrellas ⭐, un resumen antes/después y tus logros 🏆.</li><li>Hay <b>mini-juegos</b> de Pareto e Ishikawa, sonidos 8 bits 🔊 y 3 plantas de dificultad creciente.</li></ul>`}];
+let gi=0,mx=0;
+function dm2(){const d=+$("sl").value,p=d/4000*1e6;$("o2").innerHTML=`${d} defectos → <b>${p.toFixed(0)} DPMO</b> → <b>${sigma(p).toFixed(2)}σ</b>`}
+function ex(c){const E={Hombre:"Falta de capacitación, fatiga, instrucciones poco claras.",Máquina:"Desgaste, desajuste, falta de mantenimiento.",Método:"Pasos distintos según el operario, sin estándar.",Material:"Materia prima fuera de especificación, proveedor irregular."};$("ex").textContent=E[c]}
+function guide(){const s=STEPS[gi];if(!s.q)mx=Math.max(mx,gi+1);
+ $("guide").innerHTML=`<div class="card"><div class="dm">${STEPS.map((_,i)=>`<i class="${i<=mx?"on":""}${i==gi?" cur":""}" onclick="${i<=mx?`gi=${i};guide()`:""}">${i+1}</i>`).join("")}</div><div style="font-size:12px;color:var(--mut)">Paso ${gi+1} de ${STEPS.length}</div><h2>${gi+1} · ${s.t.replace(/^\d+ · /,"")}</h2>${LEAD[gi]?bub(LEAD[gi][0],LEAD[gi][1]):""}${s.b}${s.q?`<div class="q"><b>${s.q.x}</b>${s.q.o.map((o,i)=>`<button onclick="ans(${i})">${o}</button>`).join("")}<div id="fb"></div></div>`:""}<div class="nav"><button ${gi?"":"disabled"} onclick="gi--;guide()">← Atrás</button><button class="main" style="margin:0" ${mx>gi?"":"disabled"} onclick="nx()">${gi==STEPS.length-1?"Ir a la simulación 🏭":"Siguiente →"}</button></div>${gi==STEPS.length-1?`<div class="nav"><button onclick="rg()">🔄 Reiniciar guía</button><button onclick="np()">🧹 Nuevo jugador</button></div><div style="font-size:11px;color:var(--mut);margin-top:6px">«Nuevo jugador» borra las plantas desbloqueadas y los logros guardados en este navegador.</div>`:""}</div>`;
+ if(s.af)s.af()}
+function ans(i){const q=STEPS[gi].q;if(i==q.a){mx=Math.max(mx,gi+1);guide();$("fb").textContent="✅ "+q.w}else $("fb").textContent="❌ Casi. Relee la explicación e inténtalo de nuevo."}
+function rg(){gi=0;mx=0;view("g");guide();window.scrollTo&&window.scrollTo(0,0)}
+function np(){try{localStorage.removeItem("ls_lv");localStorage.removeItem("ls_ach")}catch(e){}MAXLV=1;LV=1;init();draw();rg()}
+function nx(){if(gi==STEPS.length-1)return view("s");gi++;guide()}
+function view(v){$("guide").hidden=v!="g";$("game").hidden=v!="s";$("tg").className=v=="g"?"on":"";$("ts").className=v=="s"?"on":"";$("mj").hidden=v!="m";$("tm").className=v=="m"?"on":""}
+$("tg").onclick=()=>view("g");$("ts").onclick=()=>view("s");$("tm").onclick=()=>{view("m");mjHome()};
+const LEAD=[null,["qa","Soy Carlos, de Calidad. Primero hablemos el mismo idioma: sigma mide qué tan bien trabaja un proceso."],["mgr","Necesito una meta clara que pueda presentar a la gerencia general."],["qa","Dame datos, no opiniones. Midamos."],["op","Yo veo la línea todo el día; pregúntenme qué noto. Carlos lo confirma con datos."],["pe","Soy Lucía. Una solución solo sirve si ataca la causa raíz."],["pe","Mejorar es la mitad del trabajo. Sin control, todo vuelve a como estaba."],["mgr","Tienen 10 turnos. Confío en el equipo."]];
+STEPS.unshift({t:"0 · La misión",b:bub("mgr","Equipo, bienvenidos. La línea de empaque tiene muchos defectos y los clientes se quejan. Tenemos 10 turnos para llegar a <b>4σ</b>.")+bub("qa","Soy Carlos, ingeniero de Calidad. Yo mido y analizo con datos.")+bub("pe","Y yo soy Lucía, ingeniera de Procesos. Diseño las mejoras y las dejo bajo control.")+bub("op","Soy Don Beto, operador. Conozco cada máquina de la línea. Pregunten sin pena.")+bub("mgr","Primero un repaso del método y luego a la planta. ¡Vamos!")});
+STEPS.splice(STEPS.length-1,0,{t:"7 · El ciclo continúa",b:`<p>Mejorar una vez <b>no hace que los defectos desaparezcan</b>. Esto pasa turno a turno:</p><ul><li><b>La mejora es permanente:</b> baja la tasa de defectos de esa estación y se queda ahí.</li><li><b>El azar:</b> cada turno mides una muestra nueva, por eso el número varía un poco.</li><li><b>Sin control, todo se degrada:</b> el 🛡️ protege lo que lograste.</li><li><b>Eventos:</b> rotación de personal o material distinto pueden empeorar una estación sin control.</li><li><b>Siguiente causa:</b> al resolver la principal, el Pareto muestra otra más pequeña y el ciclo empieza otra vez.</li></ul><p>Eso es <b>mejora continua</b>: los defectos no llegan a cero, pero bajan turno a turno. En el juego, ▼ significa menos defectos que el turno anterior y ▲ más.</p>`,q:{x:"Mejoraste Pintura y el siguiente turno aún tiene algunos defectos allí. ¿Qué significa?",o:["La mejora no funcionó","Es normal: bajaron, pero quedan causas menores y el ciclo DMAIC se repite","Hay que reiniciar el proyecto desde cero"],a:1,w:"Los defectos bajan de forma sostenida, pero siempre hay una siguiente causa que priorizar."}});
+LEAD.splice(LEAD.length-1,0,["qa","Ojo: no esperen que todo quede en cero. Lo importante es la tendencia."]);STEPS[STEPS.length-1].t="8 · ¡A simular!";
+guide();view("g");
+
+</script></body></html>
