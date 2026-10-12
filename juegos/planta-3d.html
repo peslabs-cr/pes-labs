@@ -43,7 +43,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#232b33;font-family:sy
 <div class="pill">Detector ultrasónico de fugas<b><span id="dtar" style="display:inline-block;transition:transform .15s">⬆</span> <span id="dtv">▯▯▯▯▯</span></b><span id="dtd"></span></div>
 <div class="pill">Casi accidentes<b id="nmv">0</b></div>
 </div>
-<div id="tools" class="hud"><button id="bsnd">🔊</button><button id="bcam">🎥 Al hombro</button><button id="bhelp">❔ Ayuda</button></div>
+<div id="tools" class="hud"><button id="bsnd">🔊</button><button id="bcam">🎥 Al hombro</button><button id="bsave">💾 Guardar</button><button id="bhelp">❔ Ayuda</button></div>
 <button id="act"></button>
 <div id="toast"></div>
 <div id="joyb"><div id="joyk"></div></div>
@@ -579,10 +579,11 @@ function showHelp(inGame){$("#pan").innerHTML=`<h1>🏭 Planta PES Motors</h1><p
   <h3>Misiones</h3><ul>${MIS.map(m=>`<li>${m[1]}</li>`).join("")}</ul>
   <p class="mut">Además hay <b>5 misiones secundarias</b>: busca al personal con ❗ sobre la cabeza. Al terminar las principales, entrega tu reporte en la oficina de ingeniería.</p><h3>Controles</h3><ul><li><b>Celular:</b> arrastra en la mitad izquierda para caminar y en la derecha para girar la cámara. Usa el botón amarillo para interactuar.</li><li><b>Computadora:</b> WASD o flechas para caminar, arrastra con el mouse para girar, rueda para acercar, <b>E</b> para interactuar, <b>C</b> para cambiar la cámara, <b>M</b> para silenciar.</li><li><b>Cámara:</b> «Al hombro» te pone detrás del ingeniero; «Aérea» te da una vista más amplia para ubicarte.</li></ul>
   <h3>Pistas</h3><ul><li>Las fugas silban: sigue el sonido y la flecha del detector ultrasónico.</li><li>Camina por los pasillos verdes; los montacargas tienen prioridad en las rutas amarillas.</li><li>Sobre 85 dB(A) necesitas protección auditiva.</li></ul>
-  <p class="mut">Planta, marcas y datos ficticios con fines didácticos. Un juego de PES Labs.</p>
-  <button class="btn" id="go">${inGame?"Continuar":"Comenzar recorrido"}</button>`;$("#ov").hidden=false;
+  <p class="mut">La partida se guarda sola cada 20 s en este navegador (también con 💾). Planta, marcas y datos ficticios con fines didácticos. Un juego de PES Labs.</p>
+  <button class="btn" id="go">${inGame?"Continuar":"Comenzar recorrido nuevo"}</button>${!inGame&&loadSave()?`<button class="btn o" id="cont">▶ Continuar partida guardada</button>`:""}`;$("#ov").hidden=false;
+  if($("#cont"))$("#cont").onclick=()=>{audioInit();if(AC&&AC.state==="suspended")AC.resume();applySave(loadSave());st.started=true;renderMis();toast("Partida cargada: sigues donde te quedaste.",4);closeOv()};
   $("#go").onclick=()=>{audioInit();if(AC&&AC.state==="suspended")AC.resume();if(!st.started){st.started=true;cam.yaw=0;renderMis();toast("Empieza en la caseta de EPP, a tu izquierda: sigue el marcador amarillo del mapa.",5)}closeOv()}}
-function endGame(){if(st.ended)return;st.ended=true;running=false;const mm=Math.floor(st.t/60),ss=Math.round(st.t%60);
+function endGame(){if(st.ended)return;st.ended=true;clearSave();running=false;const mm=Math.floor(st.t/60),ss=Math.round(st.t%60);
   const stars=st.near===0&&st.expo<3?3:st.near<=2&&st.expo<20?2:1;
   $("#pan").innerHTML=`<h1>📋 Reporte de Gemba</h1><div style="font-size:30px;text-align:center">${"⭐".repeat(stars)}</div>
   <div class="kv"><span>Tiempo del recorrido</span><b>${mm} min ${ss} s</b><span>Fugas etiquetadas</span><b>${st.leaks} de ${LEAKS.length}</b><span>Ruido medido en Estampado</span><b>${st.noise} dB(A)</b><span>Cuello de botella</span><b>Estación 6 (${ST0[BOT]} s vs. takt ${TAKT} s)</b><span>Actos inseguros reportados</span><b>1</b><span>Casi accidentes con montacargas</span><b>${st.near}</b><span>Tiempo sin protección sobre 85 dB(A)</span><b>${Math.round(st.expo)} s</b><span>Misiones secundarias</span><b>${sideCount()} de 5</b>${SIDE.kai.s===3?`<span>Kaizen estación 6</span><b>${ST0[BOT]} s → ${ST_REAL[BOT]} s</b>`:""}${timing?`<span>Ciclo promedio E3</span><b>${timing.avg} s</b>`:""}</div>
@@ -591,11 +592,32 @@ function endGame(){if(st.ended)return;st.ended=true;running=false;const mm=Math.
   <button class="btn" id="again">Jugar de nuevo</button><button class="btn o" id="more">Seguir explorando la planta</button>`;$("#ov").hidden=false;
   $("#again").onclick=()=>location.reload();$("#more").onclick=()=>{st.ended=false;st.done=true;closeOv()}}
 
+
+/* ---------- guardar y cargar ---------- */
+const SAVEK="pes_planta3d_v1";
+function snapGame(){return{st:Object.assign({},st),pl:{x:pl.x,z:pl.z,h:pl.h},cam:{mode:cam.mode,yaw:cam.yaw},lk:LEAKS.map(l=>l.tag),
+  side:Object.fromEntries(Object.keys(SIDE).map(k=>[k,{s:SIDE[k].s,n:SIDE[k].n||0}])),nc:NC.map(c=>c.on),ex:EXITB.on,ml:{on:MLEAK.on,tag:MLEAK.tag},timing,sr:ST_REAL[BOT]}}
+function saveGame(){if(!st.started||st.ended)return false;try{localStorage.setItem(SAVEK,JSON.stringify(snapGame()));return true}catch(e){return false}}
+function loadSave(){try{const g=JSON.parse(localStorage.getItem(SAVEK));return g&&g.st?g:null}catch(e){return null}}
+function clearSave(){try{localStorage.removeItem(SAVEK)}catch(e){}}
+function applySave(g){if(!g)return;Object.assign(st,g.st);st.ended=false;st.done=false;pl.x=g.pl.x;pl.z=g.pl.z;pl.h=g.pl.h;
+  if(g.cam.mode!==cam.mode)toggleCam();cam.yaw=g.cam.yaw;
+  LEAKS.forEach((l,i)=>l.tag=!!g.lk[i]);
+  for(const k in g.side)if(SIDE[k]){SIDE[k].s=g.side[k].s;if(SIDE[k].n!==undefined)SIDE[k].n=g.side[k].n}
+  NC.forEach((c,i)=>{c.on=!!g.nc[i];c.ob[4]=c.on?1:0});EXITB.on=!!g.ex;EXITB.ob[4]=g.ex?1.6:0;
+  MLEAK.on=!!g.ml.on;MLEAK.tag=!!g.ml.tag;timing=g.timing;ST_REAL[BOT]=g.sr;
+  if(st.unsafe){const n=NPC.unsafe;n.pts=[[26,5],[40,5]];n.i=0}
+  const w=NPC.mec,ms=SIDE.mec.s;SIDE.mec.fix=0;
+  if(ms===1){w.x=-24;w.z=12;w.pts=[[-24,12]];w.i=0;w.once=true}
+  else if(ms===2){w.x=-24;w.z=-14;w.pts=[[-24,-14],[-2,-20.6],[-2,-22.2]];w.i=0;w.once=true;w.arrived=false;w.face=Math.PI}
+  else if(ms===3){w.x=-2;w.z=-22.2;w.pts=[[-2,-22.2]];w.i=0;w.once=true;w.arrived=true}}
+$("#bsave").onclick=()=>{if(saveGame())toast("💾 Partida guardada en este navegador. Puedes cerrar y continuar después desde el menú inicial.",4);else toast("Empieza el recorrido para poder guardar.",3)};
+setInterval(saveGame,20000);addEventListener("pagehide",saveGame);document.addEventListener("visibilitychange",()=>{if(document.hidden)saveGame()});
 /* ---------- bucle ---------- */
 let last=performance.now();
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
   if(running)update(dt,t);else if(!st.started){for(const v of VEH)vehUpdate(v,dt,true);for(const k in NPC)walkerUpdate(NPC[k],dt);lineUpdate(dt);engUpdate(dt);PRESSES.forEach((p,i)=>pressPh[i]=(pressPh[i]+dt*2.4)%(Math.PI*2))}
   camUpdate(dt,t);render(t);if(st.started)drawMap(t);requestAnimationFrame(frame)}
 renderMis();showHelp(false);requestAnimationFrame(frame);
-window.__G={st,pl,cam,INTER,LEAKS,NPC,VEH,CARS,doInteract,update,camUpdate,render,queueBefore,setRunning:v=>{running=v}};
+window.__G={saveGame,loadSave,applySave,clearSave,SIDE,NC,MLEAK,st,pl,cam,INTER,LEAKS,NPC,VEH,CARS,doInteract,update,camUpdate,render,queueBefore,setRunning:v=>{running=v}};
 </script></body></html>

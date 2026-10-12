@@ -56,7 +56,14 @@ function opt(T,k){const n=T.length,full=(1<<n)-1,memo=new Map(),pm=T.map(x=>x.p.
   for(let s=rem;s;s=(s-1)&rem){let tt=0,ok=1;for(let j=0;j<n;j++)if(s>>j&1){tt+=T[j].t;if(pm[j]&~(m|s)){ok=0;break}}if(ok&&tt<=k)best=Math.min(best,1+f(m|s))}
   memo.set(m,best);return best}
  return f(0)}
-let G,BEST=0;
+const SK="pes_bal_save";let G,BEST=+(_ls("pes_bal_best")||0);
+function _ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
+function loadS(){try{return JSON.parse(_ls(SK))}catch(e){return null}}
+function saveS(o){_ls(SK,JSON.stringify(o))}
+function clearS(){_ls(SK,null)}
+function contBtn(label,fn){const g=loadS();if(!g)return;const c=document.querySelector("#app .card");if(!c||c.querySelector(".contb"))return;const d=document.createElement("div");d.className="contb";
+  d.innerHTML=`<button class="main" style="margin:0 0 12px;width:100%">▶ Continuar partida guardada · ${label(g)}</button><div style="font-size:12px;opacity:.7;margin:-6px 0 12px">Se guarda sola al empezar cada etapa, en este navegador.</div>`;c.prepend(d);d.querySelector("button").onclick=()=>fn(g)}
+
 const D=()=>G.lv==2;
 function tmr(ms,end){clearInterval(G.tm);G.t0=Date.now();G.tl=ms;G.tm=setInterval(()=>{const f=1-(Date.now()-G.t0)/ms,b=$("tb");if(b){b.style.width=Math.max(0,f*100)+"%";b.style.background=f<.3?"#dc2626":""}if(f<=0){clearInterval(G.tm);end()}},100)}
 const left=()=>G.tl?Math.max(0,1-(Date.now()-G.t0)/G.tl):0;
@@ -66,10 +73,10 @@ function rounds(){const d=D();return[
  {k:"r2",ti:"Licuadora",ask:{dm:d?400:360},tm:d?180:240},
  {k:"r3",ti:"Dispositivo electrónico",tk:d?63:70,tm:d?270:300},
  {k:"r3",ti:"Dispositivo electrónico: la demanda sube",ask:{dm:450},re:1,tm:d?210:240}]}
-function home(){clearInterval(G&&G.tm);G={};
+function home(){setTimeout(()=>contBtn(g=>"ronda "+(g.ri+1)+" de "+g.R.length,g=>{G=Object.assign({},g);rnd()}),0);clearInterval(G&&G.tm);G={};
  $("app").innerHTML=`<div class="card"><h2>Reparte el trabajo para que nadie sea el cuello de botella</h2>${bub("mgr","La línea tiene operarios saturados y otros esperando. Necesito un reparto equilibrado del trabajo entre estaciones.")}${bub("qa","El <b>takt time</b> es el ritmo que pide el cliente: tiempo disponible ÷ demanda. Cada estación no puede acumular más tiempo que el takt. Meta: usar <b>el menor número de estaciones</b> posible, llenándolas bien.")}${bub("pe","Respeta las precedencias: una tarea solo puede ir en la misma estación que sus requisitos o en una posterior. Toca una tarea y luego la estación. Toca un tramo de color para devolverlo.")}${bub("op","Y si la demanda cambia, ¡hay que rebalancear!")}<button class="main" onclick="start(1)">🟢 Empezar en Normal</button><button class="main" style="background:#b91c1c;border-color:#b91c1c" onclick="start(2)">🔴 Empezar en Experto (takt más ajustado y menos tiempo)</button></div>`}
 function start(l){G={lv:l,pt:0,ri:0,sr:[],carry:null};G.R=rounds();rnd()}
-function rnd(){if(G.ri>=G.R.length)return fin();const R=G.R[G.ri];if(!R.re)G.T=tk_(TK[R.k]);if(R.ask)return askS();G.tk=R.tk;bal()}
+function rnd(){if(G.ri>=G.R.length)return fin();{const c=Object.assign({},G);delete c.tm;saveS(c)}const R=G.R[G.ri];if(!R.re)G.T=tk_(TK[R.k]);if(R.ask)return askS();G.tk=R.tk;bal()}
 function askS(){const R=G.R[G.ri],dm=R.ask.dm,c=25200/dm,o=sh([[c,1],[28800/dm,0],[21600/dm,2]]);G.ao=o;G.at=c;
  $("app").innerHTML=`<div class="card"><div class="top"><span>Ronda ${G.ri+1} de ${G.R.length}</span><b>${G.pt} pts</b></div><h2>${R.ti}</h2>${bub("mgr",R.re?`¡Llegó un pedido grande! La demanda sube a <b>${dm} unidades por turno</b>.`:`El cliente pide <b>${dm} unidades por turno</b>.`)}<div class="prob">Un turno dura 8 horas, pero se descuentan 1 hora de comida y paros. ¿Cuál es el nuevo <b>takt time</b>?</div>${o.map((x,i)=>`<button class="opt" onclick="ak(${i})">${Math.round(x[0])} segundos por unidad</button>`).join("")}</div>`}
 function ak(i){const R=G.R[G.ri],dm=R.ask.dm,x=G.ao[i],ok=x[1]==1;G.tk=G.at;if(ok){G.pt+=50;tune([523,659])}else beep(120,.15,"sawtooth");
@@ -94,7 +101,7 @@ function fb(to){const R=G.R[G.ri],T=G.T,tk=G.tk,as=G.as,inc=as.some(x=>x<0),ov=[
  G.pt+=pts;G.sr.push({ti:R.ti,used,opt:G.opt,eff,stars,valid});G.carry=valid?[...as]:null;if(stars>=2)tune([523,659,784]);
  const msg=!valid?`Se acabó el tiempo con el balanceo incompleto o con estaciones por encima del takt.`:`Usaste <b>${used}</b> estaciones; el óptimo es <b>${G.opt}</b>. Eficiencia = ΣT ÷ (N × takt) = ${sum} ÷ (${used} × ${tk}) = <b>${eff}%</b>. Mínimo teórico = ⌈${sum} ÷ ${tk}⌉ = ${mn}${G.opt>mn?`; por las precedencias el óptimo real es ${G.opt}`:""}.${df>0?" Intenta llenar cada estación cerca del takt sin pasarte.":""}`;
  $("app").innerHTML=`<div class="card"><h2>${R.ti}</h2><div style="font-size:26px">${"⭐".repeat(stars)}${"☆".repeat(3-stars)} <small style="font-size:13px;color:var(--mut)">+${pts} pts</small></div>${bub("qa",msg)}<button class="main" onclick="G.ri++;rnd()">${G.ri>=G.R.length-1?"Ver resultado final":"Siguiente ronda →"}</button></div>`}
-function fin(){clearInterval(G.tm);const t=G.sr.reduce((a,x)=>a+x.stars,0),r=t>=11?"🏆 Maestro del balanceo":t>=8?"🥇 Líder de línea":t>=5?"🥈 Aprendiz":"🥉 Principiante";BEST=Math.max(BEST,G.pt);if(t>=8)tune([523,659,784,1047]);
- $("app").innerHTML=`<div class="card"><h2>${r} · ${D()?"🔴 Experto":"🟢 Normal"}</h2><div style="font-size:15px"><b>${t}</b> de 12 estrellas · <b>${G.pt}</b> pts <small style="color:var(--mut)">(mejor de la sesión: ${BEST})</small></div><table><tr><td><b>Ronda</b></td><td><b>Usadas / óptimo</b></td><td><b>Efic.</b></td><td></td></tr>${G.sr.map(x=>`<tr><td>${x.ti}</td><td>${x.valid?x.used:"–"} / ${x.opt}</td><td>${x.eff}%</td><td>${"⭐".repeat(x.stars)}</td></tr>`).join("")}</table>${bub("mgr",t>=8?"¡Excelente! La línea quedó equilibrada y lista para el nuevo pedido.":"Buen comienzo. Recuerden: llenar cada estación cerca del takt y respetar las precedencias reduce el número de estaciones.")}<button class="main" onclick="home()">🔄 Jugar de nuevo</button></div>`}
+function fin(){clearInterval(G.tm);const t=G.sr.reduce((a,x)=>a+x.stars,0),r=t>=11?"🏆 Maestro del balanceo":t>=8?"🥇 Líder de línea":t>=5?"🥈 Aprendiz":"🥉 Principiante";BEST=Math.max(BEST,G.pt);_ls("pes_bal_best",BEST);clearS();if(t>=8)tune([523,659,784,1047]);
+ $("app").innerHTML=`<div class="card"><h2>${r} · ${D()?"🔴 Experto":"🟢 Normal"}</h2><div style="font-size:15px"><b>${t}</b> de 12 estrellas · <b>${G.pt}</b> pts <small style="color:var(--mut)">(tu mejor puntaje: ${BEST})</small></div><table><tr><td><b>Ronda</b></td><td><b>Usadas / óptimo</b></td><td><b>Efic.</b></td><td></td></tr>${G.sr.map(x=>`<tr><td>${x.ti}</td><td>${x.valid?x.used:"–"} / ${x.opt}</td><td>${x.eff}%</td><td>${"⭐".repeat(x.stars)}</td></tr>`).join("")}</table>${bub("mgr",t>=8?"¡Excelente! La línea quedó equilibrada y lista para el nuevo pedido.":"Buen comienzo. Recuerden: llenar cada estación cerca del takt y respetar las precedencias reduce el número de estaciones.")}<button class="main" onclick="home()">🔄 Jugar de nuevo</button></div>`}
 home();
 </script></body></html>

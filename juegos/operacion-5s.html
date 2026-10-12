@@ -45,16 +45,23 @@ function tune(a){a.forEach((f,i)=>setTimeout(()=>beep(f,.14),i*110))}
 const P={mgr:["Marta","Gerente de planta","👩‍💼"],qa:["Carlos","Ing. de Calidad","🧑‍🔬"],pe:["Lucía","Ing. de Procesos","👷‍♀️"],op:["Don Beto","Operador","🧑‍🏭"]};
 function bub(k,t){return `<div class="bub"><div class="av">${P[k][2]}</div><div class="tx"><small>${P[k][0]} · ${P[k][1]}</small>${t}</div></div>`}
 const STG=[["Seiri","Clasificar"],["Seiton","Ordenar"],["Seiso","Limpiar"],["Seiketsu","Estandarizar"],["Shitsuke","Disciplina"]];
-let G,BEST=0;
+const SK="pes_5s_save";let G,BEST=+(_ls("pes_5s_best")||0);
+function _ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
+function loadS(){try{return JSON.parse(_ls(SK))}catch(e){return null}}
+function saveS(o){_ls(SK,JSON.stringify(o))}
+function clearS(){_ls(SK,null)}
+function contBtn(label,fn){const g=loadS();if(!g)return;const c=document.querySelector("#app .card");if(!c||c.querySelector(".contb"))return;const d=document.createElement("div");d.className="contb";
+  d.innerHTML=`<button class="main" style="margin:0 0 12px;width:100%">▶ Continuar partida guardada · ${label(g)}</button><div style="font-size:12px;opacity:.7;margin:-6px 0 12px">Se guarda sola al empezar cada etapa, en este navegador.</div>`;c.prepend(d);d.querySelector("button").onclick=()=>fn(g)}
+
 const head=()=>`<div class="steps">${STG.map((s,i)=>`<i class="${i<G.st?"done":i==G.st?"cur":""}"><b>${i+1}</b>${s[0]}<small>${s[1]}</small></i>`).join("")}</div>`;
 const D=()=>G.lv==2,sh=a=>[...a].sort(()=>Math.random()-.5);
 const stR=r=>r>=(D()?.97:.95)?3:r>=(D()?.85:.8)?2:r>=(D()?.7:.6)?1:0;
 function tmr(ms,end){clearInterval(G.tm);G.t0=Date.now();G.tl=ms;G.tm=setInterval(()=>{const f=1-(Date.now()-G.t0)/ms,b=$("tb");if(b){b.style.width=Math.max(0,f*100)+"%";b.style.background=f<.3?"#dc2626":""}if(f<=0){clearInterval(G.tm);end()}},100)}
 const left=()=>G.tl?Math.max(0,1-(Date.now()-G.t0)/G.tl):0;
 const TB=()=>`<div class="tbar" style="margin:8px 0"><div id="tb" style="width:${G.tl?left()*100:100}%"></div></div>`;
-function home(){clearInterval(G&&G.tm);G={st:0,sc:[0,0,0,0,0],pt:[0,0,0,0,0],lv:1};
+function home(){setTimeout(()=>contBtn(g=>"etapa "+(g.st+1)+" de 5",g=>{G=Object.assign({},g);go(g.st)}),0);clearInterval(G&&G.tm);G={st:0,sc:[0,0,0,0,0],pt:[0,0,0,0,0],lv:1};
  $("app").innerHTML=`<div class="card"><h2>Convierte un puesto caótico en uno de clase mundial</h2>${bub("mgr","El puesto de ensamble de la línea 2 está hecho un desorden: se pierden herramientas y hay accidentes. Tienen un turno para aplicar las <b>5S</b>, y cada etapa tiene límite de tiempo.")}${bub("pe","5S: <b>Seiri</b> clasificar, <b>Seiton</b> ordenar, <b>Seiso</b> limpiar, <b>Seiketsu</b> estandarizar y <b>Shitsuke</b> mantener la disciplina.")}${bub("op","En <b>Experto</b> hay menos tiempo, más objetos y las estrellas exigen casi perfección. ¿Se animan?")}<button class="main" onclick="G.lv=1;go(0)">🟢 Empezar en Normal</button><button class="main" style="background:#b91c1c;border-color:#b91c1c" onclick="G.lv=2;go(0)">🔴 Empezar en Experto</button></div>`}
-function go(n){G.st=n;G.tl=0;[s1,s2,s3,s4,s5][n]()}
+function go(n){G.st=n;saveS({st:n,sc:G.sc,pt:G.pt,lv:G.lv});G.tl=0;[s1,s2,s3,s4,s5][n]()}
 function res(s,t,m,c,p){G.sc[G.st]=s;G.pt[G.st]=Math.max(0,p);if(s>=2)tune([523,659,784]);
  $("app").innerHTML=head()+`<div class="card"><h2>${t}</h2><div style="font-size:26px">${"⭐".repeat(s)}${"☆".repeat(3-s)} <small style="font-size:13px;color:var(--mut)">+${G.pt[G.st]} pts</small></div>${bub(c||"qa",m)}<button class="main" onclick="${G.st==4?"fin()":"go("+(G.st+1)+")"}">${G.st==4?"Ver resultado final":"Siguiente etapa →"}</button></div>`}
 /* 1 Seiri */
@@ -96,9 +103,9 @@ function nq(){G.qi++;if(G.qi<G.q.length)return rq();const n=G.qo,t=G.q.length;re
 function s4(){quiz(Q4,D()?6:5,"Ya ordenaron y limpiaron. Ahora hay que lograr que se mantenga igual sin depender de nadie en particular. ¡Responde rápido!","pe",D()?11000:18000)}
 function s5(){quiz(Q5,D()?6:5,`Las auditorías de las últimas 5 semanas dieron: <div class="chart">${[90,86,72,58,45].map(v=>`<div style="height:${v}%"><small>${v}</small></div>`).join("")}</div>`,"mgr",D()?11000:18000)}
 /* final */
-function fin(){const t=G.sc.reduce((a,b)=>a+b,0),pts=G.pt.reduce((a,b)=>a+b,0),r=t>=14?"🏆 Maestro 5S":t>=11?"🥇 Líder 5S":t>=8?"🥈 Aprendiz":"🥉 Principiante";BEST=Math.max(BEST,pts);if(t>=11)tune([523,659,784,1047]);
+function fin(){const t=G.sc.reduce((a,b)=>a+b,0),pts=G.pt.reduce((a,b)=>a+b,0),r=t>=14?"🏆 Maestro 5S":t>=11?"🥇 Líder 5S":t>=8?"🥈 Aprendiz":"🥉 Principiante";BEST=Math.max(BEST,pts);_ls("pes_5s_best",BEST);clearS();if(t>=11)tune([523,659,784,1047]);
  const mess=sh(I1).slice(0,12).map(x=>`<span class="e" style="transform:rotate(${Math.round(Math.random()*60-30)}deg)">${x[0]}</span>`).join(" ");
- $("app").innerHTML=`<div class="card"><h2>${r} · ${D()?"🔴 Experto":"🟢 Normal"}</h2><div style="font-size:15px"><b>${t}</b> de 15 estrellas · <b>${pts}</b> pts <small style="color:var(--mut)">(mejor de la sesión: ${BEST})</small></div><table>${STG.map((s,i)=>`<tr><td><b>${s[0]}</b> · ${s[1]}</td><td>${"⭐".repeat(G.sc[i])}${"☆".repeat(3-G.sc[i])}</td><td style="color:var(--mut)">${G.pt[i]} pts</td></tr>`).join("")}</table>${bub("mgr",t>=11?"¡Excelente! El puesto pasó del caos a un lugar seguro y eficiente.":"Buen comienzo. Las 5S se aprenden con práctica: ¡inténtalo de nuevo"+(D()?"!":" o prueba el nivel Experto!"))}
+ $("app").innerHTML=`<div class="card"><h2>${r} · ${D()?"🔴 Experto":"🟢 Normal"}</h2><div style="font-size:15px"><b>${t}</b> de 15 estrellas · <b>${pts}</b> pts <small style="color:var(--mut)">(tu mejor puntaje: ${BEST})</small></div><table>${STG.map((s,i)=>`<tr><td><b>${s[0]}</b> · ${s[1]}</td><td>${"⭐".repeat(G.sc[i])}${"☆".repeat(3-G.sc[i])}</td><td style="color:var(--mut)">${G.pt[i]} pts</td></tr>`).join("")}</table>${bub("mgr",t>=11?"¡Excelente! El puesto pasó del caos a un lugar seguro y eficiente.":"Buen comienzo. Las 5S se aprenden con práctica: ¡inténtalo de nuevo"+(D()?"!":" o prueba el nivel Experto!"))}
  <div class="ba"><div class="pane"><b>Antes</b><br>${mess}</div><div class="pane"><b>Después</b><br>${Z2.map((z,k)=>`<div style="margin-top:4px">${z.split(" ")[0]} ${G.p.filter(x=>x.z==k).map(x=>`<span class="e">${x.e}</span>`).join(" ")}</div>`).join("")}</div></div>
  <button class="main" onclick="home()">🔄 Jugar de nuevo</button></div>`}
 home();

@@ -625,9 +625,9 @@ function sidePanel(rebuild){const el=$("#side"),s=sel&&byId(sel);if(!s){el.style
 function pendingIdeas(){return S.ideas.filter(x=>!x.done).length}
 function buildBar(){const b=$("#bar");const ni=pendingIdeas();b.innerHTML=ORD.map(k=>`<button data-b="${k}" class="${mode&&mode.build===k?"on":""}"><i>${TY[k].ic}</i>${TY[k].n}<small>${money(TY[k].cost)} · ${TY[k].ct} s</small></button>`).join("")+
   `<button id="bfl"><i>📊</i>Flujo<small>kanban</small></button><button id="bpl"><i>🏭</i>Planta<small>logística</small></button>`+(F("ideas")?`<button id="bid"><i>💡</i>Ideas<small>${ni?ni+" nuevas":"tablero"}</small></button>`:"")+
-  `<button id="bhelp"><i>❔</i>Ayuda<small>&nbsp;</small></button><button id="bsnd"><i>${muted?"🔇":"🔊"}</i>Sonido<small>&nbsp;</small></button>`;
+  `<button id="bsave"><i>💾</i>Guardar<small>&nbsp;</small></button><button id="bhelp"><i>❔</i>Ayuda<small>&nbsp;</small></button><button id="bsnd"><i>${muted?"🔇":"🔊"}</i>Sonido<small>&nbsp;</small></button>`;
   b.querySelectorAll("[data-b]").forEach(x=>x.onclick=()=>{audioInit();setMode(mode&&mode.build===x.dataset.b?null:{build:x.dataset.b});select(null)});
-  $("#bfl").onclick=flowPanel;$("#bpl").onclick=plantPanel;if($("#bid"))$("#bid").onclick=ideasPanel;$("#bhelp").onclick=()=>help(true);$("#bsnd").onclick=()=>{muted=!muted;buildBar()}}
+  $("#bfl").onclick=flowPanel;$("#bpl").onclick=plantPanel;if($("#bid"))$("#bid").onclick=ideasPanel;$("#bsave").onclick=()=>{flash(saveNow()?"💾 Partida guardada en este navegador. Puedes cerrar y continuar después.":"No se pudo guardar en este navegador.")};$("#bhelp").onclick=()=>help(true);$("#bsnd").onclick=()=>{muted=!muted;buildBar()}}
 $("#hintx").onclick=()=>setMode(null);
 document.querySelectorAll("#spd button").forEach(b=>b.onclick=()=>{audioInit();S.spd=+b.dataset.s;topBar()});
 $("#goalh").onclick=()=>$("#goal").classList.toggle("min");$("#kpih").onclick=()=>$("#kpi").classList.toggle("min");
@@ -763,9 +763,13 @@ function help(inGame){openOv(`<h1>🏭 Simulador de Planta Esbelta</h1>
   <li>Semáforo: 🟢 trabajando · 🟡 esperando · 🟧 bloqueada por kanban · 🟣 cambio de modelo · 🔴 falla o accidente · 🔵 instalando o en actividad.</li></ul>
   <h3>Controles</h3><ul><li><b>Celular:</b> arrastra con un dedo para mover la planta y pellizca con dos para acercar. Botones de la derecha: ＋ y − zoom, ⟲ y ⟳ girar, ⌂ vista completa. Toca una estación para verla.</li>
   <li><b>Computadora:</b> arrastra para mover, rueda para acercar, doble clic para acercar, clic derecho y arrastrar (o Q/E) para girar, flechas o WASD para desplazar, H vista completa. 1-4 construyen, K abre el flujo, espacio pausa.</li></ul>
-  <p class="mut">Puedes construir y ajustar todo con el juego en pausa. Se guarda al inicio de cada día. Planta y datos ficticios con fines didácticos. Un juego de PES Labs.</p>
-  ${inGame?`<button class="btn" id="hok">Continuar</button>`:`<button class="btn" id="hnew">Nueva partida</button>${SAVED?`<button class="btn o" id="hcont">Continuar en el día ${SAVED.day}</button>`:""}`}`);
-  if(inGame)$("#hok").onclick=closeOv;else{$("#hnew").onclick=()=>{audioInit();newGame();startDay()};if(SAVED)$("#hcont").onclick=()=>{audioInit();S=SAVED;D=S.D;startDay(true)}}}
+  <p class="mut">Puedes construir y ajustar todo con el juego en pausa. La partida se guarda sola cada 30 minutos de planta, al cerrar la página y con el botón 💾 Guardar. Planta y datos ficticios con fines didácticos. Un juego de PES Labs.</p>
+  ${inGame?`<button class="btn" id="hok">Continuar</button>`:`<button class="btn" id="hnew">Nueva partida</button>${SAVED?`<button class="btn o" id="hcont">▶ Continuar partida guardada · Día ${SAVED.day}${SAVED.t>0?" · "+clockOf(SAVED.t):""}</button>`:""}`}`);
+  if(inGame)$("#hok").onclick=closeOv;else{$("#hnew").onclick=()=>{audioInit();newGame();startDay()};if(SAVED)$("#hcont").onclick=()=>{audioInit();S=SAVED;D=S.D;try{SNAP=localStorage.getItem("pes_sim_v2_day")}catch(e){}if(!SNAP)SNAP=JSON.stringify(SAVED);
+    if(S.t>0){S.spd=0;closeOv();select(null);setMode(null);buildBar();ui();if(S.t>=DAY)endDay();else flash(`Partida cargada: día ${S.day}, ${clock()}. Pulsa ▶ para seguir.`)}else startDay(true)}}}
+function clockOf(t){const m=360+Math.floor(t/60);return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
+function saveNow(){if(!S)return false;try{localStorage.setItem("pes_sim_v2",JSON.stringify(S));if(SNAP)localStorage.setItem("pes_sim_v2_day",SNAP);return true}catch(e){return false}}
+addEventListener("pagehide",saveNow);document.addEventListener("visibilitychange",()=>{if(document.hidden)saveNow()});
 
 let SNAP=null,SAVED=null;
 try{const j=localStorage.getItem("pes_sim_v2");if(j){SAVED=JSON.parse(j);if(!SAVED||SAVED.v!==2)SAVED=null}}catch(e){SAVED=null}
@@ -777,7 +781,7 @@ function startDay(resume){const dd=dayDef(S.day);S.takt=dd.takt;if(F("drift"))S.
       for(const s of ab)s.op=S.cover[s.ty]>coverUsed(s.ty)?"cub":"temp";S.absList=ab.map(s=>s.id)}else S.absList=[];
     if(F("ideas"))genIdeas();
     D=newD();S.D=D}
-  SNAP=JSON.stringify(S);try{localStorage.setItem("pes_sim_v2",SNAP)}catch(e){}
+  SNAP=JSON.stringify(S);try{localStorage.setItem("pes_sim_v2",SNAP);localStorage.setItem("pes_sim_v2_day",SNAP)}catch(e){}
   S.spd=0;select(null);setMode(null);buildBar();ui();
   const ab=(S.absList||[]).map(byId).filter(Boolean);
   openOv(`<h2>${dd.t}</h2>${dd.intro}${S.lastRem>0&&!resume?`<p class="mut">📦 Ayer sobraron ${S.lastRem} unidades sin pedido y Ventas las remató a $${REMATE} cada una.</p>`:""}
@@ -828,7 +832,7 @@ function endDay(){S.spd=0;const late=S.back;pay("late",late*LATE);D.miss=late;S.
 /* ================= bucle ================= */
 let last=performance.now(),acc=0,uiT=0;
 function frame(now){const raw=(now-last)/1000,dt=Math.min(.05,raw);last=now;const t=now/1000;
-  if(S&&$("#ov").hidden&&S.spd>0){acc+=SPEED[S.spd]*Math.min(.25,raw);let n=Math.floor(acc);acc-=n;n=Math.min(n,600);for(let k=0;k<n;k++){step();if(S.t>=DAY){endDay();break}if(!$("#ov").hidden){acc=0;break}}}
+  if(S&&$("#ov").hidden&&S.spd>0){acc+=SPEED[S.spd]*Math.min(.25,raw);let n=Math.floor(acc);acc-=n;n=Math.min(n,600);for(let k=0;k<n;k++){step();if(S.t%1800===0)saveNow();if(S.t>=DAY){endDay();break}if(!$("#ov").hidden){acc=0;break}}}
   camUpdate(dt);if(S){render(t);uiT-=dt;if(uiT<=0){uiT=.2;ui()}}requestAnimationFrame(frame)}
 newGame();buildBar();ui();help(false);requestAnimationFrame(frame);
 window.__S={get S(){return S},get D(){return D},step,KP,startDay,endDay,placeSt,moveSt,sellSt,buyUp,kaizen,doSaf,adjust,newGame,cam,render,tap,pick,flowPanel,plantPanel,ideasPanel,IDEAS,

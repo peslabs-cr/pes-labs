@@ -80,8 +80,15 @@ function best(c){
 }
 CASES.forEach(c=>{var b=best(c);c.opt=b.cost;c.seq=b.seq});
 
+const SK="pes_arq_save";
+function _ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
+function loadS(){try{return JSON.parse(_ls(SK))}catch(e){return null}}
+function saveS(o){_ls(SK,JSON.stringify(o))}
+function clearS(){_ls(SK,null)}
+function contBtn(label,fn){const g=loadS();if(!g)return;const c=document.querySelector("#app .card");if(!c||c.querySelector(".contb"))return;const d=document.createElement("div");d.className="contb";
+  d.innerHTML=`<button class="main" style="margin:0 0 12px;width:100%">▶ Continuar partida guardada · ${label(g)}</button><div style="font-size:12px;opacity:.7;margin:-6px 0 12px">Se guarda sola al empezar cada ronda, en este navegador.</div>`;c.prepend(d);d.querySelector("button").onclick=()=>fn(g)}
 var G=null,TM=null,cv=null,cx=null,view=null,dots=[],tween=null,RAF=0;
-function newGame(){G={r:0,lives:3,stars:0,id:Date.now(),phase:"start"};dots=[];stopTimer();render()}
+function newGame(){G={r:0,lives:3,stars:0,id:Date.now(),phase:"start"};dots=[];stopTimer();render();contBtn(g=>"ronda "+(g.r+1)+" de 9 · "+g.lives+" vidas",g=>{G={r:g.r,lives:g.lives,stars:g.stars,id:Date.now(),phase:"start"};startRound()})}
 function stopTimer(){if(TM){clearInterval(TM);TM=null}if(RAF){cancelAnimationFrame(RAF);RAF=0}}
 
 function render(){
@@ -111,7 +118,7 @@ function showGuide(){
 }
 
 function startRound(){
-  stopTimer();
+  stopTimer();saveS({r:G.r,lives:G.lives,stars:G.stars});
   var c=CASES[G.r],lv=LV[c.lv];
   G.c=c;G.m=c.m;G.s=c.s;G.spent=0;G.n=0;G.msg="";G.reveal=!lv.hid;G.left=lv.time;G.done=false;G.phase="play";dots=[];
   var first=(G.r==0||CASES[G.r-1].lv!=c.lv);
@@ -263,7 +270,7 @@ function showResult(pass,k,st,wasted,timeout,s,m){
   $("nx").scrollIntoView({behavior:"smooth",block:"center"});
 }
 function endScreen(){
-  stopTimer();
+  stopTimer();clearS();
   var over=G.lives<=0,tot=G.stars,rank=tot>=24?"Arquero Seis Sigma 🏆":tot>=17?"Ingeniero de procesos sólido 👍":tot>=9?"Aprendiz en camino 🌱":"A practicar el diagnóstico 📖";
   try{var b=+localStorage.getItem("arquero_best")||0;if(tot>b)localStorage.setItem("arquero_best",String(tot))}catch(e){}
   $("app").innerHTML=`<div class="card"><div class="big">${over?"💔":"🎯"}</div><h2>${over?"Te quedaste sin vidas":"Terminaste las 9 rondas"}</h2>
