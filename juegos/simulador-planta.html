@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Simulador de Planta Esbelta</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#1e252c;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff;touch-action:none;-webkit-user-select:none;user-select:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+.hud{position:fixed;z-index:5}
+.card{background:rgba(15,20,26,.9);border-radius:10px;padding:7px 10px;font-size:12.5px;border:1px solid rgba(255,255,255,.08)}
+.card h4{margin:0;font-size:12.5px;display:flex;justify-content:space-between;gap:8px;cursor:pointer;color:#f2c21b}
+.card.min .bd{display:none}
+#top{top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
+#top .card{padding:6px 10px;font-size:13px;white-space:nowrap}
+#top b{font-size:14px}
+#mny b{color:#7ee2b8}#mny.neg b{color:#ff8a80}
+.spd{display:flex;gap:3px}
+.spd button,#bar button,.sb{background:rgba(15,20,26,.85);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:6px 9px;font-size:13px;cursor:pointer}
+.spd button.on{background:#0a7d5a;border-color:#34d399}
+#goal{top:calc(52px + env(safe-area-inset-top,0px));left:8px;max-width:min(270px,46vw)}
+#kpi{top:calc(52px + env(safe-area-inset-top,0px));right:8px;min-width:190px;max-width:46vw}
+#goal ul{margin:5px 0 0;padding:0}#goal li{list-style:none;margin:3px 0;padding-left:16px;position:relative;line-height:1.25;color:#d7dee6}
+#goal li:before{content:"○";position:absolute;left:0;color:#9aa5b1}#goal li.ok{color:#7ee2b8}#goal li.ok:before{content:"✔";color:#34d399}#goal li.nt:before{content:""}#goal li.nt{padding-left:0;color:#9aa5b1}
+#goal li small{color:#9aa5b1}
+.kg{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:5px}
+.kg span{color:#b8c2cc}.kg b{text-align:right;font-variant-numeric:tabular-nums}
+.g{color:#7ee2b8}.r{color:#ff8a80}.y{color:#ffd34d}
+#bar{left:0;right:0;bottom:calc(6px + env(safe-area-inset-bottom,0px));display:flex;gap:5px;justify-content:center;padding:0 8px;overflow-x:auto}
+#bar button{display:flex;flex-direction:column;align-items:center;min-width:64px;padding:5px 7px;font-size:12px;line-height:1.15;flex:0 0 auto}
+#bar button i{font-style:normal;font-size:18px}#bar button small{color:#9aa5b1;font-size:10.5px}
+#bar button.on{background:#7a5a00;border-color:#f2c21b}
+#radio{left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom,0px));width:min(520px,94vw);pointer-events:none;display:flex;flex-direction:column;gap:4px;align-items:center}
+.msg{background:rgba(15,20,26,.88);border-left:4px solid #f2c21b;border-radius:8px;padding:6px 10px;font-size:12.5px;line-height:1.3;transition:opacity .6s;max-width:100%}
+#side{max-height:calc(100vh - 150px);overflow-y:auto;left:8px;bottom:calc(74px + env(safe-area-inset-bottom,0px));width:min(330px,calc(100vw - 16px));display:none;font-size:13px}
+#side h3{margin:0 0 4px;font-size:15px;display:flex;justify-content:space-between}
+#side .x{cursor:pointer;color:#9aa5b1;font-size:18px;line-height:1}
+.ups{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:6px}
+.sb{font-size:12px;padding:6px 4px;line-height:1.2}.sb small{display:block;color:#9aa5b1;font-size:10.5px}.sb.own{background:#0a5a42;border-color:#34d399}.sb:disabled{opacity:.45}
+.row{display:flex;gap:4px;margin-top:5px}.row .sb{flex:1}
+#hint{top:calc(52px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:none;background:#7a5a00;border:1px solid #f2c21b;border-radius:10px;padding:6px 10px;font-size:13px;align-items:center;gap:8px;white-space:nowrap}
+#hint button{background:#1d242c;color:#fff;border:1px solid #888;border-radius:7px;padding:3px 8px}
+#camc{right:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px}
+#camc button{width:44px;height:44px;border-radius:12px;background:rgba(15,20,26,.85);color:#fff;border:1px solid rgba(255,255,255,.22);font-size:22px;line-height:1;cursor:pointer;padding:0}
+#camc button:active{background:#0a7d5a}
+.tabs{display:flex;gap:4px;margin:4px 0 6px}.tb{flex:1;background:#141a20;color:#c9d2db;border:1px solid #34404c;border-radius:7px;padding:5px 2px;font-size:12px;cursor:pointer}.tb.on{background:#0a5a42;color:#fff;border-color:#34d399}
+.upl{display:flex;flex-direction:column;gap:4px;margin-top:4px}.upr{display:flex;align-items:center;gap:5px;background:#141a20;border-radius:8px;padding:5px 7px}.upr>div{flex:1;min-width:0}.upr small{display:block;color:#9aa5b1;font-size:10.5px;line-height:1.25}.upr .sb{flex:0 0 auto;padding:6px 7px}
+.idea{background:#141a20;border-radius:10px;padding:9px 11px;margin:8px 0;border-left:4px solid #5fb4ff}.idea p{margin:4px 0}.idea.ok{border-color:#34d399}.idea.bad{border-color:#ff6b5e}.idea.no{opacity:.75;border-color:#4a5866}
+.vsm{display:flex;gap:2px;overflow-x:auto;padding:6px 0 2px;align-items:stretch}.vc{min-width:66px;flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;font-size:11px}
+.vb{background:#22303d;border:1px solid #4a5866;border-radius:6px;padding:4px 3px;min-height:74px;width:100%;box-sizing:border-box;font-size:11px;line-height:1.25}.vb small{display:block;color:#b8c2cc;font-size:10px}.vb.ext{background:transparent;border-style:dashed;font-size:12px}
+.vt{color:#f2c21b;font-size:30px;line-height:1;position:relative;margin-top:14px}.vt span{position:absolute;left:50%;top:13px;transform:translateX(-50%);font-size:10px;color:#1b1f24;font-weight:800}.vl{color:#9aa5b1;font-size:10px}
+.tl{width:100%;height:18px;font-size:10.5px;line-height:18px;border-color:#7a8794;border-style:solid;border-width:0;box-sizing:border-box}.tl.up{border-bottom-width:2px;margin-top:auto;color:#ffd34d}.vc:has(.vb) .tl.up{border-bottom-width:0}.tl.dn{color:#7ee2b8}.vc:has(.vb) .tl.dn{border-bottom-width:2px}.vc:has(.vt) .tl.dn{border-bottom-width:0}
+.lbl{position:fixed;z-index:3;transform:translate(-50%,-100%);font-size:11px;font-weight:700;background:rgba(10,14,18,.72);padding:2px 6px;border-radius:5px;pointer-events:none;white-space:nowrap;text-align:center;line-height:1.2}
+.lbl small{display:block;font-weight:500;color:#c9d2db;font-size:10px}
+.zl{font-size:12px;letter-spacing:.1em;background:rgba(0,0,0,.45);color:#e8ecef}
+#ov{position:fixed;inset:0;z-index:10;background:rgba(10,14,18,.8);display:flex;align-items:center;justify-content:center;padding:14px}
+#ov[hidden]{display:none}
+.panel{background:#1d242c;border:1px solid #34404c;border-radius:14px;max-width:560px;width:100%;padding:18px;max-height:88vh;overflow:auto;font-size:14.5px;line-height:1.45}
+.panel h1{font-size:22px;margin:0 0 6px}.panel h2{font-size:19px;margin:0 0 6px}.panel h3{font-size:15px;margin:12px 0 4px;color:#f2c21b}
+.panel ul{padding-left:20px;margin:6px 0}.panel li{margin:3px 0}
+.mut{color:#9aa5b1;font-size:13px}
+.btn{display:block;width:100%;margin-top:10px;padding:13px;border-radius:10px;border:0;background:#0a7d5a;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.btn.o{background:transparent;border:1px solid #4a5866;color:#e6ebef}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;background:#141a20;border-radius:10px;padding:10px;margin:8px 0}
+.kv b{text-align:right}
+.lesson{background:#13261f;border-left:4px solid #34d399;border-radius:8px;padding:9px 12px;margin:8px 0}
+table.fl{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}table.fl td,table.fl th{padding:5px 4px;border-bottom:1px solid #2c3640;text-align:left}
+table.fl th{color:#9aa5b1;font-weight:600;font-size:12px}
+.barw{background:#2c3640;border-radius:4px;height:8px;width:70px;position:relative;overflow:hidden}.barw i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+select{background:#141a20;color:#fff;border:1px solid #4a5866;border-radius:6px;padding:4px}
+.stars{font-size:32px;text-align:center;letter-spacing:4px}
+@media (max-width:640px){#top{left:8px;right:8px;transform:none;justify-content:space-between}#top .card{font-size:12px;padding:5px 7px}.spd button{padding:5px 6px;font-size:12px}
+ #goal,#kpi{font-size:11.5px;max-width:48vw;min-width:0}#bar button{min-width:58px}#bar{justify-content:flex-start}}
+</style></head><body>
+<canvas id="gl" tabindex="0"></canvas>
+<div id="top" class="hud"><div class="card"><b id="dayv">Día 1</b> · <span id="clk">06:00</span></div><div class="card" id="mny"><b>$0</b></div>
+<div class="spd" id="spd"><button data-s="0" title="Pausa (espacio)">⏸</button><button data-s="1" title="Velocidad 1">▶</button><button data-s="2" title="Velocidad 2">▶▶</button><button data-s="3" title="Velocidad 3">▶▶▶</button></div></div>
+<div id="goal" class="hud card"><h4 id="goalh"><span>🎯 Meta del día</span><span id="goals">▾</span></h4><div class="bd"><ul id="goall"></ul></div></div>
+<div id="kpi" class="hud card"><h4 id="kpih"><span>📈 Indicadores</span><span id="kpis">▾</span></h4><div class="bd"><div class="kg" id="kpig"></div></div></div>
+<div id="hint" class="hud"><span id="hintt"></span><button id="hintx">Cancelar</button></div>
+<div id="radio" class="hud"></div>
+<div id="camc" class="hud"><button data-c="in" title="Acercar (+)">＋</button><button data-c="out" title="Alejar (−)">−</button><button data-c="l" title="Girar">⟲</button><button data-c="r" title="Girar">⟳</button><button data-c="h" title="Vista completa (H)">⌂</button></div>
+<div id="side" class="hud card"></div>
+<div id="bar" class="hud"></div>
+<div id="labels"></div>
+<div id="ov"><div class="panel" id="pan"></div></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const cv=$("#gl");
+const gl=cv.getContext("webgl2",{antialias:true,powerPreference:"high-performance"});
+if(!gl){$("#pan").innerHTML="<h2>Tu navegador no soporta WebGL 2</h2><p>Prueba con una versión reciente de Chrome, Edge, Firefox o Safari.</p>";throw new Error("no webgl2")}
+/* ---------- matemáticas ---------- */
+function trs(o,x,y,z,ry,rx,rz,kx,ky,kz){
+  const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx),cz=Math.cos(rz),sz=Math.sin(rz);
+  const r00=cy*cz+sy*sx*sz,r01=-cy*sz+sy*sx*cz,r02=sy*cx,r10=cx*sz,r11=cx*cz,r12=-sx,r20=-sy*cz+cy*sx*sz,r21=sy*sz+cy*sx*cz,r22=cy*cx;
+  o[0]=r00*kx;o[1]=r10*kx;o[2]=r20*kx;o[3]=0;o[4]=r01*ky;o[5]=r11*ky;o[6]=r21*ky;o[7]=0;
+  o[8]=r02*kz;o[9]=r12*kz;o[10]=r22*kz;o[11]=0;o[12]=x;o[13]=y;o[14]=z;o[15]=1;return o}
+function mul(o,a,b){for(let c=0;c<4;c++)for(let r=0;r<4;r++){o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3]}return o}
+function normalMat(n,m){
+  const a=m[0],b=m[4],c=m[8],d=m[1],e=m[5],f=m[9],g=m[2],h=m[6],i=m[10];
+  const C00=e*i-f*h,C01=-(d*i-f*g),C02=d*h-e*g,C10=-(b*i-c*h),C11=a*i-c*g,C12=-(a*h-b*g),C20=b*f-c*e,C21=-(a*f-c*d),C22=a*e-b*d;
+  let det=a*C00+b*C01+c*C02;if(Math.abs(det)<1e-12)det=1e-12;const k=1/det;
+  n[0]=C00*k;n[1]=C10*k;n[2]=C20*k;n[3]=C01*k;n[4]=C11*k;n[5]=C21*k;n[6]=C02*k;n[7]=C12*k;n[8]=C22*k;return n}
+function persp(o,fy,a,n,f){const t=1/Math.tan(fy/2);o.fill(0);o[0]=t/a;o[5]=t;o[10]=(f+n)/(n-f);o[11]=-1;o[14]=2*f*n/(n-f);return o}
+function lookAt(o,e,t,u){let zx=e[0]-t[0],zy=e[1]-t[1],zz=e[2]-t[2];let l=Math.hypot(zx,zy,zz);zx/=l;zy/=l;zz/=l;
+  let xx=u[1]*zz-u[2]*zy,xy=u[2]*zx-u[0]*zz,xz=u[0]*zy-u[1]*zx;l=Math.hypot(xx,xy,xz);xx/=l;xy/=l;xz/=l;
+  const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+  o[0]=xx;o[1]=yx;o[2]=zx;o[3]=0;o[4]=xy;o[5]=yy;o[6]=zy;o[7]=0;o[8]=xz;o[9]=yz;o[10]=zz;o[11]=0;
+  o[12]=-(xx*e[0]+xy*e[1]+xz*e[2]);o[13]=-(yx*e[0]+yy*e[1]+yz*e[2]);o[14]=-(zx*e[0]+zy*e[1]+zz*e[2]);o[15]=1;return o}
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+function angDiff(a,b){let d=b-a;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d}
+let seed=7;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}
+const CC={};function C(h){if(typeof h!=="string")return h;if(CC[h])return CC[h];return CC[h]=[parseInt(h.slice(1,3),16)/255,parseInt(h.slice(3,5),16)/255,parseInt(h.slice(5,7),16)/255]}
+
+/* ---------- geometría ---------- */
+function boxTris(){const out=[];for(let a=0;a<3;a++)for(const s of[-1,1]){const u=(a+1)%3,v=(a+2)%3;const n=[0,0,0];n[a]=s;
+  const c=[[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].map(([p,q])=>{const r=[0,0,0];r[a]=.5*s;r[u]=p;r[v]=q;return r});
+  for(const i of[0,1,2,0,2,3])out.push(...c[i],...n)}return out}
+function cylTris(seg){const out=[];for(let i=0;i<seg;i++){const a0=i/seg*Math.PI*2,a1=(i+1)/seg*Math.PI*2;
+  const c0=Math.cos(a0),s0=Math.sin(a0),c1=Math.cos(a1),s1=Math.sin(a1),x0=c0*.5,z0=s0*.5,x1=c1*.5,z1=s1*.5;
+  out.push(x0,-.5,z0,c0,0,s0,x1,-.5,z1,c1,0,s1,x1,.5,z1,c1,0,s1,x0,-.5,z0,c0,0,s0,x1,.5,z1,c1,0,s1,x0,.5,z0,c0,0,s0);
+  out.push(0,.5,0,0,1,0,x0,.5,z0,0,1,0,x1,.5,z1,0,1,0,0,-.5,0,0,-1,0,x1,-.5,z1,0,-1,0,x0,-.5,z0,0,-1,0)}return out}
+function sphTris(la,lo){const pt=(i,j)=>{const t=i/la*Math.PI,p=j/lo*Math.PI*2;return[Math.sin(t)*Math.cos(p)*.5,Math.cos(t)*.5,Math.sin(t)*Math.sin(p)*.5]};
+  const out=[];for(let i=0;i<la;i++)for(let j=0;j<lo;j++){const a=pt(i,j),b=pt(i+1,j),c=pt(i+1,j+1),d=pt(i,j+1);for(const q of[a,b,c,a,c,d])out.push(...q,q[0]*2,q[1]*2,q[2]*2)}return out}
+const BOX=boxTris(),CYL=cylTris(14),SPH=sphTris(7,12);
+
+/* ---------- shaders ---------- */
+const VS=`#version 300 es
+layout(location=0) in vec3 aP;layout(location=1) in vec3 aN;layout(location=2) in vec3 aC;
+uniform mat4 uVP,uM;uniform mat3 uNM;out vec3 vN,vC,vW;
+void main(){vec4 w=uM*vec4(aP,1.);vW=w.xyz;vN=uNM*aN;vC=aC;gl_Position=uVP*w;}`;
+const FS=`#version 300 es
+precision highp float;in vec3 vN,vC,vW;uniform vec3 uCol,uEm,uCam,uFogC,uL;uniform float uA;uniform vec2 uFog;out vec4 o;
+void main(){vec3 n=normalize(vN);vec3 b=vC*uCol;float h=n.y*.5+.5;vec3 amb=mix(vec3(.34,.35,.37),vec3(.80,.84,.90),h);
+float d=max(dot(n,uL),0.);vec3 c=b*(amb*.64+d*vec3(1.,.97,.92)*.58)+uEm;
+float f=smoothstep(uFog.x,uFog.y,distance(vW,uCam));o=vec4(mix(c,uFogC,f),uA);}`;
+function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x}
+const PR=gl.createProgram();gl.attachShader(PR,sh(gl.VERTEX_SHADER,VS));gl.attachShader(PR,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(PR);
+if(!gl.getProgramParameter(PR,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(PR));
+gl.useProgram(PR);
+const U={};for(const n of["uVP","uM","uNM","uCol","uEm","uCam","uFogC","uL","uA","uFog"])U[n]=gl.getUniformLocation(PR,n);
+gl.vertexAttrib3f(2,1,1,1);
+function mkMesh(arr,col){const vao=gl.createVertexArray();gl.bindVertexArray(vao);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,arr instanceof Float32Array?arr:new Float32Array(arr),gl.STATIC_DRAW);const st=(col?9:6)*4;
+  gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,st,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,st,12);
+  if(col){gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,3,gl.FLOAT,false,st,24)}else gl.disableVertexAttribArray(2);
+  gl.bindVertexArray(null);return{vao,n:arr.length/(col?9:6)}}
+const BOXM=mkMesh(BOX),CYLM=mkMesh(CYL),SPHM=mkMesh(SPH);
+
+/* ================= reglas del simulador ================= */
+const REMATE=10,DAY=28800,PRICE=40,MAT=15,OPC=600,MOVEC=800,TRC=.05,HOLD=1,CLAIM=50,LATE=10,MTTR=900,INST=600;
+const FLC=3000,FLOP=200,BONUS=1500,KZT=2700,ACCC=2500,MRC=6000,TWIC=1000;
+const SPEED=[0,60,180,480];
+const TY={
+  mec:{n:"Mecanizado",ic:"⚙️",ct:38,cost:12000,def:.02,mtbf:7200,col:"#3b82f6",sg:0,co:300,ar:.015,
+    hz:[["Atrapamiento en el husillo",5,3],["Proyección de virutas",3,4]]},
+  ens:{n:"Ensamble",ic:"🔩",ct:70,cost:10000,def:.025,mtbf:10800,col:"#f59e0b",sg:1,co:180,ar:.01,
+    hz:[["Golpe del brazo robótico",4,3],["Postura forzada (ergonomía)",2,4]]},
+  pru:{n:"Prueba",ic:"🔬",ct:35,cost:9000,def:0,mtbf:14400,col:"#a855f7",sg:2,co:30,ar:.004,
+    hz:[["Contacto eléctrico en el banco",4,2],["Ruido del banco de prueba",2,3]]},
+  emp:{n:"Empaque",ic:"📦",ct:30,cost:6000,def:.003,mtbf:14400,col:"#10b981",sg:3,co:0,ar:.008,
+    hz:[["Atrapamiento en el transportador",4,3],["Sobreesfuerzo al levantar cajas",2,4]]}};
+const ORD=["mec","ens","pru","emp"];
+const UPG={
+  s5:{n:"5S",lv:[{c:800,d:"Ciclo −5 %"},{c:2500,d:"Ciclo −10 %"}],m:[1,.95,.9]},
+  py:{n:"Poka-yoke",lv:[{c:1200,d:"Defectos −50 %"},{c:3000,d:"Defectos −75 %"}],m:[1,.5,.25]},
+  tpm:{n:"TPM",lv:[{c:1500,d:"Fallas −40 %"},{c:3500,d:"Fallas −65 %"}],m:[1,1/.6,1/.35]},
+  smed:{n:"SMED",day:6,lv:[{c:1000,d:"Cambio de modelo −50 %"},{c:3000,d:"Cambio de modelo −80 %"}],m:[1,.5,.2]}};
+const SAF={ra:{n:"Evaluación de riesgos",c:300,t:900,d:"Identifica peligros y califica el riesgo (15 min)"},
+  eng:{n:"Guarda / barrera",c:1800,t:1200,d:"Control de ingeniería: probabilidad −2 (20 min)"},
+  adm:{n:"Procedimiento y LOTO",c:400,t:0,d:"Control administrativo: probabilidad −1"},
+  epp:{n:"Equipo de protección",c:150,t:0,d:"EPP: severidad −1 (última barrera)"}};
+const ITC=["#c69c6d","#86acd9","#f3c06b","#c4a3f0","#d4ad78"],ITB=["#8fa3b8","#5b7fb0","#d08a3a","#9670c8","#6fae8c"];
+const RECV=[-18,0],SHIP=[18,0];
+const KANV=[0,2,3,4,6,8,12,20],LOTV=[1,2,5,10,20,50];
+const LINKS=["Mecanizado → Ensamble","Ensamble → Prueba","Prueba → Empaque","Empaque → Embarque"];
+const UNLOCK={ideas:2,drift:3,acc:4,ev:5,prod2:6,abs:7};
+const F=k=>S.day>=UNLOCK[k];
+
+const DAYS=[null,
+ {t:"Día 1 · Primer turno",takt:60,
+  intro:`<p>Heredas una planta pequeña: <b>una estación de cada tipo</b>, acomodadas donde cupieron, y <b>4 montacargas</b>. El cliente pide <b>una unidad cada 60 s</b> (ese es el <b>takt</b>).</p><p>Ensamble tarda <b>70 s</b>. Ninguna planta produce más rápido que su estación más lenta: esa es tu <b>restricción</b>.</p>`,
+  tip:"Abre 📊 Flujo para comparar el ciclo de cada etapa con el takt, y construye lo que haga falta antes de arrancar.",
+  lesson:"La capacidad de la planta la decide la restricción. Mejorar cualquier otra estación no aumenta las entregas.",
+  goals:K=>[["Entregas ≥ 90 %",K.otd>=.9,pc(K.otd)],["Utilidad del día > $0",K.pf>0,money(K.pf)],["Inventario promedio (WIP + PT) < 40",K.inv<40,K.inv.toFixed(0)]]},
+ {t:"Día 2 · Que fluya",takt:60,
+  intro:`<p>Ayer la planta <b>empujó</b>: cada estación produjo todo lo que pudo, sin importar si alguien lo necesitaba.</p><p>Hoy toca <b>jalar</b>: con un límite <b>kanban</b>, una estación solo produce cuando la siguiente tiene espacio. Y por la <b>Ley de Little</b>, menos inventario significa menos tiempo de entrega.</p><p>Desde hoy el personal propone mejoras en el tablero 💡 <b>Ideas</b>. Algunas son muy buenas… y otras no tanto.</p>`,
+  tip:"Pon límites kanban en todas las conexiones (📊 Flujo) y acerca las estaciones para cortar el «espagueti» de los montacargas.",
+  lesson:"Ley de Little: tiempo de entrega = inventario ÷ ritmo de salida. Para entregar más rápido no hay que correr más, sino tener menos inventario esperando.",
+  goals:K=>[["Entregas ≥ 95 %",K.otd>=.95,pc(K.otd)],["Tiempo de entrega < 25 min",K.ltn>0&&K.lt<25,K.ltn?K.lt.toFixed(1)+" min":"—"],["Inventario promedio < 25",K.inv<25,K.inv.toFixed(0)]]},
+ {t:"Día 3 · Calidad en la fuente",takt:60,
+  intro:`<p>Compras cambió de proveedor y ahora <b>Mecanizado genera 3 veces más defectos</b>. Además, la herramienta de corte <b>se desgasta</b> y el proceso se va corriendo poco a poco.</p><p>Toca un Mecanizado y abre su <b>carta X̄</b>: cuando los puntos se acercan al límite de control, ajusta la herramienta <b>antes</b> de que salgan piezas malas.</p>`,
+  tip:"Poka-yoke previene errores; la carta de control avisa cuando el proceso cambia. Inspeccionar al final solo descubre el problema tarde.",
+  lesson:"La calidad se construye en la fuente: prevenir (poka-yoke) y detectar a tiempo (control estadístico) es mucho más barato que desechar.",
+  goals:K=>[["Calidad a la primera ≥ 95 %",K.tst>0&&K.fpy>=.95,pc(K.fpy)],["Entregas ≥ 95 %",K.otd>=.95,pc(K.otd)],["Reclamos de cliente ≤ 3",K.cl<=3,K.cl]]},
+ {t:"Día 4 · La seguridad primero",takt:60,
+  intro:`<p>Desde hoy pueden ocurrir <b>accidentes</b>. Un accidente detiene la estación una hora, cuesta $${ACCC.toLocaleString("es-CR")} y el operador lesionado se va a casa.</p><p>Por cada accidente grave hay muchos <b>casi accidentes</b> antes: son avisos. Haz una <b>evaluación de riesgos</b> en cada estación (pestaña 🦺 Seguridad) y aplica los controles en orden: primero <b>ingeniería</b>, luego <b>administrativos</b> y al final <b>EPP</b>.</p>`,
+  tip:"Los montacargas también son un riesgo: más metros recorridos, más exposición. En 🏭 Planta puedes demarcar pasillos peatonales.",
+  lesson:"Jerarquía de controles: eliminar, sustituir, ingeniería, administrativos y EPP. El EPP es la última barrera, no la primera.",
+  goals:K=>[["Evaluación de riesgos en todas las estaciones",K.ra>=1,pc(K.ra)],["Cero accidentes",K.acc===0,K.acc],["Ningún riesgo en rojo (≥ 15)",K.red===0,K.red]]},
+ {t:"Día 5 · La demanda sube",takt:45,
+  intro:`<p>Ventas cerró un contrato nuevo: el cliente ahora pide <b>una unidad cada 45 s</b>.</p><p>Además, la vida real llega a la planta: proveedores atrasados, cortes de luz, pedidos urgentes y auditorías. Un sistema <b>andon</b> (🏭 Planta) acelera la respuesta a cualquier parada.</p>`,
+  tip:"Antes de comprar una máquina, sácale más a la que tienes: 5S acorta el ciclo y TPM evita paradas. Hoy tienes 2 eventos kaizen.",
+  lesson:"OEE = disponibilidad × rendimiento × calidad. Muchas veces la capacidad que buscas ya está escondida en tus propias máquinas.",
+  goals:K=>[["Entregas ≥ 95 %",K.otd>=.95,pc(K.otd)],["Utilidad del día ≥ $4 000",K.pf>=4000,money(K.pf)],["OEE de la planta ≥ 65 %",K.oee>=.65,pc(K.oee)]]},
+ {t:"Día 6 · Dos modelos",takt:45,
+  intro:`<p>El cliente ahora pide <b>dos modelos</b>: A (60 %) y B (40 %, cajas azules). Cada vez que una estación cambia de modelo se detiene para el <b>cambio de formato</b>: Mecanizado tarda 5 min y Ensamble 3 min.</p><p>Con <b>lotes grandes</b> hay pocos cambios pero mucho inventario del modelo equivocado. Con <b>lotes pequeños</b> fluye mejor, pero solo si los cambios son rápidos: para eso existe <b>SMED</b>.</p>`,
+  tip:"Ajusta el tamaño de lote en 📊 Flujo. Primero reduce el cambio de formato con SMED; después baja el lote (heijunka).",
+  lesson:"SMED convierte un cambio de horas en minutos. Con cambios cortos se puede producir en lotes pequeños y nivelados (heijunka) sin perder capacidad.",
+  goals:K=>[["Entregas ≥ 90 %",K.otd>=.9,pc(K.otd)],["Inventario promedio < 30",K.inv<30,K.inv.toFixed(0)],["Utilidad del día ≥ $4 000",K.pf>=4000,money(K.pf)]]},
+ {t:"Día 7 · La gente hace la planta",takt:45,
+  intro:`<p>Hoy faltan operadores. Una estación sin su operador queda con un <b>temporal sin entrenamiento</b>: trabaja 30 % más lento, con el doble de defectos y más riesgo.</p><p>En 🏭 Planta puedes entrenar operadores <b>polivalentes</b> con TWI (instrucción de trabajo). Cada uno cubre una ausencia de esa estación, hoy y en los días que vienen.</p>`,
+  tip:"Una matriz de polivalencia sana tiene al menos un respaldo para cada puesto crítico, empezando por la restricción.",
+  lesson:"Las personas son el centro del sistema Lean: entrenar con trabajo estándar y polivalencia da flexibilidad, calidad y seguridad.",
+  goals:K=>[["Entregas ≥ 90 %",K.otd>=.9,pc(K.otd)],["Cero accidentes",K.acc===0,K.acc],["Utilidad del día ≥ $5 000",K.pf>=5000,money(K.pf)]]},
+ {t:"Día 8 · Reto final",takt:40,
+  intro:`<p>Último día de evaluación. El cliente pide <b>una unidad cada 40 s</b>, de los dos modelos, con todo lo que puede pasar en una planta real.</p><p>Usa todo lo aprendido: restricción, flujo jalado, calidad en la fuente, seguridad, mantenimiento, SMED y personas.</p>`,
+  tip:"Una planta esbelta entrega a tiempo, con poco inventario, sin accidentes y sin desperdicio.",
+  lesson:"Lean no es una herramienta: es la suma de muchas mejoras pequeñas que dejan fluir el valor hacia el cliente, con personas seguras y entrenadas.",
+  goals:K=>[["Entregas ≥ 93 %",K.otd>=.93,pc(K.otd)],["Utilidad del día ≥ $6 000",K.pf>=6000,money(K.pf)],["Cero accidentes",K.acc===0,K.acc]]}];
+const LASTDAY=DAYS.length-1;
+const FREE={t:"Modo libre",takt:40,intro:"<p>Ya terminaste la campaña. Sigue mejorando tu planta todo lo que quieras.</p>",tip:"Intenta subir la utilidad sin bajar las entregas ni la seguridad.",lesson:"La mejora continua no termina nunca: kaizen.",
+  goals:K=>[["Entregas ≥ 97 %",K.otd>=.97,pc(K.otd)],["Utilidad del día ≥ $8 000",K.pf>=8000,money(K.pf)],["Cero accidentes",K.acc===0,K.acc]]};
+const dayDef=d=>DAYS[d]||FREE;
+
+/* ideas del personal */
+const NAMES=["Marta","José","Andrés","Carla","Luis","Ana","Diego","Sofía","Pablo","Elena"];
+const IDEAS=[
+ {k:"herr",t:"Tablero de sombras para las herramientas",cl:"Cada herramienta tiene su lugar marcado: dejamos de buscarlas.",c:200,ty:["mec","ens"],ap:s=>{s.mod.ct-=3},r:"Ciclo −3 s. Pequeña, barata y salida del piso: así es el kaizen.",g:1},
+ {k:"guia",t:"Guía de colocación en el fixture",cl:"Una guía hace que la pieza solo entre en la posición correcta.",c:300,ty:["mec","ens"],ap:s=>{s.mod.defM*=.7},r:"Defectos −30 %: un poka-yoke hecho en casa.",g:1},
+ {k:"lub",t:"Checklist de limpieza y lubricación al iniciar el turno",cl:"Cinco minutos de limpieza para ver fugas, ruidos y piezas flojas.",c:100,ty:null,ap:s=>{s.mod.mtbfM*=1.3},r:"Fallas −25 %: es mantenimiento autónomo, el primer pilar de TPM.",g:1},
+ {k:"rampa",t:"Rampa de gravedad para las piezas",cl:"Las piezas bajan solas hasta la mano del operador.",c:400,ty:["pru","emp"],ap:s=>{s.mod.ct-=3},r:"Ciclo −3 s sin motores ni energía: un karakuri.",g:1},
+ {k:"visual",t:"Ayuda visual del trabajo estándar",cl:"Una hoja con fotos de cada paso, en el puesto.",c:50,ty:["ens","pru","emp"],ap:s=>{s.mod.defM*=.8},r:"Defectos −20 %: el trabajo estándar es la base de la mejora.",g:1},
+ {k:"junta",t:"Reunión de 5 minutos al iniciar el turno",cl:"Revisar juntos los problemas de ayer y el plan de hoy.",c:0,ty:"plant",ap:()=>{S.g.mttrM*=.85},r:"Las fallas se atienden 15 % más rápido: todos saben qué está pasando.",g:1},
+ {k:"vel",t:"Subir la velocidad de la máquina 20 %",cl:"Si la máquina va más rápido, sacamos más piezas. ¡Fácil!",c:0,ty:["mec","ens"],ap:s=>{s.mod.ct-=TY[s.ty].ct*.15;s.mod.defM*=2;s.mod.mtbfM*=.5},r:"El ciclo bajó, pero los defectos y las fallas se duplicaron. Acelerar sin atacar la causa sale caro.",g:0},
+ {k:"insp",t:"Contratar un inspector más al final de la línea",cl:"Así ningún defecto llega al cliente.",c:0,ty:"plant",ap:()=>{S.g.opExtra+=400},r:"Cuesta $400 por turno y no evita ni un solo defecto: la inspección solo separa lo que ya salió mal.",g:0},
+ {k:"lote",t:"Comprar materia prima en lotes grandes con descuento",cl:"El proveedor nos rebaja $2 por pieza si compramos de a muchas.",c:0,ty:"plant",ap:()=>{S.g.matC=13;S.g.rawBuf=12},r:"El material bajó $2, pero ahora hay 12 piezas esperando en cada Mecanizado: más inventario y más tiempo de entrega. Ojo con los ahorros que esconden desperdicio.",g:0},
+ {k:"ruta",t:"Pintar en el piso las rutas de los montacargas",cl:"Que todos sepan por dónde pasan los montacargas.",c:150,ty:"plant",ap:()=>{S.g.flRisk*=.7},r:"Riesgo de atropello −30 %. La gestión visual también es seguridad.",g:1,day:4},
+ {k:"guarda",t:"Quitar la guarda para cargar más rápido",cl:"La guarda estorba: sin ella cargamos la pieza en 3 s menos.",c:0,ty:["mec","emp"],ap:s=>{s.mod.ct-=3;s.mod.riskM*=3},r:"Ganaste 3 s, pero el riesgo de accidente se triplicó. La seguridad no se negocia.",g:0,day:4},
+ {k:"super",t:"Supermercado de 4 piezas en Mecanizado",cl:"Un pequeño colchón por si el proveedor se atrasa.",c:0,ty:"plant",ap:()=>{S.g.rawBuf=Math.max(S.g.rawBuf,4)},r:"Protege contra los atrasos del proveedor con muy poco inventario extra.",g:1,day:5},
+ {k:"ext",t:"Preparar el cambio de modelo mientras la máquina trabaja",cl:"Tener listas las herramientas y el fixture antes de parar.",c:200,ty:["mec","ens"],ap:s=>{s.mod.coM*=.6},r:"Cambio de modelo −40 %: es el primer paso de SMED, pasar actividades internas a externas.",g:1,day:6},
+ {k:"ergo",t:"Mesa de altura ajustable",cl:"Para no trabajar agachados todo el turno.",c:350,ty:["ens","emp"],ap:s=>{s.mod.riskM*=.7;s.mod.ct-=1},r:"Riesgo ergonómico −30 % y un poco más rápido: la ergonomía también es productividad.",g:1,day:4}];
+
+function pc(v){return Math.round(v*100)+" %"}
+function money(v){return (v<0?"−":"")+"$"+Math.round(Math.abs(v)).toLocaleString("es-CR")}
+
+/* ================= estado ================= */
+let S=null,D=null;
+function newD(){return{t:0,ord:0,del:0,rev:0,c:{mat:0,op:0,tr:0,hold:0,claim:0,late:0,saf:0},capex:0,invI:0,lt:0,ltn:0,tst:0,tg:0,scrap:0,cl:0,dist:0,fails:0,miss:0,rel:0,
+  acc:0,nm:0,cos:0,aud:0,bonus:0,qI:[0,0,0,0,0],evs:[]}}
+function newGame(){
+  S={v:2,day:1,t:0,abs:0,money:30000,seed:12345,nid:1,st:[],tr:[],trq:[],fg:[],kan:[0,0,0,0],back:0,bk:{A:0,B:0},oacc:0,defMul:1,takt:60,best:{},spd:2,scrap:0,
+    fl:4,flBusy:[],flStop:0,mr:0,walk:0,prox:0,andon:0,cover:{mec:0,ens:0,pru:0,emp:0},lot:20,relP:"A",relN:0,kzN:1,
+    g:{mttrM:1,matC:MAT,rawBuf:2,opExtra:0,flRisk:1},ideas:[],used:[],ev:[],supply:0,pwr:0,noAcc:0};
+  D=newD();S.D=D;
+  addSt("mec",2,8,true);addSt("ens",14,1,true);addSt("pru",5,2,true);addSt("emp",10,9,true);
+}
+function srnd(){let t=S.seed=(S.seed+0x6D2B79F5)|0;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}
+function gauss(){return Math.sqrt(-2*Math.log(srnd()+1e-12))*Math.cos(2*Math.PI*srnd())}
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+.3275911*x);return s*(1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x))}
+const Phi=x=>.5*(1+erf(x/Math.SQRT2));
+function addSt(ty,i,j,free){const s={id:S.nid++,ty,i,j,q:[],busy:null,rem:0,held:null,fail:0,inst:free?0:INST,up:{s5:0,py:0,tpm:0,smed:0},k:newK(),num:0,
+  stop:0,why:"",kzUp:null,co:0,cur:"A",saf:{ra:0,eng:0,adm:0,epp:0},mod:{ct:0,defM:1,mtbfM:1,riskM:1,coM:1},dr:0,spc:[],pc:0,op:"ok"};
+  s.num=1+Math.max(0,...S.st.filter(o=>o.ty===ty).map(o=>o.num));S.st.push(s);return s}
+function newK(){return{tot:0,up:0,run:0,prod:0,bad:0,blk:0,stv:0,down:0,co:0}}
+const nm=s=>TY[s.ty].n+" "+s.num;
+const scen=s=>[-18+2*s.i,-10+2*s.j];
+const ctOf=s=>Math.max(TY[s.ty].ct*.5,TY[s.ty].ct*UPG.s5.m[s.up.s5]+s.mod.ct)*(s.op==="temp"?1.3:1);
+const defOf=s=>TY[s.ty].def*(s.ty==="mec"?S.defMul:1)*UPG.py.m[s.up.py]*s.mod.defM*(s.op==="temp"?2:1);
+const mtbfOf=s=>TY[s.ty].mtbf*UPG.tpm.m[s.up.tpm]*s.mod.mtbfM;
+const coOf=s=>Math.round(TY[s.ty].co*UPG.smed.m[s.up.smed]*s.mod.coM);
+const driftDef=m=>Phi(-(4-m))+Phi(-(4+m));
+function hzRes(s){return TY[s.ty].hz.map(([n,sv,p])=>{const P=Math.max(1,p-(s.saf.eng?2:0)-(s.saf.adm?1:0)),Sv=Math.max(1,sv-(s.saf.epp?1:0));return{n,S:sv,P:p,Sr:Sv,Pr:P,R:Sv*P,R0:sv*p}})}
+function riskMult(s){const h=hzRes(s);return h.reduce((a,x)=>a+x.R,0)/h.reduce((a,x)=>a+x.R0,0)*s.mod.riskM*(s.op==="temp"?1.5:1)}
+const byId=id=>S.st.find(s=>s.id===id);
+function canPlace(i,j,self){if(i<2||i>16||j<0||j>10)return false;return !S.st.some(o=>o!==self&&Math.abs(o.i-i)<2&&Math.abs(o.j-j)<2)}
+const flCap=()=>S.fl+(S.mr?3:0);
+function coverUsed(ty){return S.st.filter(s=>s.ty===ty&&s.op==="cub").length}
+
+/* ================= simulación (pasos de 1 s) ================= */
+function pay(k,v){D.c[k]+=v;S.money-=v}
+function incoming(s){let n=0;for(const r of S.tr)if(r.d===s.id)n++;for(const r of S.trq)if(r.d===s.id)n++;return n}
+function stageCount(sg){let n=0;if(sg===4)n=S.fg.length;else if(sg>0)for(const s of S.st)if(TY[s.ty].sg===sg)n+=s.q.length;
+  if(sg===0)for(const s of S.st)if(s.ty==="mec")n+=s.q.length;for(const r of S.tr)if(r.sg===sg)n++;for(const r of S.trq)if(r.sg===sg)n++;return n}
+function choose(sg,from,p){let best=null,bs=1e9;for(const s of S.st){if(TY[s.ty].sg!==sg)continue;const c=scen(s);
+  const lp=s.q.length?s.q[s.q.length-1].p:s.busy?s.busy.p:s.cur;const sc=(p&&lp&&lp!==p&&TY[s.ty].co?1.5:0)+s.q.length+incoming(s)+(s.busy?1:0)+(s.fail>0?4:0)+(s.stop>0?5:0)+(s.inst>0?6:0)+(Math.abs(c[0]-from[0])+Math.abs(c[1]-from[1]))*.01;if(sc<bs){bs=sc;best=s}}return best}
+function send(it,from,dest){const to=dest?scen(dest):SHIP;const d=Math.abs(to[0]-from[0])+Math.abs(to[1]-from[1]);
+  const r={it,f:[from[0],from[1]],to:[to[0],to[1]],d:dest?dest.id:-1,sg:dest?TY[dest.ty].sg:4,t:0,T:d/1.0+10+(S.mr?15:0),L:d};
+  if(!S.flStop&&S.flBusy.length<flCap())dispatch(r);else S.trq.push(r)}
+function dispatch(r){S.tr.push(r);S.flBusy.push(S.abs+Math.round(r.T+r.L*.5*(S.mr?.5:1)));pay("tr",r.L*TRC*(S.mr?.5:1));D.dist+=r.L;
+  if(F("acc")){const p=r.L/90000*(S.walk?.5:1)*(S.prox?.4:1)*S.g.flRisk;const u=srnd();
+    if(u<p)flAccident();else if(u<p*7){D.nm++;radio("nmf","⚠️ Casi accidente: un montacargas casi atropella a un peatón. Más metros recorridos = más exposición.",2400)}}}
+function fgCount(p){let n=0;for(const it of S.fg)if((it.p||"A")===p)n++;for(const r of S.tr)if(r.sg===4&&(r.it.p||"A")===p)n++;for(const r of S.trq)if(r.sg===4&&(r.it.p||"A")===p)n++;return n}
+function tryPush(s,it){const sg=TY[s.ty].sg+1,lim=S.kan[sg-1];if(lim&&(sg===4&&F("prod2")?fgCount(it.p||"A"):stageCount(sg))>=lim)return false;
+  if(sg===4){send(it,scen(s),null);return true}const d=choose(sg,scen(s),it.p);if(!d){radio("miss"+sg,`⛔ No hay ninguna estación de ${TY[ORD[sg]].n}: el flujo está detenido.`,1800);return false}send(it,scen(s),d);return true}
+function nextProd(){if(!F("prod2"))return"A";S.relN++;const L=S.relP==="A"?S.lot:Math.max(1,Math.round(S.lot*.67));if(S.relN>L){S.relN=1;S.relP=S.relP==="A"?"B":"A"}return S.relP}
+function step(){
+  S.t++;S.abs++;D.t++;
+  // pedidos del cliente
+  S.oacc++;if(S.oacc>=S.takt){S.oacc-=S.takt;D.ord++;const p=F("prod2")&&srnd()<.4?"B":"A";S.bk[p]++;S.back++}
+  // eventos
+  for(const e of S.ev)if(!e.done&&S.t>=e.t){e.done=1;fireEv(e.k)}
+  if(S.pwr>0)S.pwr--;
+  // montacargas
+  if(S.flStop>0)S.flStop--;else{if(S.flBusy.length){const a=S.abs;S.flBusy=S.flBusy.filter(e=>e>a)}while(S.trq.length&&S.flBusy.length<flCap())dispatch(S.trq.shift())}
+  // material a Mecanizado (supermercado)
+  if(S.supply>0)S.supply--;else for(const s of S.st)if(s.ty==="mec"&&s.inst<=0&&s.q.length+incoming(s)+(s.busy?1:0)<S.g.rawBuf){const it={b:0,t0:S.abs,c:0,p:nextProd()};pay("mat",S.g.matC);D.rel++;send(it,RECV,s)}
+  // transporte
+  for(let k=S.tr.length-1;k>=0;k--){const r=S.tr[k];r.t++;if(r.t<r.T)continue;S.tr.splice(k,1);
+    if(r.d===-1){S.fg.push(r.it);continue}const s=byId(r.d);if(s){s.q.push(r.it);continue}
+    const alt=choose(r.sg,r.to);if(alt)send(r.it,r.to,alt);else{D.scrap++;S.scrap++}}
+  // estaciones (de la última etapa hacia la primera)
+  const accOn=F("acc"),drOn=F("drift"),p2=F("prod2");
+  for(let g=3;g>=0;g--)for(const s of S.st){if(TY[s.ty].sg!==g)continue;
+    if(s.inst>0){s.inst--;continue}const k=s.k;k.tot++;
+    if(S.pwr>0){k.down++;continue}
+    if(s.stop>0){s.stop--;k.down++;if(s.stop<=0)endStop(s);continue}
+    if(s.fail>0){s.fail--;k.down++;continue}
+    if(s.co>0){s.co--;k.down++;k.co++;continue}
+    k.up++;
+    if(s.held){if(tryPush(s,s.held))s.held=null;else{k.blk++;continue}}
+    if(s.busy){s.rem--;k.run++;
+      if(srnd()<1/mtbfOf(s)){s.fail=Math.round(MTTR*(S.andon?.6:1)*S.g.mttrM*(.6+.8*srnd()));D.fails++;radio("f"+s.id,`🔧 ${nm(s)} está en falla (≈${Math.round(s.fail/60)} min). ${s.up.tpm?"":"TPM reduce estas paradas."}${S.andon?"":" Con andon la respuesta es más rápida."}`,2400)}
+      if(accOn){const rate=TY[s.ty].ar*riskMult(s)/3600,u=srnd();if(u<rate){accident(s);continue}else if(u<rate*7)nearMiss(s)}
+      if(s.rem<=0){const it=s.busy;s.busy=null;k.prod++;
+        if(s.ty==="pru"){D.tst++;if(!it.b)D.tg++;if(it.b&&srnd()<.97){D.scrap++;S.scrap++;k.bad++;continue}}
+        else{let pd=defOf(s);if(drOn&&s.ty==="mec"){pd+=driftDef(s.dr);s.dr+=.007+.003*gauss();s.dr=Math.max(0,s.dr);s.pc++;
+            if(s.pc%8===0){const xb=+(s.dr+gauss()*.5).toFixed(2);s.spc.push(xb);if(s.spc.length>25)s.spc.shift();
+              if(xb>1.5)radio("spc"+s.id,`📈 ${nm(s)}: un punto salió del límite de control en la carta X̄. El proceso cambió: ajusta la herramienta antes de que salgan defectos.`,3600)}}
+          if(srnd()<pd){it.b=1;k.bad++}}
+        it.c=g+1;if(!tryPush(s,it))s.held=it}continue}
+    if(s.q.length){if(p2&&s.q[0].p!==s.cur){s.cur=s.q[0].p;s.co=coOf(s);D.cos++;if(s.co>0){radio("co"+s.id,`🔄 ${nm(s)} cambia al modelo ${s.cur}: ${Math.round(s.co/60)} min parada por cambio de formato.`,3000);continue}}
+      s.busy=s.q.shift();s.rem=ctOf(s)}else k.stv++}
+  // entregas
+  for(const p of["A","B"])while(S.bk[p]>0){const ix=S.fg.findIndex(it=>(it.p||"A")===p);if(ix<0)break;const it=S.fg.splice(ix,1)[0];S.bk[p]--;S.back--;
+    D.del++;D.rev+=PRICE;S.money+=PRICE;D.lt+=S.abs-it.t0;D.ltn++;
+    if(it.b){D.cl++;pay("claim",CLAIM);radio("cl","😠 Un cliente recibió una unidad defectuosa: reclamo de $50. Los defectos que escapan son los más caros.",3600)}}
+  // costos que corren con el tiempo
+  const inv=wipNow()+S.fg.length;D.invI+=inv;pay("hold",inv*HOLD/3600);pay("op",(S.st.length*OPC+S.fl*FLOP+S.g.opExtra)/DAY);
+  if(S.t%10===0)for(let q=0;q<5;q++)D.qI[q]+=stageCount(q)*10;
+  if(S.t%60===0)watch();
+}
+function endStop(s){const w=s.why;s.why="";
+  if(w==="kz"){s.up[s.kzUp]=Math.min(2,s.up[s.kzUp]+1);radio("kz"+s.id,`🧑‍🔧 Terminó el evento kaizen en ${nm(s)}: ${UPG[s.kzUp].n} nivel ${s.up[s.kzUp]} sin gastar dinero.`,0);s.kzUp=null}
+  if(w==="adj"){s.dr=0;radio("adj"+s.id,`🔧 ${nm(s)}: herramienta ajustada, el proceso vuelve al centro.`,0)}
+  if(w==="ra"){s.saf.ra=1;radio("ra"+s.id,`📋 Evaluación de riesgos lista en ${nm(s)}. Revisa la pestaña 🦺 Seguridad para ver los peligros y sus controles.`,0)}
+  if(w==="eng"){s.saf.eng=1;radio("eng"+s.id,`🛡️ Guarda instalada en ${nm(s)}: la probabilidad de accidente bajó.`,0)}
+  if(w==="acc")radio("acc2"+s.id,`🚑 ${nm(s)} vuelve a operar después de la investigación del accidente.`,0)}
+function accident(s){const h=hzRes(s);let tot=h.reduce((a,x)=>a+x.R,0),u=srnd()*tot,hz=h[0];for(const x of h){u-=x.R;if(u<=0){hz=x;break}}
+  s.stop=3600;s.why="acc";D.acc++;pay("saf",ACCC);
+  const cov=S.cover[s.ty]>coverUsed(s.ty);s.op=cov?"cub":"temp";
+  showAcc(`🚑 Accidente en ${nm(s)}`,`<p><b>${hz.n}.</b> El operador fue atendido y se fue a casa. La estación queda detenida <b>1 hora</b> para la investigación y el accidente cuesta <b>$${ACCC.toLocaleString("es-CR")}</b>.</p>
+   <p>${cov?"Un operador polivalente entrenado cubre el puesto.":"No hay operador polivalente entrenado para este puesto: lo cubre un <b>temporal sin entrenamiento</b> (más lento, más defectos y más riesgo)."}</p>
+   <div class="lesson">🦺 ${s.saf.ra?"Revisa los controles en la pestaña Seguridad: empieza por los de ingeniería.":"Esta estación no tenía evaluación de riesgos. Hazla en la pestaña 🦺 Seguridad para ver qué controles aplicar."}</div>`)}
+function nearMiss(s){const h=hzRes(s).sort((a,b)=>b.R-a.R)[0];D.nm++;radio("nm"+s.id,`⚠️ Casi accidente en ${nm(s)}: ${h.n.toLowerCase()}. Es un aviso: evalúa el riesgo antes de que ocurra un accidente.`,3600)}
+function flAccident(){D.acc++;pay("saf",ACCC);S.flStop=1200;
+  showAcc("🚑 Atropello con montacargas",`<p>Un montacargas golpeó a un compañero en un cruce. Todos los montacargas se detienen <b>20 minutos</b> para la investigación y el accidente cuesta <b>$${ACCC.toLocaleString("es-CR")}</b>.</p>
+   <div class="lesson">🦺 Cada metro de montacargas es exposición. Acerca las estaciones, demarca pasillos peatonales o instala sensores de proximidad (🏭 Planta).</div>`)}
+const EVS={prov:"🚚 El proveedor viene atrasado: 45 min sin materia prima. El supermercado de Mecanizado es tu único colchón.",
+  corte:"⚡ Corte eléctrico: toda la planta se detiene 10 minutos.",urg:"📞 Pedido urgente: el cliente pide 15 unidades extra para hoy.",aud:""};
+function fireEv(k){D.evs.push(k);
+  if(k==="prov")S.supply=2700;if(k==="corte")S.pwr=600;if(k==="urg"){S.bk.A+=15;S.back+=15;D.ord+=15}
+  if(k==="aud"){const ok=S.st.filter(s=>s.up.s5>0&&s.saf.ra).length/Math.max(1,S.st.length);
+    if(ok>=.75){D.aud=1000;S.money+=1000;radio("aud",`🧾 Auditoría del cliente: la planta está ordenada y con riesgos evaluados. ¡Bono de $1 000!`,0)}
+    else{D.aud=-500;pay("saf",500);radio("aud",`🧾 Auditoría del cliente: hallazgos por falta de 5S y de evaluaciones de riesgo. Multa de $500.`,0)}return}
+  radio("ev"+k,EVS[k],0)}
+function wipNow(){let n=S.tr.length+S.trq.length;for(const s of S.st)n+=s.q.length+(s.busy?1:0)+(s.held?1:0);return n}
+function oeeOf(s){const k=s.k;if(k.tot<60||k.up<1)return null;const A=k.up/k.tot,P=Math.min(1,ctOf(s)*k.prod/k.up),Q=k.prod?(k.prod-k.bad)/k.prod:1;return{A,P,Q,o:A*P*Q}}
+function KP(){let os=0,on=0;for(const s of S.st){const o=oeeOf(s);if(o){os+=o.o;on++}}
+  const cost=Object.values(D.c).reduce((a,b)=>a+b,0);const ns=Math.max(1,S.st.length);
+  return{otd:D.ord?D.del/D.ord:1,del:D.del,ord:D.ord,back:S.back,wip:wipNow(),fg:S.fg.length,inv:D.t?D.invI/D.t:0,lt:D.ltn?D.lt/D.ltn/60:0,ltn:D.ltn,
+    pf:D.rev-cost+D.aud,rev:D.rev,cost,fpy:D.tst?D.tg/D.tst:1,tst:D.tst,cl:D.cl,oee:on?os/on:0,dist:D.dist,scrap:D.scrap,
+    acc:D.acc,nm:D.nm,ra:S.st.filter(s=>s.saf.ra).length/ns,red:S.st.reduce((a,s)=>a+hzRes(s).filter(h=>h.R>=15).length,0),cos:D.cos,trq:S.trq.length}}
+function watch(){
+  for(const s of S.st)if(TY[s.ty].sg>0&&s.q.length>=12)radio("q"+s.id,`📻 Se acumulan ${s.q.length} piezas frente a ${nm(s)}: ahí está tu restricción (o un kanban que falta).`,5400);
+  if(S.fg.length>=25)radio("fg",`📦 Hay ${S.fg.length} unidades terminadas sin pedido. Eso es sobreproducción: el desperdicio que esconde a todos los demás.`,5400);
+  if(S.back>=15)radio("bk",`⏰ Hay ${S.back} pedidos atrasados. Revisa en 📊 Flujo qué etapa no alcanza el takt.`,5400);
+  if(S.money<0)radio("mn","💸 La caja está en negativo: no podrás invertir hasta recuperarte.",7200);
+  if(S.trq.length>=6)radio("trq",`🚜 Hay ${S.trq.length} piezas esperando montacargas. Compra otro, acerca las estaciones o pon un tren logístico (🏭 Planta).`,5400);
+  if(F("prod2")&&S.kan[3]){const e=S.st.find(s=>s.ty==="emp"&&s.held);if(e){const p=e.held.p||"A",o=p==="A"?"B":"A";if(S.bk[o]>3&&S.bk[p]===0)radio("fgmix",`📦 El andén está lleno del modelo ${p}, pero el cliente espera el ${o}. Con lotes grandes el kanban de producto terminado debe ser mayor que el lote, o baja el lote con SMED.`,5400)}}
+  const bl=S.st.find(s=>s.held&&S.kan[TY[s.ty].sg]);if(bl)radio("kb",`🟧 ${nm(bl)} espera porque el kanban está lleno. ¡Así se ve un sistema jalado: no produce lo que nadie pidió!`,10800);
+  const pr=S.st.filter(s=>s.ty==="emp").reduce((a,s)=>a+s.k.prod,0);if(D.t>3600&&D.dist/Math.max(1,pr)>120)radio("sp","🍝 Los montacargas recorren más de 120 m por unidad. Acerca las estaciones en el orden del proceso.",10800);
+}
+
+/* ================= radio de planta ================= */
+const RAD={};
+function radio(key,msg,cool){if(RAD[key]!==undefined&&S.abs-RAD[key]<cool)return;RAD[key]=S.abs;if(typeof document==="undefined"||!$("#radio"))return;
+  const e=document.createElement("div");e.className="msg";e.textContent=msg;const box=$("#radio");box.prepend(e);
+  while(box.children.length>2)box.lastChild.remove();setTimeout(()=>{e.style.opacity=0;setTimeout(()=>e.remove(),700)},9000);tone(660,.12,.05,"sine")}
+/* ================= escena estática ================= */
+/* ---------- escena estática (horneada) ---------- */
+const SV=[],SVT=[],OB=[];const TM=new Float32Array(16),NMb=new Float32Array(9);
+function bake(dst,tris,m,col){normalMat(NMb,m);for(let i=0;i<tris.length;i+=6){const x=tris[i],y=tris[i+1],z=tris[i+2],nx=tris[i+3],ny=tris[i+4],nz=tris[i+5];
+  dst.push(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14]);
+  const a=NMb[0]*nx+NMb[3]*ny+NMb[6]*nz,b=NMb[1]*nx+NMb[4]*ny+NMb[7]*nz,c=NMb[2]*nx+NMb[5]*ny+NMb[8]*nz,l=Math.hypot(a,b,c)||1;
+  dst.push(a/l,b/l,c/l,col[0],col[1],col[2])}}
+function B(x,y,z,w,h,d,col,ry=0,dst=SV){bake(dst,BOX,trs(TM,x,y,z,ry,0,0,w,h,d),C(col))}
+function Bf(x,z,w,h,d,col,ry=0,y0=0,dst=SV){B(x,y0+h/2,z,w,h,d,col,ry,dst)}
+function Cy(x,y,z,r,h,col,rx=0,rz=0,ry=0){bake(SV,CYL,trs(TM,x,y,z,ry,rx,rz,r*2,h,r*2),C(col))}
+function Sp(x,y,z,kx,ky,kz,col){bake(SV,SPH,trs(TM,x,y,z,0,0,0,kx,ky,kz),C(col))}
+function ob(x,z,w,d,h){OB.push([x-w/2,x+w/2,z-d/2,z+d/2,h])}
+
+function staticScene(){
+  B(0,-.06,0,140,.1,110,"#47515b");
+  for(let x=-60;x<=60;x+=6)B(x,-.005,26,.15,.01,6,"#c9d2db");
+  B(0,0,0,40,.04,24,"#aab3bb");
+  B(-18,.025,0,4,.02,24,"#9c8a6c");B(18,.025,0,4,.02,24,"#7f9f88");
+  for(let i=0;i<=16;i++)B(-16+2*i,.028,0,.04,.01,24,"#8e98a2");
+  for(let j=0;j<=12;j++)B(0,.028,-12+2*j,32,.01,.04,"#8e98a2");
+  B(-16,.03,0,.18,.012,24,"#f2c21b");B(16,.03,0,.18,.012,24,"#f2c21b");
+  const wall=(x,z,w,d)=>Bf(x,z,w,1.1,d,"#6b7785");
+  wall(0,-12.15,40.6,.3);wall(0,12.15,40.6,.3);
+  for(const sx of[-1,1]){wall(sx*20.15,-7.25,.3,9.5);wall(sx*20.15,7.25,.3,9.5);B(sx*20.15,2.6,0,.3,.3,5,"#f2c21b")}
+  for(const[x,z]of[[-20.15,-12.15],[20.15,-12.15],[-20.15,12.15],[20.15,12.15]])Bf(x,z,.7,3.2,.7,"#56636f");
+  // recepción: racks con material
+  for(const z of[-9,-5,5,9]){for(const dx of[-.9,.9])for(const dz of[-1.5,1.5])Bf(-19.2+dx*.0,z+dz,.12,2.6,.12,"#2b6cb0");
+    for(const y of[.15,1.25,2.35]){B(-19.2,y,z,1.1,.08,3.1,"#f28c28");for(const dz of[-1,0,1])Bf(-19.2,z+dz,.8,.7,.8,"#c69c6d",0,y+.04)}}
+  // embarque: muelle y andén
+  for(const z of[-9,-5,5,9])B(19.3,.06,z,1.2,.12,3,"#5b6672");
+  // camiones en los muelles
+  const truck=(x,dir,col)=>{Bf(x,0,2.6,3.0,6.5,"#e8ecef",0,.7);Bf(x+dir*4.3,0,2.6,2.4,2.2,col,0,.6);B(x+dir*5.42,1.9,0,.05,.9,2.2,"#1b2a3a");
+    for(const zz of[-2.4,1.8])for(const sx of[-1,1])bake(SV,CYL,trs(TM,x+sx*1.25,.45,zz,0,0,Math.PI/2,.9,.3,.9),C("#1d2126"))};
+  truck(-24.2,-1,"#2b6cb0");truck(24.2,1,"#0a7d5a");
+  // oficina y comedor fuera del área (decoración)
+  Bf(0,-16.5,10,3,4,"#3e4a56");B(0,1.6,-14.45,8,1.2,.05,"#9fd3ff");
+  Bf(-30,18,6,.1,8,"#2f855a");Bf(30,-18,6,.1,8,"#2f855a");
+}
+staticScene();
+const STAT=mkMesh(new Float32Array(SV),true);
+
+/* ================= dibujo ================= */
+const POOL=[];let pi=0;function pm(){if(pi>=POOL.length)POOL.push(new Float32Array(16));return POOL[pi++]}
+const TMP=new Float32Array(16),NMt=new Float32Array(9),IDT=trs(new Float32Array(16),0,0,0,0,0,0,1,1,1),WHITE=[1,1,1],ZERO=[0,0,0];
+function P(par,x,y,z,ry=0,rx=0,rz=0,kx=1,ky=1,kz=1){const o=pm();trs(TMP,x,y,z,ry,rx,rz,kx,ky,kz);if(par)mul(o,par,TMP);else o.set(TMP);return o}
+let curV=null;const TQ=[];
+function draw(m,mesh,col,em,a){normalMat(NMt,m);gl.uniformMatrix4fv(U.uM,false,m);gl.uniformMatrix3fv(U.uNM,false,NMt);gl.uniform3fv(U.uCol,col);gl.uniform3fv(U.uEm,em||ZERO);gl.uniform1f(U.uA,a);
+  if(curV!==mesh){gl.bindVertexArray(mesh.vao);curV=mesh}gl.drawArrays(gl.TRIANGLES,0,mesh.n)}
+function part(mesh,par,x,y,z,kx,ky,kz,col,em,ry=0,rx=0,rz=0,a=1){const m=P(par,x,y,z,ry,rx,rz,kx,ky,kz);
+  if(a<1){const dx=m[12]-cam.e[0],dy=m[13]-cam.e[1],dz=m[14]-cam.e[2];TQ.push([m,mesh,C(col),em,a,dx*dx+dy*dy+dz*dz])}else draw(m,mesh,C(col),em,1)}
+function shadow(x,z,kx,kz,y=0){part(CYLM,null,x,y+.025,z,kx,.01,kz,"#000000",null,0,0,0,.26)}
+const EMB=[.1,.35,1],EMO=[1.6,.7,.1],EMY=[1.2,.9,.1],EMR=[1.3,.1,.1],EMG=[.1,1.0,.3],EMW=[.9,.9,.9];
+
+function person(x,y,z,h,o){const b=P(null,x,y,z,h);const sw=Math.sin(o.ph||0)*.55*(o.mv||0),sk=o.skin||"#d9a77e";
+  for(const s of[-1,1]){const J=P(b,s*.12,.86,0,0,sw*s,0);part(BOXM,J,0,-.4,0,.18,.8,.22,o.pants);part(BOXM,J,0,-.83,.05,.2,.1,.32,"#22272e")}
+  part(BOXM,b,0,1.2,0,.5,.66,.28,o.shirt);if(o.vest){part(BOXM,b,0,1.22,0,.53,.46,.31,o.vest);part(BOXM,b,0,1.14,0,.54,.06,.32,"#e8ecef")}
+  for(const s of[-1,1]){const J=P(b,s*.33,1.48,0,0,-sw*s+(o.arm||0),0);part(BOXM,J,0,-.3,0,.14,.62,.16,o.shirt);part(SPHM,J,0,-.64,0,.13,.13,.13,sk)}
+  part(SPHM,b,0,1.75,0,.32,.34,.32,sk);
+  if(o.helm){part(SPHM,b,0,1.86,0,.37,.24,.39,o.helm);part(BOXM,b,0,1.83,.18,.3,.03,.1,o.helm)}else part(SPHM,b,0,1.83,-.02,.33,.2,.33,o.hair||"#2a2018");
+  if(o.ppe){part(BOXM,b,0,1.76,.155,.28,.07,.04,"#1f2a33");for(const s of[-1,1])part(CYLM,b,s*.17,1.75,0,.13,.08,.13,"#d64545",null,0,0,Math.PI/2)}
+  shadow(x,z,.9,.9,y)}
+
+const cam={t:[0,0,1],yaw:0,pitch:.98,dist:44,e:[0,30,30]};
+const PJ=new Float32Array(16),VW=new Float32Array(16),VPm=new Float32Array(16),IVP=new Float32Array(16);
+function crew(x,z,busy,t,ph,col){person(x,0,z,Math.PI,{shirt:col||"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b",arm:busy?.9+.35*Math.sin(t*6+ph):.15})}
+function drawStation(s,t,sel){const[x,z]=scen(s),ty=TY[s.ty],b=P(null,x,0,z);const busy=!!s.busy&&s.fail<=0&&s.inst<=0&&s.stop<=0&&s.co<=0&&S.pwr<=0;const ph=s.id*1.7;
+  part(BOXM,b,0,.03,0,3.8,.06,3.8,sel?"#ffd34d":"#6b7785",sel?[.35,.28,.02]:null);
+  part(BOXM,b,0,.065,1.45,3.2,.02,.6,"#2f855a");
+  if(s.ty==="mec"){part(BOXM,b,0,1.0,-.4,2.7,2.0,2.0,"#3e6db5");part(BOXM,b,-.3,1.25,.61,1.5,.85,.04,"#14202c",busy?[.08,.18,.3]:null);
+    part(BOXM,b,0,2.1,-.4,2.1,.2,1.6,"#2f5591");part(BOXM,b,1.12,1.3,.66,.36,.6,.1,"#1d2126");part(BOXM,b,1.12,1.42,.72,.26,.22,.02,"#1b3d2a",[.1,.5,.25]);
+    if(busy)part(CYLM,b,-.3,1.3+.12*Math.sin(t*20),.1,.12,.5,.12,"#e6edf3",[.6,.6,.6])}
+  else if(s.ty==="ens"){part(BOXM,b,0,.85,-.3,2.8,.12,1.5,"#8a6a3a");for(const sx of[-1.25,1.25])for(const sz of[-.9,.3])part(BOXM,b,sx,.42,sz,.1,.84,.1,"#3b4048");
+    part(BOXM,b,-.4,1.12,-.3,.8,.42,.7,ITC[2]);
+    const r=busy?Math.sin(t*2.2+ph)*.9:0,j1=P(b,.85,.92,-.75,r);part(CYLM,j1,0,.15,0,.5,.3,.5,"#f59e0b");
+    const j2=P(j1,0,.3,0,0,.55+(busy?.3*Math.sin(t*3.1+ph):0));part(BOXM,j2,0,.5,0,.2,1.0,.2,"#f59e0b");
+    const j3=P(j2,0,1.0,0,0,1.25);part(SPHM,j2,0,1.0,0,.26,.26,.26,"#3b4048");part(BOXM,j3,0,.4,0,.15,.8,.15,"#f6b84a");part(BOXM,j3,0,.85,0,.3,.12,.3,"#3b4048")}
+  else if(s.ty==="pru"){part(BOXM,b,0,1.1,-.45,2.5,2.2,1.6,"#6d46b0");part(BOXM,b,0,.85,.36,1.5,1.3,.04,"#1a1326");
+    const ok=busy&&Math.sin(t*3+ph)>-.6;part(BOXM,b,0,1.95,.37,1.1,.42,.04,"#0b1a12",busy?(ok?[.1,.75,.3]:[.8,.1,.1]):[.02,.06,.03]);
+    if(busy)for(const sx of[-.7,.7])part(BOXM,null,x+sx,.85,z+.45,.03,1.2,.03,"#c58bff",[.8,.4,1.2],0,0,0,.6)}
+  else{part(BOXM,b,0,.55,-.35,3.3,.12,1.0,"#3b4048");for(const sx of[-1.4,1.4])part(BOXM,b,sx,.27,-.35,.1,.54,.8,"#2b3036");
+    for(let k=0;k<7;k++)part(CYLM,b,-1.45+k*.48,.62,-.35,.12,.95,.12,"#9aa5b1",null,0,Math.PI/2,0);
+    if(busy){const f=1-s.rem/ctOf(s);part(BOXM,b,-1.3+2.6*f,.92,-.35,.62,.55,.62,ITC[4])}
+    part(CYLM,b,1.15,1.1,-1.15,.14,2.2,.14,"#10b981");part(BOXM,b,1.15,2.25,-.6,.2,.12,1.2,"#10b981")}
+  // semáforo de estado
+  part(CYLM,b,1.65,1.25,-1.65,.08,2.5,.08,"#2b3036");
+  const bl=Math.sin(t*7)>0;let lc="#f2c21b",le=EMY;
+  if(s.inst>0||(s.stop>0&&s.why!=="acc")){lc=bl?"#5fb4ff":"#1d3550";le=bl?EMB:null}else if(s.fail>0||s.why==="acc"||S.pwr>0){lc=bl?"#ff3b30":"#4a1210";le=bl?EMR:null}else if(s.co>0){lc=bl?"#c084fc":"#3b2357";le=bl?[.8,.3,1.2]:null}else if(s.held){lc="#ff8a1e";le=EMO}else if(busy){lc="#22c55e";le=EMG}
+  part(SPHM,b,1.65,2.6,-1.65,.34,.34,.34,lc,le);
+  // personas
+  if(s.inst<=0&&s.why!=="acc"){if(s.op==="temp")person(x,0,z+1.45,Math.PI,{shirt:"#e67e22",pants:"#2d3540",arm:busy?.9+.35*Math.sin(t*4+ph):.15});else crew(x,z+1.45,busy,t,ph,{mec:"#2f5fa8",ens:"#8a5a12",pru:"#5b3a8f",emp:"#0d7a5a"}[s.ty])}
+  if(s.why==="acc"){const pu=.75+.25*Math.sin(t*6);part(BOXM,b,0,3.4,0,.9*pu,.28*pu,.1,"#ff3b30",EMR);part(BOXM,b,0,3.4,0,.28*pu,.9*pu,.1,"#ff3b30",EMR);person(x+1.1,0,z+1.3,-Math.PI*.7,{shirt:"#f4f6f8",pants:"#1f2a33",helm:"#ff3b30",arm:.6})}
+  if(s.why==="kz"){for(let k=0;k<3;k++)person(x-1.2+k*1.2,0,z+2.2,Math.PI,{shirt:["#2f855a","#2f5fa8","#8a5a12"][k],pants:"#2d3540",helm:"#f4f6f8",arm:.4+.3*Math.sin(t*3+k)})}
+  if(s.why==="ra")person(x+1.2,0,z+1.6,Math.PI*.8,{shirt:"#f4f6f8",pants:"#2d3540",helm:"#2f855a",vest:"#34d399",arm:.9});
+  if(s.saf.eng)for(const[gx,gz,gw,gd]of[[-1.85,-.2,.06,3.2],[1.85,-.2,.06,3.2],[0,-1.85,3.7,.06]]){part(BOXM,b,gx,.7,gz,gw,.06,gd,"#f2c21b");part(BOXM,b,gx,1.2,gz,gw,.06,gd,"#f2c21b")}
+  if(s.fail>0)person(x+1.0,0,z+1.0,Math.PI*.75,{shirt:"#1f4e8c",pants:"#1f2a33",helm:"#f4f6f8",arm:.9+.4*Math.sin(t*9)});
+  if(s.inst>0){part(BOXM,b,0,1.4,0,3.7,2.8,3.7,"#ffd34d",null,0,0,0,.22);for(const[cx,cz]of[[-1.7,1.7],[1.7,1.7],[-1.7,-1.7]])part(CYLM,b,cx,.3,cz,.3,.6,.3,"#f28c28")}
+  // cola de entrada (izquierda) y pieza retenida (derecha)
+  const n=Math.min(s.q.length,12);if(s.q.length||s.ty!=="mec")part(BOXM,b,-1.55,.07,.55,.95,.12,1.25,"#b08a5a");
+  for(let k=0;k<n;k++){const it=s.q[k],L=k>>2,c=k&3;part(BOXM,b,-1.55+((c&1)-.5)*.44,.36+L*.44,.55+((c>>1)-.5)*.58,.4,.4,.5,(it.p==='B'?ITB:ITC)[it.c]||ITC[0])}
+  if(s.held){part(BOXM,b,1.55,.07,.55,.95,.12,1.25,"#b08a5a");part(BOXM,b,1.55,.4,.55,.5,.5,.5,(s.held.p==='B'?ITB:ITC)[s.held.c])}
+}
+function cart(r,t){const p=clamp((r.t-4)/Math.max(1,r.T-8),0,1),dx=r.to[0]-r.f[0],dz=r.to[1]-r.f[1],L=Math.abs(dx)+Math.abs(dz),s=p*L;
+  let x,z,h;if(s<Math.abs(dx)){x=r.f[0]+Math.sign(dx)*s;z=r.f[1];h=dx>0?Math.PI/2:-Math.PI/2}else{x=r.to[0];z=r.f[1]+Math.sign(dz)*(s-Math.abs(dx));h=dz>0?0:Math.PI}
+  if(L<.01)h=0;const lane=.55,ox=Math.cos(h)*lane,oz=-Math.sin(h)*lane;x+=ox;z+=oz;
+  const b=P(null,x,0,z,h);part(BOXM,b,0,.32,0,.85,.34,1.2,"#f2c21b");part(BOXM,b,0,.62,-.5,.8,.3,.2,"#3b4048");
+  for(const sx of[-1,1])for(const sz of[-.4,.4])part(CYLM,b,sx*.42,.16,sz,.3,.12,.3,"#1d2126",null,0,0,Math.PI/2);
+  part(BOXM,b,0,.8,.12,.62,.62,.62,(r.it.p==='B'?ITB:ITC)[r.it.c]);const blk=Math.sin(t*8+r.T)>0;part(CYLM,b,0,.88,-.5,.12,.1,.12,blk?"#ffb020":"#7a5a20",blk?EMO:null);shadow(x,z,1.2,1.5)}
+function train(t){const per=[[-15,-11],[15,-11],[15,11],[-15,11]],L=[30,22,30,22],tot=104;let d=(t*3)%tot;
+  const pos=dd=>{dd=((dd%tot)+tot)%tot;for(let k=0;k<4;k++){if(dd<=L[k]){const a=per[k],b=per[(k+1)%4],f=dd/L[k];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,Math.atan2(b[0]-a[0],b[1]-a[1])]}dd-=L[k]}return per[0].concat(0)};
+  for(let c=0;c<4;c++){const[x,z,h]=pos(d-c*1.8),b=P(null,x,0,z,h);if(c===0){part(BOXM,b,0,.55,0,1.0,.8,1.3,"#2b6cb0");part(BOXM,b,0,1.1,-.3,.9,.4,.5,"#1d2126")}else{part(BOXM,b,0,.35,0,1.0,.2,1.4,"#5b6672");part(BOXM,b,0,.7,0,.8,.5,.9,"#c69c6d")}
+    for(const sx of[-1,1])part(CYLM,b,sx*.48,.2,0,.36,.12,.36,"#1d2126",null,0,0,Math.PI/2)}}
+function render(t){
+  pi=0;TQ.length=0;
+  gl.clearColor(.118,.145,.173,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);
+  persp(PJ,45*Math.PI/180,cv.width/cv.height,.5,400);lookAt(VW,cam.e,cam.t,[0,1,0]);mul(VPm,PJ,VW);invert(IVP,VPm);
+  gl.uniformMatrix4fv(U.uVP,false,VPm);gl.uniform3fv(U.uCam,cam.e);gl.uniform3f(U.uFogC,.118,.145,.173);gl.uniform2f(U.uFog,110,260);
+  const L=[.45,.85,.35],ll=Math.hypot(...L);gl.uniform3f(U.uL,L[0]/ll,L[1]/ll,L[2]/ll);
+  curV=null;draw(IDT,STAT,WHITE,null,1);
+  for(const s of S.st)drawStation(s,t,sel===s.id);
+  for(let k=0;k<Math.min(S.tr.length,90);k++)cart(S.tr[k],t);
+  // producto terminado en el andén de embarque
+  const nf=Math.min(S.fg.length,96);for(let k=0;k<nf;k++){const c=k%2,r=(k>>1)%16,l=k>>5;part(BOXM,null,16.9+c*.9,.4+l*.8,-7.6+r*1.0,.78,.76,.82,S.fg[k].p==='B'?ITB[4]:ITC[4])}
+  if(S.walk){for(const z of[-11.3,11.3])part(BOXM,null,0,.04,z,32,.012,.9,"#2f9e5b");for(const x of[-15.4,15.4])part(BOXM,null,x,.04,0,.9,.012,22,"#2f9e5b")}
+  if(S.mr)train(t);
+  // desecho
+  part(BOXM,null,-17.8,.5,10.6,1.6,1.0,1.4,"#a3322b");const sc=Math.min(S.scrap,12);for(let k=0;k<sc;k++)part(BOXM,null,-18.3+(k%3)*.5,1.05+Math.floor(k/3)*.05,10.3+(k%2)*.5,.4,.3,.4,"#7d2a24");
+  // fantasma de construcción
+  if(ghost){const[gx,gz]=[-18+2*ghost.i,-10+2*ghost.j];part(BOXM,null,gx,1.2,gz,3.9,2.4,3.9,ghost.ok?"#34d399":"#ff4d4d",ghost.ok?[.1,.5,.25]:[.6,.1,.1],0,0,0,.35)}
+  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+  TQ.sort((a,b)=>b[5]-a[5]);for(const q of TQ)draw(q[0],q[1],q[2],q[3],q[4]);
+  gl.depthMask(true);gl.disable(gl.BLEND);
+  labels()}
+function invert(out,a){const a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7],a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15];
+  const b00=a00*a11-a01*a10,b01=a00*a12-a02*a10,b02=a00*a13-a03*a10,b03=a01*a12-a02*a11,b04=a01*a13-a03*a11,b05=a02*a13-a03*a12,b06=a20*a31-a21*a30,b07=a20*a32-a22*a30,b08=a20*a33-a23*a30,b09=a21*a32-a22*a31,b10=a21*a33-a23*a31,b11=a22*a33-a23*a32;
+  let det=b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;if(!det)return null;det=1/det;
+  out[0]=(a11*b11-a12*b10+a13*b09)*det;out[1]=(a02*b10-a01*b11-a03*b09)*det;out[2]=(a31*b05-a32*b04+a33*b03)*det;out[3]=(a22*b04-a21*b05-a23*b03)*det;
+  out[4]=(a12*b08-a10*b11-a13*b07)*det;out[5]=(a00*b11-a02*b08+a03*b07)*det;out[6]=(a32*b02-a30*b05-a33*b01)*det;out[7]=(a20*b05-a22*b02+a23*b01)*det;
+  out[8]=(a10*b10-a11*b08+a13*b06)*det;out[9]=(a01*b08-a00*b10-a03*b06)*det;out[10]=(a30*b04-a31*b02+a33*b00)*det;out[11]=(a21*b02-a20*b04-a23*b00)*det;
+  out[12]=(a11*b07-a10*b09-a12*b06)*det;out[13]=(a00*b09-a01*b07+a02*b06)*det;out[14]=(a31*b01-a30*b03-a32*b00)*det;out[15]=(a20*b03-a21*b01+a22*b00)*det;return out}
+function proj(x,y,z){const m=VPm,w=m[3]*x+m[7]*y+m[11]*z+m[15];if(w<=.1)return null;return[((m[0]*x+m[4]*y+m[8]*z+m[12])/w+1)/2*innerWidth,(1-(m[1]*x+m[5]*y+m[9]*z+m[13])/w)/2*innerHeight]}
+function pick(px,py){const nx=px/innerWidth*2-1,ny=1-py/innerHeight*2;const u=(x,y,z)=>{const m=IVP,w=m[3]*x+m[7]*y+m[11]*z+m[15];return[(m[0]*x+m[4]*y+m[8]*z+m[12])/w,(m[1]*x+m[5]*y+m[9]*z+m[13])/w,(m[2]*x+m[6]*y+m[10]*z+m[14])/w]};
+  const a=u(nx,ny,-1),b=u(nx,ny,1);if(Math.abs(a[1]-b[1])<1e-6)return null;const k=a[1]/(a[1]-b[1]);return[a[0]+(b[0]-a[0])*k,a[2]+(b[2]-a[2])*k]}
+/* ================= etiquetas ================= */
+const LBL=new Map();const ZL=[["RECEPCIÓN",-18,3.4,-10.5],["EMBARQUE",18,3.4,-10.5],["DESECHO",-17.8,1.8,10.6]];
+const zle=ZL.map(z=>{const e=document.createElement("div");e.className="lbl zl";e.textContent=z[0];$("#labels").append(e);return e});
+function labels(){const far=cam.dist>70;
+  ZL.forEach((z,i)=>{const p=proj(z[1],z[2],z[3]);const e=zle[i];if(!p){e.style.display="none";return}e.style.display="block";e.style.left=p[0]+"px";e.style.top=p[1]+"px";
+    if(i===2)e.textContent="DESECHO "+S.scrap});
+  const seen=new Set();for(const s of S.st){seen.add(s.id);let e=LBL.get(s.id);if(!e){e=document.createElement("div");e.className="lbl";$("#labels").append(e);LBL.set(s.id,e)}
+    const[x,z]=scen(s);const p=proj(x,3.3,z);if(!p){e.style.display="none";continue}e.style.display="block";e.style.left=p[0]+"px";e.style.top=p[1]+"px";
+    const st=stTxt(s);
+    const h=`${TY[s.ty].ic} ${nm(s)}`+(far?"":`<small>${st} · cola ${s.q.length}</small>`);if(e._h!==h){e.innerHTML=h;e._h=h}}
+  for(const[id,e]of LBL)if(!seen.has(id)){e.remove();LBL.delete(id)}}
+
+/* ================= audio ================= */
+let AC=null,mg=null,muted=false;
+function audioInit(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=.8;mg.connect(AC.destination)}catch(e){AC=null}}
+function tone(f,d,v,type){if(!AC||muted)return;try{const o=AC.createOscillator(),g=AC.createGain();o.type=type||"square";o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(mg);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d+.02)}catch(e){}}
+const sfx={ok:()=>{tone(523,.1,.07,"triangle");setTimeout(()=>tone(784,.14,.07,"triangle"),90)},no:()=>tone(160,.2,.07,"sawtooth"),coin:()=>{tone(988,.08,.05,"square");setTimeout(()=>tone(1319,.15,.05,"square"),70)},
+  end:()=>[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25,.07,"triangle"),i*130))};
+
+/* ================= interacción ================= */
+let mode=null,sel=null,ghost=null,TAB="m";
+function stTxt(s){let t=s.inst>0?"🔵 instalando":S.pwr>0?"⚡ sin energía":s.stop>0?({acc:"🚑 accidente",kz:"🧑‍🔧 evento kaizen",ra:"📋 evaluando riesgos",adj:"🔧 ajustando herramienta",eng:"🛡️ instalando guarda"}[s.why]||"⏸ detenida"):
+  s.fail>0?"🔴 en falla":s.co>0?"🟣 cambio de modelo":s.held?"🟧 bloqueada":s.busy?"🟢 trabajando":"🟡 esperando";
+  if(s.op==="temp")t+=" · 👤 temporal";else if(s.op==="cub")t+=" · 👥 polivalente";return t}
+function setMode(m){mode=m;ghost=null;const h=$("#hint");
+  if(!m){h.style.display="none"}else{h.style.display="flex";$("#hintt").textContent=m.build?`Toca dónde colocar ${TY[m.build].n} (${money(TY[m.build].cost)})`:`Toca el nuevo lugar para ${nm(byId(m.move))} (${money(MOVEC)})`}
+  buildBar()}
+function cellAt(w){return{i:Math.round((w[0]+18)/2),j:Math.round((w[1]+10)/2)}}
+function stAt(w){return S.st.find(s=>{const[x,z]=scen(s);return Math.abs(w[0]-x)<2&&Math.abs(w[1]-z)<2})}
+function tap(px,py){const w=pick(px,py);if(!w)return;
+  if(mode&&mode.build){const c=cellAt(w);if(placeSt(mode.build,c.i,c.j))setMode(null);return}
+  if(mode&&mode.move){const c=cellAt(w);if(moveSt(byId(mode.move),c.i,c.j))setMode(null);return}
+  const s=stAt(w);select(s?s.id:null)}
+function spend(v){if(S.money<v){sfx.no();flash("No te alcanza el dinero.");return false}S.money-=v;D.capex+=v;return true}
+function placeSt(ty,i,j){if(!canPlace(i,j)){sfx.no();flash("Ese espacio está ocupado o fuera del área de producción.");return false}
+  if(!spend(TY[ty].cost))return false;const s=addSt(ty,i,j,false);sfx.ok();select(s.id);
+  radio("b"+s.id,`🏗️ ${nm(s)} se está instalando: estará lista en 10 minutos de planta.`,0);return true}
+function moveSt(s,i,j){if(!s)return false;if(!canPlace(i,j,s)){sfx.no();flash("Ese espacio está ocupado o fuera del área de producción.");return false}
+  if(!spend(MOVEC))return false;s.i=i;s.j=j;s.inst=Math.max(s.inst,INST);sfx.ok();select(s.id);return true}
+function sellSt(s){const v=Math.round(TY[s.ty].cost*.5);S.money+=v;D.capex-=v;
+  const pend=s.q.concat(s.busy?[s.busy]:[],s.held?[s.held]:[]);S.st=S.st.filter(o=>o!==s);
+  for(const it of pend){const alt=choose(TY[s.ty].sg,scen(s));if(alt)alt.q.push(it);else{D.scrap++;S.scrap++}}
+  select(null);sfx.coin();flash(`Vendiste ${nm(s)} por ${money(v)}.`)}
+function busyStop(s){return s.stop>0||s.inst>0}
+function buyUp(s,k){const L=s.up[k];if(L>=2)return;if(!spend(UPG[k].lv[L].c))return;s.up[k]=L+1;sfx.ok();sidePanel(true)}
+function kaizen(s,k){if(S.kzN<=0){sfx.no();flash("Ya usaste los eventos kaizen de hoy.");return}if(busyStop(s)){sfx.no();flash("La estación está ocupada con otra actividad.");return}
+  if(s.up[k]>=2)return;S.kzN--;s.stop=KZT;s.why="kz";s.kzUp=k;sfx.ok();radio("kzs"+s.id,`🧑‍🔧 Evento kaizen en ${nm(s)}: el equipo detiene la estación 45 min para implementar ${UPG[k].n}.`,0);sidePanel(true)}
+function doSaf(s,k){if(k!=="ra"&&!s.saf.ra){flash("Primero haz la evaluación de riesgos.");return}if(s.saf[k])return;
+  if(SAF[k].t&&busyStop(s)){sfx.no();flash("La estación está ocupada con otra actividad.");return}
+  if(!spend(SAF[k].c))return;sfx.ok();if(SAF[k].t){s.stop=SAF[k].t;s.why=k}else s.saf[k]=1;sidePanel(true)}
+function adjust(s){if(busyStop(s)){sfx.no();flash("La estación está ocupada con otra actividad.");return}s.stop=180;s.why="adj";sfx.ok();sidePanel(true)}
+function flash(m){const e=document.createElement("div");e.className="msg";e.style.borderLeftColor="#5fb4ff";e.textContent=m;$("#radio").prepend(e);
+  while($("#radio").children.length>2)$("#radio").lastChild.remove();setTimeout(()=>{e.style.opacity=0;setTimeout(()=>e.remove(),700)},4000)}
+function select(id){if(id!==sel)TAB="m";sel=id;sidePanel(true)}
+const dots=L=>"●".repeat(L)+"○".repeat(2-L);
+function riskCls(R){return R>=15?"r":R>=8?"y":"g"}
+function spcSVG(s){const W=300,H=120,y=v=>H/2-v*(H/7)+10,pts=s.spc;const xs=i=>16+i*(W-24)/24;
+  let g=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="background:#141a20;border-radius:8px">`;
+  g+=`<line x1="12" x2="${W-4}" y1="${y(0)}" y2="${y(0)}" stroke="#34d399" stroke-width="1"/>`;
+  for(const[v,lab]of[[1.5,"LSC"],[-1.5,"LIC"]])g+=`<line x1="12" x2="${W-4}" y1="${y(v)}" y2="${y(v)}" stroke="#ff6b5e" stroke-dasharray="4 3"/><text x="${W-6}" y="${y(v)-3}" fill="#ff8a80" font-size="9" text-anchor="end">${lab}</text>`;
+  if(pts.length>1)g+=`<polyline fill="none" stroke="#9fc4ff" stroke-width="1.5" points="${pts.map((v,i)=>xs(i)+","+y(clamp(v,-2.6,3.4))).join(" ")}"/>`;
+  pts.forEach((v,i)=>{g+=`<circle cx="${xs(i)}" cy="${y(clamp(v,-2.6,3.4))}" r="3" fill="${Math.abs(v)>1.5?"#ff3b30":"#e6edf3"}"/>`});
+  return g+`<text x="14" y="12" fill="#9aa5b1" font-size="9">X̄ (cada 8 piezas)</text></svg>`}
+function sidePanel(rebuild){const el=$("#side"),s=sel&&byId(sel);if(!s){el.style.display="none";$("#radio").style.display="";$("#camc").style.display="";return}
+  el.style.display="block";if(innerWidth<640){$("#radio").style.display="none";$("#camc").style.display="none"}
+  const tabs=[["m","⚙️ Mejoras"]];if(F("acc"))tabs.push(["s","🦺 Seguridad"]);if(s.ty==="mec"&&F("drift"))tabs.push(["c","📈 Carta X̄"]);if(!tabs.some(x=>x[0]===TAB))TAB="m";
+  if(rebuild||!el._b){const ty=TY[s.ty];let body="";
+    if(TAB==="m"){body=`<div class="mut" style="margin-top:6px">Eventos kaizen disponibles hoy: <b>${S.kzN}</b> (gratis, detienen la estación 45 min)</div><div class="upl">`+
+      Object.keys(UPG).filter(k=>!UPG[k].day||S.day>=UPG[k].day).map(k=>{const L=s.up[k],u=UPG[k];
+        return`<div class="upr"><div><b>${u.n}</b> <span class="y">${dots(L)}</span><small>${L<2?"Siguiente: "+u.lv[L].d:"✔ Nivel máximo"}</small></div>${L<2?`<button class="sb" data-u="${k}">${money(u.lv[L].c)}</button><button class="sb" data-z="${k}" ${S.kzN>0?"":"disabled"}>🧑‍🔧 Kaizen</button>`:""}</div>`}).join("")+`</div>
+      <div class="row"><button class="sb" id="smv">↔ Mover<small>${money(MOVEC)} · 10 min</small></button><button class="sb" id="ssl">💲 Vender<small>recibes ${money(ty.cost*.5)}</small></button></div>`}
+    else if(TAB==="s"){if(!s.saf.ra)body=`<p class="mut">Sin evaluación no sabes qué peligros hay ni cuáles controles aplicar. Ya hubo ${s.k?D.nm:0} casi accidentes hoy en la planta.</p><button class="sb" style="width:100%" data-s="ra">📋 Hacer evaluación de riesgos<small>${money(SAF.ra.c)} · detiene 15 min</small></button>`;
+      else{const h=hzRes(s);body=`<table class="fl"><tr><th>Peligro</th><th>Inicial</th><th>Actual</th></tr>${h.map(x=>`<tr><td>${x.n}</td><td class="${riskCls(x.R0)}">${x.S}×${x.P} = ${x.R0}</td><td class="${riskCls(x.R)}"><b>${x.Sr}×${x.Pr} = ${x.R}</b></td></tr>`).join("")}</table>
+        <div class="mut">Riesgo = severidad × probabilidad (1 a 5). Verde ≤ 7 · amarillo 8 a 14 · rojo ≥ 15. Riesgo de accidente hoy: <b>${pc(riskMult(s))}</b> del inicial.</div>
+        <div class="ups">${["eng","adm","epp"].map(k=>`<button class="sb ${s.saf[k]?"own":""}" data-s="${k}" ${s.saf[k]?"disabled":""}>${SAF[k].n}<small>${s.saf[k]?"✔ aplicado":SAF[k].d+" · "+money(SAF[k].c)}</small></button>`).join("")}</div>
+        <div class="mut" style="margin-top:4px">Jerarquía: eliminar → sustituir → ingeniería → administrativos → EPP.</div>`}}
+    else{body=`<div id="sch"></div><p class="mut">Cada punto es el promedio de 4 piezas medidas. La herramienta se desgasta y el proceso se corre hacia arriba. Si un punto pasa el límite de control (LSC), el proceso cambió: ajusta antes de que lleguen los defectos.</p>
+      <button class="sb" style="width:100%" id="sadj">🔧 Ajustar herramienta<small>detiene 3 min · sin costo</small></button>`}
+    el.innerHTML=`<h3><span>${ty.ic} ${nm(s)}</span><span class="x" id="sx">✕</span></h3><div class="tabs">${tabs.map(([k,n])=>`<button class="tb ${TAB===k?"on":""}" data-t="${k}">${n}</button>`).join("")}</div><div id="sst"></div>${body}`;
+    el._b=1;$("#sx").onclick=()=>select(null);
+    el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{TAB=b.dataset.t;sidePanel(true)});
+    el.querySelectorAll("[data-u]").forEach(b=>b.onclick=()=>buyUp(s,b.dataset.u));
+    el.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>kaizen(s,b.dataset.z));
+    el.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>doSaf(s,b.dataset.s));
+    if($("#sadj"))$("#sadj").onclick=()=>adjust(s);
+    if($("#smv")){$("#smv").onclick=()=>setMode({move:s.id});$("#ssl").onclick=()=>{if(confirm(`¿Vender ${nm(s)}? Recibes ${money(ty.cost*.5)}.`))sellSt(s)}}}
+  const o=oeeOf(s),k=s.k;
+  $("#sst").innerHTML=`<div class="mut">${stTxt(s)}${s.stop>0?` (${Math.ceil(s.stop/60)} min)`:s.fail>0?` (${Math.ceil(s.fail/60)} min)`:s.inst>0?` (${Math.ceil(s.inst/60)} min)`:""}</div><div class="kg"><span>Tiempo de ciclo</span><b>${ctOf(s).toFixed(1)} s</b>
+   <span>Takt actual</span><b class="${ctOf(s)/Math.max(1,S.st.filter(x=>x.ty===s.ty).length)>S.takt?"r":"g"}">${S.takt} s</b>
+   <span>Producidas · ${s.ty==="pru"?"rechazadas":"defectos"}</span><b>${k.prod} · ${k.bad}</b><span>En cola</span><b>${s.q.length}</b>
+   <span>OEE (D × R × C)</span><b>${o?pc(o.o)+` <small class="mut">${pc(o.A)}·${pc(o.P)}·${pc(o.Q)}</small>`:"—"}</b></div>`;
+  if($("#sch"))$("#sch").innerHTML=spcSVG(s)}
+
+/* ---- barra inferior ---- */
+function pendingIdeas(){return S.ideas.filter(x=>!x.done).length}
+function buildBar(){const b=$("#bar");const ni=pendingIdeas();b.innerHTML=ORD.map(k=>`<button data-b="${k}" class="${mode&&mode.build===k?"on":""}"><i>${TY[k].ic}</i>${TY[k].n}<small>${money(TY[k].cost)} · ${TY[k].ct} s</small></button>`).join("")+
+  `<button id="bfl"><i>📊</i>Flujo<small>kanban</small></button><button id="bpl"><i>🏭</i>Planta<small>logística</small></button>`+(F("ideas")?`<button id="bid"><i>💡</i>Ideas<small>${ni?ni+" nuevas":"tablero"}</small></button>`:"")+
+  `<button id="bhelp"><i>❔</i>Ayuda<small>&nbsp;</small></button><button id="bsnd"><i>${muted?"🔇":"🔊"}</i>Sonido<small>&nbsp;</small></button>`;
+  b.querySelectorAll("[data-b]").forEach(x=>x.onclick=()=>{audioInit();setMode(mode&&mode.build===x.dataset.b?null:{build:x.dataset.b});select(null)});
+  $("#bfl").onclick=flowPanel;$("#bpl").onclick=plantPanel;if($("#bid"))$("#bid").onclick=ideasPanel;$("#bhelp").onclick=()=>help(true);$("#bsnd").onclick=()=>{muted=!muted;buildBar()}}
+$("#hintx").onclick=()=>setMode(null);
+document.querySelectorAll("#spd button").forEach(b=>b.onclick=()=>{audioInit();S.spd=+b.dataset.s;topBar()});
+$("#goalh").onclick=()=>$("#goal").classList.toggle("min");$("#kpih").onclick=()=>$("#kpi").classList.toggle("min");
+if(innerWidth<640){$("#kpi").classList.add("min")}
+/* ---- puntero y cámara ---- */
+const ptr=new Map();let drag=null,pinch=null;
+function clampT(){cam.t[0]=clamp(cam.t[0],-30,30);cam.t[2]=clamp(cam.t[2],-22,22)}
+function panBy(ax,ay,bx,by){const a=pick(ax,ay),b=pick(bx,by);if(!a||!b)return;cam.t[0]+=a[0]-b[0];cam.t[2]+=a[1]-b[1];clampT()}
+function zoomAt(f,px,py){const nd=clamp(cam.dist*f,14,125);f=nd/cam.dist;if(f===1)return;const w=pick(px,py);cam.dist=nd;
+  if(w){cam.t[0]=w[0]+(cam.t[0]-w[0])*f;cam.t[2]=w[1]+(cam.t[2]-w[1])*f;clampT()}}
+function mid(){const[a,b]=[...ptr.values()];return{x:(a.x+b.x)/2,y:(a.y+b.y)/2,d:Math.hypot(a.x-b.x,a.y-b.y)||1,a:Math.atan2(b.y-a.y,b.x-a.x),tw:0}}
+cv.addEventListener("contextmenu",e=>e.preventDefault());
+cv.addEventListener("pointerdown",e=>{audioInit();cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1)drag={lx:e.clientX,ly:e.clientY,sx:e.clientX,sy:e.clientY,moved:false,rot:e.button===2||e.button===1||e.shiftKey};else{if(drag)drag.moved=true;pinch=mid()}});
+cv.addEventListener("pointermove",e=>{
+  if(e.pointerType==="mouse"&&mode){const w=pick(e.clientX,e.clientY);if(w){const c=cellAt(w);ghost={i:c.i,j:c.j,ok:canPlace(c.i,c.j,mode.move?byId(mode.move):null)}}}
+  if(!ptr.has(e.pointerId))return;ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size>=2&&pinch){const p=mid();panBy(pinch.x,pinch.y,p.x,p.y);zoomAt(pinch.d/p.d,p.x,p.y);
+    const da=angDiff(pinch.a,p.a);p.tw=pinch.tw+da;if(Math.abs(p.tw)>.35)cam.yaw-=da;pinch=p;return}
+  if(!drag)return;const lx=drag.lx,ly=drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;
+  if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>6){drag.moved=true}if(!drag.moved)return;
+  if(drag.rot){cam.yaw-=(e.clientX-lx)*.006;cam.pitch=clamp(cam.pitch+(e.clientY-ly)*.004,.45,1.45)}
+  else panBy(lx,ly,e.clientX,e.clientY)});
+const up=e=>{if(drag&&!drag.moved&&ptr.size===1&&ptr.has(e.pointerId))tap(e.clientX,e.clientY);ptr.delete(e.pointerId);
+  if(ptr.size<2)pinch=null;if(ptr.size===1){const[q]=[...ptr.values()];drag={lx:q.x,ly:q.y,sx:q.x,sy:q.y,moved:true,rot:false}}if(!ptr.size)drag=null};
+cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",e=>{ptr.delete(e.pointerId);if(!ptr.size)drag=null;pinch=null});
+cv.addEventListener("wheel",e=>{e.preventDefault();zoomAt(Math.exp(clamp(e.deltaY,-120,120)*.0018),e.clientX,e.clientY)},{passive:false});
+let lastTap=0;cv.addEventListener("dblclick",e=>{camAnim.z+=Math.log(.6);camAnim.px=e.clientX;camAnim.py=e.clientY});
+const camAnim={z:0,y:0,px:0,py:0,home:0};
+function camBtn(k){const cx=innerWidth/2,cy=innerHeight/2;camAnim.px=cx;camAnim.py=cy;
+  if(k==="in")camAnim.z+=Math.log(.7);if(k==="out")camAnim.z+=Math.log(1/.7);if(k==="l")camAnim.y+=Math.PI/4;if(k==="r")camAnim.y-=Math.PI/4;if(k==="h")camAnim.home=1}
+const keys={};addEventListener("keydown",e=>{if(!$("#ov").hidden)return;keys[e.code]=1;
+  if(e.code==="Space"){S.spd=S.spd?0:2;topBar();e.preventDefault()}if(e.code==="Escape"){setMode(null);select(null)}
+  if(e.key==="+"||e.code==="NumpadAdd")camBtn("in");if(e.key==="-"||e.code==="NumpadSubtract")camBtn("out");if(e.code==="KeyH")camBtn("h");
+  if(/^Digit[1-4]$/.test(e.code)){setMode({build:ORD[+e.code[5]-1]});select(null)}if(e.code==="KeyK")flowPanel()});
+addEventListener("keyup",e=>{keys[e.code]=0});
+function homeView(){const p=innerWidth<innerHeight;return{d:p?Math.min(120,46*1.25*innerHeight/innerWidth):46,t:[0,0,p?7:1]}}
+function camUpdate(dt){const r=(keys.KeyQ?1:0)-(keys.KeyE?1:0);cam.yaw+=r*dt*1.4;const mx=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),mz=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);
+  if(mx||mz){const v=cam.dist*.7*dt,cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);cam.t[0]=clamp(cam.t[0]+(cy*mx+sy*mz)*v,-30,30);cam.t[2]=clamp(cam.t[2]+(-sy*mx+cy*mz)*v,-22,22)}
+  const a=Math.min(1,dt*9);if(Math.abs(camAnim.z)>.001){const s=camAnim.z*a;camAnim.z-=s;zoomAt(Math.exp(s),camAnim.px,camAnim.py)}
+  if(Math.abs(camAnim.y)>.001){const s=camAnim.y*a;camAnim.y-=s;cam.yaw+=s}
+  if(camAnim.home){const h=homeView(),k=Math.min(1,dt*6);cam.dist+=(h.d-cam.dist)*k;cam.t[0]+=(h.t[0]-cam.t[0])*k;cam.t[2]+=(h.t[2]-cam.t[2])*k;cam.yaw+=angDiff(cam.yaw,0)*k;cam.pitch+=(.98-cam.pitch)*k;
+    if(Math.abs(h.d-cam.dist)<.2&&Math.abs(cam.yaw)<.01)camAnim.home=0}
+  const cp=Math.cos(cam.pitch);cam.e=[cam.t[0]+Math.sin(cam.yaw)*cp*cam.dist,Math.sin(cam.pitch)*cam.dist,cam.t[2]+Math.cos(cam.yaw)*cp*cam.dist]}
+document.querySelectorAll("#camc button").forEach(b=>b.onclick=()=>{audioInit();camBtn(b.dataset.c)});
+function resize(){const dpr=Math.min(devicePixelRatio||1,1.6);cv.width=Math.round(innerWidth*dpr);cv.height=Math.round(innerHeight*dpr);gl.viewport(0,0,cv.width,cv.height)}
+addEventListener("resize",resize);resize();
+{const h=homeView();cam.dist=h.d;cam.t=h.t}
+
+/* ================= interfaz ================= */
+function clock(){const m=360+Math.floor(S.t/60);return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
+function topBar(){$("#dayv").textContent="Día "+S.day;$("#clk").textContent=clock();const m=$("#mny");m.firstChild.textContent=money(S.money);m.classList.toggle("neg",S.money<0);
+  document.querySelectorAll("#spd button").forEach(b=>b.classList.toggle("on",+b.dataset.s===S.spd))}
+let lastNi=-1;
+function ui(){topBar();const K=KP(),dd=dayDef(S.day);
+  const gs=dd.goals(K);const early=D.t<1800&&S.day!==4;$("#goall").innerHTML=gs.map((g,i)=>`<li class="${g[1]&&!early?"ok":""}">${i?"⭐ ":""}${g[0]} <small>(${g[2]})</small></li>`).join("")+`<li class="nt">Takt: ${S.takt} s · cierre 14:00</li>`;
+  $("#goals").textContent=(early?0:gs.filter(g=>g[1]).length)+"/3 ▾";
+  $("#kpis").textContent=pc(K.otd)+" ▾";
+  $("#kpig").innerHTML=`<span>Entregas</span><b class="${K.otd>=.95?"g":K.otd>=.85?"y":"r"}">${K.del}/${K.ord} · ${pc(K.otd)}</b><span>Pedidos atrasados</span><b class="${K.back>5?"r":""}">${K.back}${F("prod2")?` <small class="mut">A ${S.bk.A} · B ${S.bk.B}</small>`:""}</b>
+   <span>WIP · Prod. terminado</span><b>${K.wip} · <span class="${K.fg>20?"y":""}">${K.fg}</span></b><span>Tiempo de entrega</span><b>${K.ltn?K.lt.toFixed(1)+" min":"—"}</b>
+   <span>OEE planta</span><b>${K.oee?pc(K.oee):"—"}</b><span>Calidad a la primera</span><b>${K.tst?pc(K.fpy):"—"}</b><span>Utilidad del día</span><b class="${K.pf>=0?"g":"r"}">${money(K.pf)}</b>
+   <span>Montacargas</span><b>${S.flBusy.length}/${flCap()}${K.trq?` <span class="y">· ${K.trq} en espera</span>`:""}</b>`+
+   (F("acc")?`<span>Accidentes · casi acc.</span><b class="${K.acc?"r":"g"}">${K.acc} · ${K.nm}</b>`:"");
+  const ni=F("ideas")?pendingIdeas():0;if(ni!==lastNi){lastNi=ni;buildBar()}
+  if(sel)sidePanel(false)}
+
+function openOv(html){$("#pan").innerHTML=html;$("#ov").hidden=false;$("#pan").scrollTop=0}
+function closeOv(){$("#ov").hidden=true}
+function showAcc(title,body){if(typeof document==="undefined")return;sfx.no();openOv(`<h2>${title}</h2>${body}<button class="btn" id="aok">Entendido</button>`);$("#aok").onclick=closeOv}
+function flowPanel(){
+  const rows=ORD.map((k,g)=>{const ss=S.st.filter(s=>s.ty===k),n=ss.length;const ct=n?ss.reduce((a,s)=>a+ctOf(s),0)/n:TY[k].ct;const eff=n?ct/n:Infinity;
+    const r=Math.min(1.4,eff/S.takt),c=eff>S.takt?"#ff6b5e":eff>S.takt*.9?"#ffd34d":"#34d399";
+    return`<tr><td>${TY[k].ic} ${TY[k].n}</td><td>${n}</td><td><b style="color:${c}">${n?eff.toFixed(0)+" s":"—"}</b></td><td><div class="barw"><i style="width:${Math.min(100,r/1.4*100)}%;background:${c}"></i></div></td>${F("prod2")?`<td>${n?(TY[k].co?Math.round(coOf(ss[0])/60)+" min":"no aplica"):"—"}</td>`:""}</tr>`}).join("");
+  const kr=LINKS.map((l,i)=>`<tr><td>${l}</td><td>${stageCount(i+1)}</td><td><select data-k="${i}">${KANV.map(v=>`<option value="${v}" ${S.kan[i]===v?"selected":""}>${v?v+" piezas":"Sin límite (empujar)"}</option>`).join("")}</select></td></tr>`).join("");
+  openOv(`<h2>📊 Flujo de la planta</h2>
+  <h3>Balance de capacidad</h3><p class="mut">Ciclo efectivo = ciclo ÷ número de estaciones. Si supera el takt (${S.takt} s), esa etapa no alcanza la demanda.</p>
+  <table class="fl"><tr><th>Etapa</th><th>Est.</th><th>Ciclo ef.</th><th>vs. takt</th>${F("prod2")?"<th>Cambio</th>":""}</tr>${rows}</table>
+  <h3>Kanban: límite de inventario entre etapas</h3><p class="mut">Con límite, la estación de antes se detiene cuando la conexión está llena: solo se produce lo que la siguiente etapa jala.${F("prod2")?" En Empaque → Embarque el límite es por modelo (espacios del supermercado de producto terminado).":""}</p>
+  <table class="fl"><tr><th>Conexión</th><th>Ahora</th><th>Límite</th></tr>${kr}</table>
+  ${F("prod2")?`<h3>Tamaño de lote (heijunka)</h3><p class="mut">Mecanizado alterna los modelos: ${S.lot} de A y luego ${Math.max(1,Math.round(S.lot*.67))} de B (la demanda es 60/40). Lote grande = pocos cambios y mucho inventario; lote pequeño = flujo nivelado, pero necesita cambios rápidos (SMED).</p>
+   <select id="flot">${LOTV.map(v=>`<option value="${v}" ${S.lot===v?"selected":""}>Lote de ${v}</option>`).join("")}</select> <span class="mut">Cambios de modelo hoy: ${D.cos}</span>`:""}
+  <button class="btn" id="fok">Listo</button>`);
+  document.querySelectorAll("[data-k]").forEach(s=>s.onchange=()=>{S.kan[+s.dataset.k]=+s.value;sfx.ok()});
+  if($("#flot"))$("#flot").onchange=e=>{S.lot=+e.target.value;S.relN=0;sfx.ok()};
+  $("#fok").onclick=closeOv}
+
+function plantPanel(){const K=KP();const lk=d=>`<span class="mut">🔒 Se usa desde el día ${d}</span>`;
+  const item=(id,t,d,own,c)=>`<div class="upr"><div><b>${t}</b><small>${d}</small></div>${own?`<span class="g">✔</span>`:`<button class="sb" data-p="${id}">${money(c)}</button>`}</div>`;
+  const types=ORD.map(k=>{const n=S.st.filter(s=>s.ty===k).length,ab=S.st.filter(s=>s.ty===k&&s.op!=="ok").length;
+    return`<tr><td>${TY[k].ic} ${TY[k].n}</td><td>${n}</td><td><b>${S.cover[k]}</b></td><td class="${ab?"y":""}">${ab}</td><td><button class="sb" data-tw="${k}">+1 · ${money(TWIC)}</button></td></tr>`}).join("");
+  openOv(`<h2>🏭 Planta</h2>
+  <h3>🚜 Logística</h3><div class="upl">
+   <div class="upr"><div><b>Montacargas: ${S.fl}</b><small>Ocupados ${S.flBusy.length} · ${K.trq} piezas esperando · $${FLOP} por turno cada uno</small></div><button class="sb" data-p="flb">+1 · ${money(FLC)}</button>${S.fl>1?`<button class="sb" data-p="fls">−1 · +${money(FLC/2)}</button>`:""}</div>
+   ${item("mr","Tren logístico (milk run)","Ruta fija por el perímetro: +3 viajes a la vez y costo por metro −50 %, pero cada pieza espera unos 15 s al tren.",S.mr,MRC)}</div>
+  <h3>🦺 Seguridad de planta</h3>${F("acc")?`<div class="kv"><span>Accidentes hoy · casi accidentes</span><b>${K.acc} · ${K.nm}</b><span>Días seguidos sin accidentes</span><b>${S.noAcc}</b></div>`:lk(UNLOCK.acc)}
+  <div class="upl">${item("walk","Pasillos peatonales demarcados","Separan a las personas de los montacargas: riesgo de atropello −50 %.",S.walk,800)}
+   ${item("prox","Sensores de proximidad en montacargas","Frenan el montacargas si detectan a una persona: riesgo −60 %.",S.prox,2500)}</div>
+  <h3>🚨 Respuesta a problemas</h3><div class="upl">${item("andon","Sistema andon","Cualquier operador avisa una parada al instante: las reparaciones son 40 % más rápidas.",S.andon,2000)}</div>
+  <h3>👥 Personas · matriz de polivalencia</h3><p class="mut">Cada operador polivalente entrenado con TWI cubre una ausencia o lesión en ese puesto. Sin respaldo entra un temporal: 30 % más lento, doble de defectos y más riesgo.${F("abs")?"":" Las ausencias empiezan el día "+UNLOCK.abs+"; los accidentes, el día "+UNLOCK.acc+"."}</p>
+  <table class="fl"><tr><th>Puesto</th><th>Est.</th><th>Respaldos</th><th>Faltan hoy</th><th>Entrenar</th></tr>${types}</table>
+  <button class="btn" id="pok">Listo</button>`);
+  const buy={mr:()=>{if(spend(MRC))S.mr=1},walk:()=>{if(spend(800))S.walk=1},prox:()=>{if(spend(2500))S.prox=1},andon:()=>{if(spend(2000))S.andon=1},
+    flb:()=>{if(spend(FLC))S.fl++},fls:()=>{if(S.fl>1){S.fl--;S.money+=FLC/2;D.capex-=FLC/2}}};
+  document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{buy[b.dataset.p]();sfx.ok();plantPanel()});
+  document.querySelectorAll("[data-tw]").forEach(b=>b.onclick=()=>{if(spend(TWIC)){S.cover[b.dataset.tw]++;const k=b.dataset.tw;
+    for(const s of S.st)if(s.ty===k&&s.op==="temp"&&S.cover[k]>coverUsed(k)){s.op="cub";break}sfx.ok()}plantPanel()});
+  $("#pok").onclick=closeOv}
+
+function genIdeas(){let pool=IDEAS.filter(x=>(!x.day||S.day>=x.day)&&!S.used.includes(x.k)&&(x.ty==="plant"||(x.ty===null?S.st.length:S.st.some(s=>x.ty.includes(s.ty)))));
+  if(pool.length<3){S.used=S.used.filter(k=>IDEAS.find(x=>x.k===k).ty!=="plant"?false:true);pool=IDEAS.filter(x=>(!x.day||S.day>=x.day)&&!S.used.includes(x.k)&&(x.ty==="plant"||(x.ty===null?S.st.length:S.st.some(s=>x.ty.includes(s.ty)))))}
+  S.ideas=[];for(let n=0;n<3&&pool.length;n++){const ix=Math.floor(srnd()*pool.length),x=pool.splice(ix,1)[0];let st=null;
+    if(x.ty!=="plant"){const c=S.st.filter(s=>x.ty===null||x.ty.includes(s.ty));st=c[Math.floor(srnd()*c.length)].id}
+    S.ideas.push({k:x.k,st,who:NAMES[Math.floor(srnd()*NAMES.length)],done:0});S.used.push(x.k)}}
+function ideasPanel(){const I=k=>IDEAS.find(x=>x.k===k);
+  openOv(`<h2>💡 Ideas del personal</h2><p class="mut">Las mejores mejoras suelen salir de quien hace el trabajo, y casi siempre son baratas. Pero no todas las ideas son buenas: piensa en el efecto completo antes de aplicarla.</p>`+
+   S.ideas.map((d,ix)=>{const x=I(d.k),s=d.st?byId(d.st):null;const tgt=x.ty==="plant"?"Toda la planta":s?nm(s):"(estación ya no existe)";
+     return`<div class="idea ${d.done===1?(x.g?"ok":"bad"):d.done===-1?"no":""}"><div class="mut">${d.who} · ${tgt}</div><b>${x.t}</b><p>«${x.cl}»</p>`+
+      (d.done?`<p class="${d.done===1?(x.g?"g":"r"):"mut"}">${d.done===1?(x.g?"✅ ":"⚠️ ")+x.r:(x.g?"Se descartó. Era buena idea: "+x.r:"👍 Buen criterio: "+x.r)}</p>`:
+       `<div class="row"><button class="sb" data-ia="${ix}" ${x.ty!=="plant"&&!s?"disabled":""}>Aplicar · ${x.c?money(x.c):"gratis"}</button><button class="sb" data-id="${ix}">Descartar</button></div>`)+`</div>`}).join("")+
+   `<button class="btn" id="iok">Listo</button>`);
+  document.querySelectorAll("[data-ia]").forEach(b=>b.onclick=()=>{const d=S.ideas[+b.dataset.ia],x=I(d.k);if(x.c&&!spend(x.c))return;
+    x.ap(d.st?byId(d.st):null);d.done=1;(x.g?sfx.ok:sfx.no)();ideasPanel()});
+  document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{S.ideas[+b.dataset.id].done=-1;ideasPanel()});
+  $("#iok").onclick=closeOv}
+
+function help(inGame){openOv(`<h1>🏭 Simulador de Planta Esbelta</h1>
+  <p>Diseña y dirige tu propia planta: coloca estaciones, conecta el flujo, pon límites kanban y mejora con <b>5S, Poka-yoke, TPM y SMED</b>, cuidando la <b>seguridad</b> y a las <b>personas</b>. Son ${LASTDAY} días, cada uno con un reto y una lección.</p>
+  <h3>Cómo funciona</h3><ul><li>Las piezas entran por <b>Recepción</b>, pasan por <b>Mecanizado → Ensamble → Prueba → Empaque</b> y salen por <b>Embarque</b>.</li>
+  <li>Los montacargas llevan cada pieza; si todos están ocupados, la pieza espera. Cada metro cuesta y es exposición a riesgo.</li>
+  <li>Las mejoras tienen 2 niveles. Puedes pagarlas o hacer un <b>evento kaizen</b>: gratis, pero la estación se detiene 45 min.</li>
+  <li>Cada estrella del día da un <b>bono de gerencia</b> de ${money(BONUS)}.</li>
+  <li>Cada estación cuesta $600 por turno. Cada unidad entregada deja $40 y su material cuesta $15. El inventario cuesta $1 por unidad cada hora.</li>
+  <li>Semáforo: 🟢 trabajando · 🟡 esperando · 🟧 bloqueada por kanban · 🟣 cambio de modelo · 🔴 falla o accidente · 🔵 instalando o en actividad.</li></ul>
+  <h3>Controles</h3><ul><li><b>Celular:</b> arrastra con un dedo para mover la planta y pellizca con dos para acercar. Botones de la derecha: ＋ y − zoom, ⟲ y ⟳ girar, ⌂ vista completa. Toca una estación para verla.</li>
+  <li><b>Computadora:</b> arrastra para mover, rueda para acercar, doble clic para acercar, clic derecho y arrastrar (o Q/E) para girar, flechas o WASD para desplazar, H vista completa. 1-4 construyen, K abre el flujo, espacio pausa.</li></ul>
+  <p class="mut">Puedes construir y ajustar todo con el juego en pausa. Se guarda al inicio de cada día. Planta y datos ficticios con fines didácticos. Un juego de PES Labs.</p>
+  ${inGame?`<button class="btn" id="hok">Continuar</button>`:`<button class="btn" id="hnew">Nueva partida</button>${SAVED?`<button class="btn o" id="hcont">Continuar en el día ${SAVED.day}</button>`:""}`}`);
+  if(inGame)$("#hok").onclick=closeOv;else{$("#hnew").onclick=()=>{audioInit();newGame();startDay()};if(SAVED)$("#hcont").onclick=()=>{audioInit();S=SAVED;D=S.D;startDay(true)}}}
+
+let SNAP=null,SAVED=null;
+try{const j=localStorage.getItem("pes_sim_v2");if(j){SAVED=JSON.parse(j);if(!SAVED||SAVED.v!==2)SAVED=null}}catch(e){SAVED=null}
+function startDay(resume){const dd=dayDef(S.day);S.takt=dd.takt;if(F("drift"))S.defMul=3;
+  if(!resume){S.t=0;S.oacc=0;S.back=0;S.bk={A:0,B:0};S.kzN=F("ev")?2:1;S.ev=[];S.supply=0;S.pwr=0;S.flStop=0;
+    for(const s of S.st){s.k=newK();s.op="ok";if(s.why==="acc"){s.stop=0;s.why=""}}
+    if(F("ev")){const ks=["prov","corte","urg","aud"];for(let n=0;n<2;n++){const k=ks.splice(Math.floor(srnd()*ks.length),1)[0];S.ev.push({k,t:3600+Math.floor(srnd()*21600),done:0})}}
+    if(F("abs")){const ab=S.st.filter(()=>srnd()<.15);if(S.day===UNLOCK.abs&&!ab.length&&S.st.length){const e=S.st.find(s=>s.ty==="ens")||S.st[0];ab.push(e)}
+      for(const s of ab)s.op=S.cover[s.ty]>coverUsed(s.ty)?"cub":"temp";S.absList=ab.map(s=>s.id)}else S.absList=[];
+    if(F("ideas"))genIdeas();
+    D=newD();S.D=D}
+  SNAP=JSON.stringify(S);try{localStorage.setItem("pes_sim_v2",SNAP)}catch(e){}
+  S.spd=0;select(null);setMode(null);buildBar();ui();
+  const ab=(S.absList||[]).map(byId).filter(Boolean);
+  openOv(`<h2>${dd.t}</h2>${dd.intro}${S.lastRem>0&&!resume?`<p class="mut">📦 Ayer sobraron ${S.lastRem} unidades sin pedido y Ventas las remató a $${REMATE} cada una.</p>`:""}
+   ${ab.length?`<p>👤 <b>Ausencias hoy:</b> ${ab.map(s=>nm(s)+(s.op==="cub"?" (cubierta por un polivalente)":" (entra un temporal)")).join(", ")}.</p>`:""}
+   <div class="lesson">💡 ${dd.tip}</div>
+   <h3>Meta</h3><ul>${dd.goals(KP()).map((g,i)=>`<li>${i?"⭐ ":"<b>Para aprobar:</b> "}${g[0]}</li>`).join("")}</ul>
+   <p class="mut">Caja: <b>${money(S.money)}</b>${F("ideas")?` · Tienes ${pendingIdeas()} ideas nuevas en 💡`:""}. El juego queda en pausa para que prepares la planta; luego pulsa ▶.</p>
+   <button class="btn" id="dgo">Preparar la planta</button>`);
+  $("#dgo").onclick=()=>{closeOv();sfx.ok()}}
+function vsmHTML(){const t=Math.max(1,D.t),lam=D.del>0?D.del/t:1/S.takt;let html='<div class="vsm">',va=0,wt=0,cols=[];
+  const tri=(k,lab)=>{const inv=D.qI[k]/t,w=inv/lam/60;wt+=w;cols.push(`<div class="vc"><div class="vt">▲<span>${inv.toFixed(1)}</span></div><div class="vl">${lab}</div><div class="tl up">${w.toFixed(1)} min</div><div class="tl dn"></div></div>`)};
+  cols.push(`<div class="vc"><div class="vb ext">🏭<br>Proveedor</div><div class="tl up"></div><div class="tl dn"></div></div>`);
+  ORD.forEach((k,g)=>{tri(g,g?"cola":"super");const ss=S.st.filter(s=>s.ty===k),n=ss.length;const ct=n?ss.reduce((a,s)=>a+ctOf(s),0)/n:0;va+=ct;
+    let A=0,m=0;for(const s of ss){const o=oeeOf(s);if(o){A+=o.A;m++}}
+    cols.push(`<div class="vc"><div class="vb"><b>${TY[k].n}</b><small>C/T ${ct.toFixed(0)} s<br>${n} est.<br>Disp. ${m?pc(A/m):"—"}${F("prod2")&&n?"<br>C/O "+Math.round(coOf(ss[0])/60)+" min":""}</small></div><div class="tl up"></div><div class="tl dn">${ct.toFixed(0)} s</div></div>`)});
+  tri(4,"PT");cols.push(`<div class="vc"><div class="vb ext">🚚<br>Cliente<small>takt ${S.takt} s</small></div><div class="tl up"></div><div class="tl dn"></div></div>`);
+  const lt=wt+va/60,pva=lt>0?va/60/lt:0;
+  return html+cols.join("")+`</div><div class="kv"><span>Tiempo de entrega (VSM)</span><b>${lt.toFixed(1)} min</b><span>Tiempo de valor agregado</span><b>${(va/60).toFixed(1)} min</b><span>% de valor agregado</span><b class="${pva>.25?"g":"y"}">${(pva*100).toFixed(1)} %</b></div>
+   <p class="mut">Los triángulos ▲ son el inventario promedio en cada punto; arriba de la línea de tiempo va la espera (Ley de Little) y abajo el tiempo de proceso. Casi todo el tiempo de entrega es espera: ahí está la oportunidad.</p>`}
+function endDay(){S.spd=0;const late=S.back;pay("late",late*LATE);D.miss=late;S.back=0;S.bk={A:0,B:0};const rem=Math.max(0,S.fg.length-10);S.fg.splice(0,rem);D.rev+=rem*REMATE;S.money+=rem*REMATE;D.rem=rem;S.lastRem=rem;
+  const K=KP(),dd=dayDef(S.day),gs=dd.goals(K);
+  const pass=gs[0][1],stars=pass?1+(gs[1][1]?1:0)+(gs[2][1]?1:0):0;S.best[S.day]=Math.max(S.best[S.day]||0,stars);sfx.end();
+  const bonus=stars*BONUS;D.bonus=bonus;S.money+=bonus;S.noAcc=D.acc?0:S.noAcc+1;
+  const tips=[];if(K.otd<.95)tips.push("Entregas bajas: en 📊 Flujo, la etapa con ciclo efectivo mayor que el takt es tu restricción. Revisa también fallas, cambios de modelo y montacargas en espera.");
+  if(K.inv>25)tips.push("Mucho inventario: pon límites kanban en todas las conexiones, empezando por Empaque → Embarque.");
+  if(K.ltn&&K.lt>20)tips.push("Tiempo de entrega alto: por la Ley de Little baja con menos inventario. Kanban más pequeños y estaciones más cerca.");
+  if(K.tst&&K.fpy<.95)tips.push("Calidad: poka-yoke en Mecanizado y Ensamble, y ajusta la herramienta cuando la carta X̄ se acerque al límite.");
+  if(K.acc)tips.push("Hubo accidentes: haz evaluaciones de riesgos y aplica controles de ingeniería primero. Revisa también los pasillos peatonales.");
+  if(rem>20)tips.push(`Sobreproducción: ${rem} unidades sin pedido se remataron a $${REMATE}, aunque cada una costó más de $15. Un kanban en Empaque → Embarque lo evita.`);
+  if(K.pf<0)tips.push("Utilidad negativa: cuida el material que entra sin pedido, los metros de montacargas y las estaciones de sobra ($600 por turno cada una). Las ideas del personal y los eventos kaizen mejoran sin gastar casi nada.");
+  const c=D.c,fin=S.day===LASTDAY&&pass;
+  openOv(`<h2>📋 Cierre del ${dd.t.split(" · ")[0].toLowerCase()}</h2><div class="stars">${stars?"⭐".repeat(stars)+"☆".repeat(3-stars):"☆☆☆"}</div>
+   <p style="text-align:center;margin:0">${pass?(stars===3?"¡Turno perfecto!":"Meta cumplida."):"No se alcanzó la meta principal."}</p>
+   <ul>${gs.map(g=>`<li>${g[1]?"✅":"❌"} ${g[0]} <span class="mut">(${g[2]})</span></li>`).join("")}</ul>
+   <div class="kv"><span>Pedidos del cliente</span><b>${K.ord}</b><span>Entregados a tiempo</span><b>${K.del} (${pc(K.otd)})</b><span>Pedidos cancelados (multa $${LATE} c/u)</span><b>${late}</b>
+   <span>Tiempo de entrega promedio</span><b>${K.ltn?K.lt.toFixed(1)+" min":"—"}</b><span>Inventario promedio (WIP + PT)</span><b>${K.inv.toFixed(1)}</b>
+   <span>OEE de la planta</span><b>${pc(K.oee)}</b><span>Calidad a la primera</span><b>${K.tst?pc(K.fpy):"—"}</b><span>Piezas desechadas · reclamos</span><b>${K.scrap} · ${K.cl}</b>
+   <span>Recorrido de montacargas</span><b>${(K.dist/1000).toFixed(1)} km</b>${F("acc")?`<span>Accidentes · casi accidentes</span><b class="${K.acc?"r":"g"}">${K.acc} · ${K.nm}</b>`:""}${F("prod2")?`<span>Cambios de modelo</span><b>${K.cos}</b>`:""}</div>
+   <h3>🗺️ Mapa de flujo de valor del día</h3>${vsmHTML()}
+   <div class="kv"><span>Ventas</span><b class="g">${money(K.rev-rem*REMATE)}</b>${rem?`<span>Remate de ${rem} unidades sobrantes ($${REMATE} c/u)</span><b class="y">${money(rem*REMATE)}</b>`:""}<span>Material</span><b>−${money(c.mat)}</b><span>Operación (estaciones, montacargas, personal)</span><b>−${money(c.op)}</b><span>Transporte interno</span><b>−${money(c.tr)}</b>
+   <span>Costo de inventario</span><b>−${money(c.hold)}</b><span>Reclamos y multas</span><b>−${money(c.claim+c.late)}</b>${c.saf?`<span>Accidentes y auditoría</span><b>−${money(c.saf)}</b>`:""}${D.aud>0?`<span>Bono de auditoría</span><b class="g">${money(D.aud)}</b>`:""}<span><b>Utilidad operativa</b></span><b class="${K.pf>=0?"g":"r"}">${money(K.pf)}</b>
+   <span>Bono de gerencia (${stars} ⭐)</span><b class="g">${money(bonus)}</b><span>Inversiones del día</span><b>${money(D.capex)}</b><span>Caja</span><b>${money(S.money)}</b></div>
+   <div class="lesson">📘 ${dd.lesson}</div>${tips.length?`<h3>Para mejorar</h3><ul>${tips.map(t=>`<li>${t}</li>`).join("")}</ul>`:""}
+   ${fin?`<div class="lesson" style="border-color:#f2c21b;background:#2a2410">🏆 ¡Completaste la campaña! Total: ${Object.values(S.best).reduce((a,b)=>a+b,0)} de ${LASTDAY*3} estrellas. Puedes seguir en modo libre.</div>`:""}
+   ${pass||S.day>LASTDAY?`<button class="btn" id="dnext">${S.day>=LASTDAY?"Seguir en modo libre":"Siguiente día"}</button>`:""}<button class="btn ${pass?"o":""}" id="dre">Repetir el día</button>${pass||S.day>LASTDAY?"":`<button class="btn o" id="dnext">Seguir de todas formas</button>`}`);
+  $("#dnext").onclick=()=>{S.day++;startDay()};$("#dre").onclick=()=>{S=JSON.parse(SNAP);D=S.D;for(const k in RAD)delete RAD[k];startDay(true)}}
+
+/* ================= bucle ================= */
+let last=performance.now(),acc=0,uiT=0;
+function frame(now){const raw=(now-last)/1000,dt=Math.min(.05,raw);last=now;const t=now/1000;
+  if(S&&$("#ov").hidden&&S.spd>0){acc+=SPEED[S.spd]*Math.min(.25,raw);let n=Math.floor(acc);acc-=n;n=Math.min(n,600);for(let k=0;k<n;k++){step();if(S.t>=DAY){endDay();break}if(!$("#ov").hidden){acc=0;break}}}
+  camUpdate(dt);if(S){render(t);uiT-=dt;if(uiT<=0){uiT=.2;ui()}}requestAnimationFrame(frame)}
+newGame();buildBar();ui();help(false);requestAnimationFrame(frame);
+window.__S={get S(){return S},get D(){return D},step,KP,startDay,endDay,placeSt,moveSt,sellSt,buyUp,kaizen,doSaf,adjust,newGame,cam,render,tap,pick,flowPanel,plantPanel,ideasPanel,IDEAS,
+  runDay(){for(let k=0;k<DAY&&S.t<DAY;k++)step();return KP()}};
+</script></body></html>
