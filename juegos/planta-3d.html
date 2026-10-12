@@ -36,14 +36,14 @@ html,body{margin:0;height:100%;overflow:hidden;background:#232b33;font-family:sy
 @media (max-width:600px){#toast{top:34%}#map{width:124px;height:83px}#mis{font-size:11.5px}.pill b{font-size:15px}}
 </style></head><body>
 <canvas id="gl" tabindex="0"></canvas>
-<div id="mis" class="hud"><h4 id="mish"><span>Misiones ▾</span><span id="misn">0/5</span></h4><div id="misnext"></div><ul id="misl"></ul></div>
+<div id="mis" class="hud"><h4 id="mish"><span>Misiones ▾</span><span id="misn">Principales 0/5 · Secundarias 0/5</span></h4><div id="misnext"></div><ul id="misl"></ul></div>
 <div id="inst" class="hud">
 <canvas id="map" width="162" height="108"></canvas>
 <div class="pill">Nivel de ruido<b id="dbv">-- dB</b><span id="dbs"></span></div>
 <div class="pill">Detector ultrasónico de fugas<b><span id="dtar" style="display:inline-block;transition:transform .15s">⬆</span> <span id="dtv">▯▯▯▯▯</span></b><span id="dtd"></span></div>
 <div class="pill">Casi accidentes<b id="nmv">0</b></div>
 </div>
-<div id="tools" class="hud"><button id="bsnd">🔊</button><button id="bhelp">❔ Ayuda</button></div>
+<div id="tools" class="hud"><button id="bsnd">🔊</button><button id="bcam">🎥 Al hombro</button><button id="bhelp">❔ Ayuda</button></div>
 <button id="act"></button>
 <div id="toast"></div>
 <div id="joyb"><div id="joyk"></div></div>
@@ -127,14 +127,14 @@ function Sp(x,y,z,kx,ky,kz,col){bake(SV,SPH,trs(TM,x,y,z,0,0,0,kx,ky,kz),C(col))
 function ob(x,z,w,d,h){OB.push([x-w/2,x+w/2,z-d/2,z+d/2,h])}
 
 /* posiciones clave */
-const SX=[-16,-10,-4,2,8,26,32,38,44,49];
+const SX=[-16,-10,-4,2,8,26,32,38,44,49];const L2X=[-14,-6,2,10,18,26];
 const ST_NAMES=["Arneses eléctricos","Tablero de instrumentos","Líneas de freno y combustible","Vidrios y sellos","Puertas","Matrimonio (chasis + carrocería)","Escape y suspensión","Llantas y ruedas","Asientos","Fluidos y prueba final"];
 const ST_REAL=[52,55,57,54,56,71,53,50,55,49];const TAKT=60,BOT=5,ST0=ST_REAL.slice();
 const PRESSES=[[-20,-27,0],[-11,-27,.9],[-2,-27,1.8]];
 const CELLS=[[24,-26],[44,-26]];
 const LEAKS=[{x:46.9,y:1.0,z:35.4,n:"Tanque de aire comprimido"},{x:-7.6,y:1.2,z:-23.0,n:"Alimentación de la prensa 2"},{x:17.4,y:1.4,z:-19.2,n:"Bajante neumática de la celda 1"},{x:-13,y:1.3,z:3.5,n:"Herramienta entre las estaciones 1 y 2"},{x:-36,y:1.4,z:-8.2,n:"Unidad FRL del almacén"}];
 LEAKS.forEach(l=>l.tag=false);
-const NOISE=[];PRESSES.forEach(p=>NOISE.push([p[0],p[1],100]));CELLS.forEach(c=>NOISE.push([c[0],c[1],90]));NOISE.push([50,33,95],[54.5,33,95]);SX.forEach(x=>NOISE.push([x,0,78]));
+const NOISE=[];PRESSES.forEach(p=>NOISE.push([p[0],p[1],100]));CELLS.forEach(c=>NOISE.push([c[0],c[1],90]));NOISE.push([50,33,95],[54.5,33,95]);SX.forEach(x=>NOISE.push([x,0,78]));L2X.forEach(x=>NOISE.push([x,33,78]));
 
 function staticCar(x,z,ry,col){const m0=trs(new Float32Array(16),x,0,z,ry,0,0,1,1,1);const t=new Float32Array(16),q=new Float32Array(16);
   const p=(lx,ly,lz,kx,ky,kz,c,mesh,rz=0)=>{trs(t,lx,ly,lz,0,0,rz,kx,ky,kz);mul(q,m0,t);bake(SV,mesh,q,C(c))};
@@ -205,9 +205,13 @@ function buildWorld(){
     Bf(x,-1.9,.12,3.2,.12,"#56636f");B(x,3.5,-1.9,1.8,.7,.08,"#1f2a33")});
   for(const x of[52,53.5,55]){for(const s of[-1,1])Bf(x,s*1.8,.18,3,.18,"#e6ebef");B(x,3.1,0,.2,.2,3.8,[2.5,2.5,2.4])}
   // pintura, calidad, compresores
-  Bf(-5,33.5,30,6,9,"#e3e7eb");Bf(-5,28.97,26,1.4,.08,"#9fd4f5",0,2.2);Bf(-5,28.97,3,2.6,.1,"#56636f");ob(-5,33.5,30,9,6);
-  Bf(25,34,9,.2,6.4,"#3a4450");staticCar(25,34,Math.PI/2,"#c0392b");
-  for(const x of[22,25,28]){for(const s of[-1,1])Bf(x,34+s*2.8,.2,3.2,.2,"#dfe5ea");B(x,3.25,34,.22,.22,5.8,[2.4,2.4,2.3])}ob(25,34,9.2,6.6,3.4);
+  Bf(8,33,62,.012,11,"#a6acb2");Bf(8,33,56,.5,2.4,"#4a535c");for(let x=-19.5;x<36;x+=1)Bf(x,33,.08,.02,2.2,"#6b7681",0,.5);
+  for(const s of[-1,1])Bf(8,33+s*1.25,56,.25,.1,"#f2c21b",0,.5);ob(8,33,56.4,2.6,.6);
+  L2X.forEach((x,i)=>{Bf(x,31.4,.12,3.0,.12,"#56636f");Bf(x+1.5,35.9,.8,1.0,.6,"#3a4652");Bf(x+1.5,35.9,.7,.25,.5,["#2f6db5","#2f855a","#c0392b"][i%3],0,1.0)});
+  Bf(-21.5,33,2.4,1.6,3.2,"#56636f");ob(-21.5,33,2.4,3.2,1.6);Bf(37.6,33,2.4,1.6,3.2,"#56636f");ob(37.6,33,2.4,3.2,1.6);
+  strip(-21,26.3,40,26.3,.14,Y,.03,.012);strip(-21,29.0,40,29.0,.14,Y,.03,.012);
+  for(let z=26.5;z<28.9;z+=.8)Bf(8,z+.2,2.4,.02,.4,WH,0,.035);
+  strip(11,-33.8,58,-33.8,.14,Y,.03,.012);
   Bf(41.5,28,3,4,.3,"#b9c1c9");Bf(52,28,12,4,.3,"#b9c1c9");Bf(40,34,.3,4,12,"#b9c1c9");ob(41.5,28,3,.4,4);ob(52,28,12,.4,4);ob(40,34,.4,12,4);
   for(const x of[50,54.5]){Bf(x,33,3,2.2,2,"#3b6ea5");Bf(x,33,2.4,.6,.06,"#22303d",0,1.4);ob(x,33,3.1,2.1,2.3)}
   Cy(46,1.7,36.5,.95,3.4,"#d3d9df");ob(46,36.5,1.9,1.9,3.5);Bf(43.4,38.4,1.6,1.8,1.2,"#7d8894");ob(43.4,38.4,1.6,1.2,1.9);
@@ -226,7 +230,7 @@ const STAT=mkMesh(new Float32Array(SV),true),STATT=mkMesh(new Float32Array(SVT),
 /* ---------- estado ---------- */
 const st={ppe:false,leaks:0,noise:null,bottle:false,unsafe:false,near:0,expo:0,expoWarn:false,ppeWarn:0,t:0,done:false,started:false,ended:false};
 const pl={x:-44,z:28,y:0,h:Math.PI,ph:0,mv:0};
-const cam={yaw:0,pitch:.5,dist:7.5,dcur:7.5,e:[0,10,20],t:[0,0,0]};
+const cam={yaw:0,pitch:.22,dist:3.4,dcur:3.4,e:[0,10,20],t:[0,0,0],mode:"hombro"};
 let running=false,muted=false;
 
 /* vehículos */
@@ -235,7 +239,9 @@ const VEH=[
   veh("fl",[[-53.1,-9.5],[-53.1,-37.6],[-45,-37.6],[-45,-9.5]],3.0),
   veh("fl",[[-28,9.2],[52,9.2],[53,10.6],[52,12],[-28,12],[-29,10.6]],3.4),
   veh("fl",[[6.4,-7.4],[6.4,-37],[7.5,-38],[8.6,-37],[8.6,-7.4],[7.5,-6.9]],2.8),
-  veh("tug",[[-31.6,-8],[-31.6,17.6],[54,17.6],[55,16.7],[54,15.8],[-29.4,15.8],[-29.4,-8],[-30.5,-9]],2.4)];
+  veh("tug",[[-31.6,-8],[-31.6,17.6],[54,17.6],[55,16.7],[54,15.8],[-29.4,15.8],[-29.4,-8],[-30.5,-9]],2.4),
+  veh("fl",[[12,-34.6],[56,-34.6],[57,-36],[56,-37.4],[12,-37.4],[11,-36]],2.8),
+  veh("tug",[[-19,27.0],[38,27.0],[39,27.7],[38,28.3],[-19,28.3],[-20,27.7]],2.0)];
 VEH[1].x=10;VEH[1].z=9.2;
 /* peatones */
 function walker(pts,sp,o,h){return{pts,i:pts.length>1?1:0,x:pts[0][0],z:pts[0][1],h:h||0,sp,ph:rnd()*6,o,wait:0}}
@@ -244,9 +250,16 @@ const NPC={unsafe:walker([[26,10.6],[40,10.6]],1.2,{shirt:"#4b5563",pants:"#2d35
   pick:walker([[-37.5,-11],[-37.5,-34]],1.1,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b"}),
   qa:walker([[46,-4.9],[55,-4.9]],.9,{shirt:"#f4f6f8",pants:"#3a4450",helm:"#f4f6f8",vest:null}),
   boss:walker([[12,6.6]],1.2,{shirt:"#f4f6f8",pants:"#1f2933",helm:"#f4f6f8",vest:null,skin:"#e3b48f",hair:"#3b2a1d"},Math.PI),
-  aud:walker([[25,29.6]],1.2,{shirt:"#8fc7ef",pants:"#2d3540",helm:"#f4f6f8",vest:null},Math.PI),
+  aud:walker([[30,23.6]],1.2,{shirt:"#8fc7ef",pants:"#2d3540",helm:"#f4f6f8",vest:null},Math.PI),
   ehs:walker([[-47,27.4]],1.2,{shirt:"#2f855a",pants:"#2d3540",helm:"#2f855a",vest:"#d6f21b",skin:"#e3b48f"},Math.PI),
-  mec:walker([[-2,-22.2]],1.6,{shirt:"#2b4c7e",pants:"#2b4c7e",helm:"#d64545",vest:null,arm:.9},Math.PI)};
+  mec:walker([[-2,-22.2]],1.6,{shirt:"#2b4c7e",pants:"#2b4c7e",helm:"#d64545",vest:null,arm:.9},Math.PI),
+  ger:walker([[-20,5.3],[50,5.3]],1.1,{shirt:"#1f2933",pants:"#1f2933",helm:"#f4f6f8",vest:null,skin:"#e3b48f",hair:"#3b2a1d"}),
+  dir:walker([[-21.5,5.9],[48.5,5.9]],1.1,{shirt:"#5b6b7c",pants:"#1f2933",helm:"#f4f6f8",vest:null,skin:"#c98d63"}),
+  tec:walker([[-20,-5.2],[55,-5.2]],1.0,{shirt:"#2b4c7e",pants:"#2b4c7e",helm:"#d64545",vest:null}),
+  op1:walker([[50,24.4],[-50,24.4]],1.2,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b"}),
+  op2:walker([[48.5,24.0],[-51.5,24.0]],1.2,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b",skin:"#c98d63"}),
+  log:walker([[-40,22],[-40,-4]],1.1,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#f28c28"})};
+["ger","dir","op1","op2"].forEach(k=>NPC[k].fixed=2);
 const SIDE={boss:{s:0,nm:"Marta",rol:"Jefa de producción"},aud:{s:0,nm:"Andrés",rol:"Auditor de calidad",n:0},kai:{s:0,nm:"José",rol:"Operador de la estación 6"},mec:{s:0,nm:"Luis",rol:"Mecánico de mantenimiento"},ehs:{s:0,nm:"Carla",rol:"Supervisora de seguridad (EHS)"}};
 const NC=[{x:-36.3,z:-20,on:true},{x:41,z:-3.6,on:true},{x:-9.5,z:-35.2,on:true}];NC.forEach(c=>{c.ob=[c.x-.6,c.x+.6,c.z-.55,c.z+.55,1];OB.push(c.ob)});
 const EXITB={on:true,ob:[57.6,59.6,-9.8,-6.2,1.6]};OB.push(EXITB.ob);
@@ -265,8 +278,13 @@ function lineUpdate(dt){
     if(c.s<SX.length&&Math.abs(c.x-sx)<1e-3)c.work=ST_REAL[c.s]/10}
   while(CARS.length&&CARS[0].x>54.5)CARS.shift();
   if(CARS.length&&CARS[0].s>=SX.length&&CARS[0].x>=54.4)CARS.shift()}
+const ENG=[];let engT=0;
+function engUpdate(dt){engT-=dt;const last=ENG[ENG.length-1];if(engT<=0&&(!last||last.x>-19+3.2)){ENG.push({x:-19,s:0,w:0});engT=5}
+  for(let i=0;i<ENG.length;i++){const e=ENG[i],ah=i>0?ENG[i-1]:null;if(e.w>0){e.w-=dt;if(e.w<=0){e.w=0;e.s++}continue}
+    const lim=ah?ah.x-3:1e9,sx=e.s<L2X.length?L2X[e.s]:1e9;let nx=Math.min(e.x+1.6*dt,lim,sx);if(nx<e.x)nx=e.x;e.x=nx;if(e.s<L2X.length&&Math.abs(e.x-sx)<1e-3)e.w=4.2+((e.s*37)%9)/10}
+  while(ENG.length&&ENG[0].x>35)ENG.shift()}
 function queueBefore(k){return CARS.filter(c=>c.s===k&&c.work===0&&c.x<SX[k]-.01&&c.x>(k?SX[k-1]:-21)).length}
-for(let k=0;k<1400;k++)lineUpdate(.1);
+for(let k=0;k<1400;k++){lineUpdate(.1);engUpdate(.1)}
 for(const v of VEH)for(let k=0;k<200;k++)vehUpdate(v,.1,true);
 
 /* partículas */
@@ -329,7 +347,7 @@ function robot(x,z,cx,cz,t,ph){const r0=Math.atan2(cx-x,cz-z)+.5*Math.sin(t*.9+p
 function ring(x,z,t,col,em){const s=1.3+.15*Math.sin(t*4);part(CYLM,null,x,.06,z,s*2,.02,s*2,col,em,0,0,0,.45)}
 
 /* ---------- etiquetas de zona ---------- */
-const LB=[["ALMACÉN",-45,7,-24,80],["ESTAMPADO",-11,10,-27,80],["CARROCERÍA · ROBOTS",34,6,-26,80],["ENSAMBLE FINAL",15,5.5,-1,80],["COMPRESORES",49,5,33,60],["PINTURA",-5,7,33.5,70],["AUDITORÍA DE CALIDAD",25,5,34,60],["OFICINA DE INGENIERÍA",-52.5,5,34.5,60],["CASETA DE EPP",-43,3.9,32.6,30],["MEDICIÓN DE RUIDO",-11,2.2,-20.5,26]];
+const LB=[["ALMACÉN",-45,7,-24,80],["ESTAMPADO",-11,10,-27,80],["CARROCERÍA · ROBOTS",34,6,-26,80],["ENSAMBLE FINAL",15,5.5,-1,80],["COMPRESORES",49,5,33,60],["LÍNEA 2 · SUBENSAMBLE DE MOTORES",8,4.6,33,75],["OFICINA DE INGENIERÍA",-52.5,5,34.5,60],["CASETA DE EPP",-43,3.9,32.6,30],["MEDICIÓN DE RUIDO",-11,2.2,-20.5,26]];
 SX.forEach((x,i)=>LB.push(["E"+(i+1)+" · "+ST_NAMES[i].split(" (")[0],x,4.3,-1.9,24]));
 const LBE=LB.map(l=>{const d=document.createElement("div");d.className="lbl";d.textContent=l[0];$("#labels").appendChild(d);return d});
 
@@ -368,7 +386,7 @@ function renderMis(){const n=mainCount(),ns=sideCount();
   const act=SIDEK.filter(k=>SIDE[k].s>0);
   h+=`<li class="sec">Secundarias ${ns}/5</li>`+act.map(k=>`<li class="${SIDE[k].s===3?"ok":""}">${sideText(k)}</li>`).join("");
   if(act.length<5)h+=`<li class="hint">Busca al personal con ❗ para más misiones</li>`;
-  $("#misl").innerHTML=h;$("#misn").textContent=n+"/5 · "+ns+"/5";
+  $("#misl").innerHTML=h;$("#misn").textContent="Principales "+n+"/5 · Secundarias "+ns+"/5";
   const nx=MIS.find(m=>!misDone(m[0])),sk=SIDEK.find(k=>SIDE[k].s===1||SIDE[k].s===2);
   $("#misnext").textContent=nx?"→ "+nx[1]:sk?"→ "+sideText(sk):"→ Entrega tu reporte en la oficina de ingeniería";
   if(n===5&&!endHinted&&st.started){endHinted=true;setTimeout(()=>toast("<b>¡Misiones principales completas!</b> Entrega tu reporte en la oficina de ingeniería o sigue con las misiones secundarias.",6),2600)}
@@ -409,6 +427,10 @@ INTER.push(
   {dyn:NPC.ehs,r:2.4,lab:"Hablar con Carla",ok:()=>SIDE.ehs.s===0,go:()=>dlg("ehs","Ingeniero, en la inspección de esta mañana alguien reportó una <b>salida de emergencia bloqueada</b>. ¿Puede recorrer las salidas (puertas con letrero verde) y pedir que la despejen?",[{t:"Voy a revisar",f:()=>{SIDE.ehs.s=1;renderMis();closeOv()}}])},
   {x:57.4,z:-8,r:2.8,lab:"Solicitar despeje de la salida",ok:()=>SIDE.ehs.s===1&&EXITB.on,go:()=>{EXITB.on=false;EXITB.ob[4]=0;SIDE.ehs.s=3;tone(880,.15,.05);toast("<b>Carla:</b> ¡Gracias! Logística retiró las tarimas. Las salidas y rutas de evacuación deben estar libres siempre; también es parte de las 5S.",6.5);renderMis()}},
   {x:-48,z:28.4,r:2.4,lab:"Entregar reporte del Gemba",ok:()=>mainCount()===5&&!st.ended,go:()=>endGame()});
+function gdlg(nm,rol,html){running=false;$("#pan").innerHTML=`<h2>${nm} <span class="mut">· ${rol}</span></h2><div class="say">${html}</div><button class="btn" id="gx">Gracias</button>`;$("#ov").hidden=false;$("#gx").onclick=closeOv}
+INTER.push({dyn:NPC.dir,r:2.6,lab:"Hablar con la gerencia",ok:()=>true,go:()=>{
+  const msg=!st.bottle?"<b>Roberto, director de operaciones:</b> Ingeniero, la línea 1 no está llegando a la meta del turno. ¿Ya sabe dónde está el cuello de botella? Mire las luces andón: la que parpadea en rojo le dice mucho.":SIDE.kai.s<3?"<b>Roberto:</b> Bien identificado el cuello de botella. Ahora necesito una mejora, no más horas extra. Hable con José, el operador de esa estación: nadie conoce el puesto mejor que él.":"<b>Roberto:</b> Excelente. Con el kaizen, la estación 6 ya cumple el takt y la fila de autos desapareció. Así se gana la confianza: con datos y con la gente.";
+  gdlg("Roberto y Sofía","Dirección y gerencia de planta",msg+"<br><br><b>Sofía, gerente de planta:</b> Y recuerde el orden: seguridad primero, luego calidad, luego productividad.")}});
 let curI=null;
 function stationModal(i){running=false;const q=queueBefore(i);
   $("#pan").innerHTML=`<h2>Estación ${i+1} · ${ST_NAMES[i]}</h2><div class="kv"><span>Tiempo de ciclo</span><b>${ST_REAL[i]} s</b><span>Takt time</span><b>${TAKT} s</b><span>Autos esperando antes de esta estación</span><b>${q}</b></div>
@@ -423,19 +445,20 @@ function doInteract(){if(curI&&running){curI.go();$("#act").style.display="none"
 $("#act").addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();doInteract()});
 
 /* ---------- entrada ---------- */
-const K={};addEventListener("keydown",e=>{K[e.code]=true;if(e.code==="KeyE"||e.code==="Space"||e.code==="Enter"){if(running){e.preventDefault();doInteract()}}if(e.code==="KeyM")toggleSnd()});
+const K={};addEventListener("keydown",e=>{K[e.code]=true;if(e.code==="KeyE"||e.code==="Space"||e.code==="Enter"){if(running){e.preventDefault();doInteract()}}if(e.code==="KeyM")toggleSnd();if(e.code==="KeyC")toggleCam()});
 addEventListener("keyup",e=>{K[e.code]=false});
 const joy={id:null,x0:0,y0:0,x:0,y:0},look={id:null,x:0,y:0};
 cv.addEventListener("pointerdown",e=>{if(!running)return;cv.setPointerCapture(e.pointerId);
   if(e.pointerType!=="mouse"&&e.clientX<innerWidth*.5&&joy.id===null){joy.id=e.pointerId;joy.x0=e.clientX;joy.y0=e.clientY;joy.x=joy.y=0;const jb=$("#joyb");jb.style.left=e.clientX+"px";jb.style.top=e.clientY+"px";jb.style.display="block";$("#joyk").style.transform=""}
   else if(look.id===null){look.id=e.pointerId;look.x=e.clientX;look.y=e.clientY}});
 cv.addEventListener("pointermove",e=>{if(e.pointerId===joy.id){let dx=e.clientX-joy.x0,dy=e.clientY-joy.y0;const l=Math.hypot(dx,dy),m=50;if(l>m){dx*=m/l;dy*=m/l}joy.x=dx/m;joy.y=dy/m;$("#joyk").style.transform=`translate(${dx}px,${dy}px)`}
-  else if(e.pointerId===look.id){cam.yaw-=(e.clientX-look.x)*.006;cam.pitch=clamp(cam.pitch+(e.clientY-look.y)*.004,.18,1.05);look.x=e.clientX;look.y=e.clientY}});
+  else if(e.pointerId===look.id){cam.yaw-=(e.clientX-look.x)*.006;cam.pitch=clamp(cam.pitch+(e.clientY-look.y)*.004,cam.mode==="hombro"?.02:.18,cam.mode==="hombro"?.75:1.05);look.x=e.clientX;look.y=e.clientY}});
 function pend(e){if(e.pointerId===joy.id){joy.id=null;joy.x=joy.y=0;$("#joyb").style.display="none"}if(e.pointerId===look.id)look.id=null}
 cv.addEventListener("pointerup",pend);cv.addEventListener("pointercancel",pend);
-cv.addEventListener("wheel",e=>{cam.dist=clamp(cam.dist+e.deltaY*.01,4,14);e.preventDefault()},{passive:false});
+cv.addEventListener("wheel",e=>{cam.dist=clamp(cam.dist+e.deltaY*.01,cam.mode==="hombro"?2.4:4,cam.mode==="hombro"?5:14);e.preventDefault()},{passive:false});
 function toggleSnd(){muted=!muted;$("#bsnd").textContent=muted?"🔇":"🔊";if(mg)mg.gain.value=muted?0:.9}
-$("#bsnd").onclick=toggleSnd;$("#bhelp").onclick=()=>{running=false;showHelp(true)};
+function toggleCam(){if(cam.mode==="hombro"){cam.mode="aerea";cam.dist=7.5;cam.pitch=.5;$("#bcam").textContent="🎥 Aérea"}else{cam.mode="hombro";cam.dist=3.4;cam.pitch=.22;$("#bcam").textContent="🎥 Al hombro"}cam.dcur=cam.dist}
+$("#bcam").onclick=toggleCam;$("#bsnd").onclick=toggleSnd;$("#bhelp").onclick=()=>{running=false;showHelp(true)};
 
 /* ---------- actualización ---------- */
 function collide(p,r){for(const o of OB){if(p.y>o[4]-.05)continue;const cx=clamp(p.x,o[0],o[1]),cz=clamp(p.z,o[2],o[3]);let dx=p.x-cx,dz=p.z-cz;const d2=dx*dx+dz*dz;
@@ -451,7 +474,7 @@ function vehUpdate(v,dt,sim){const tg=v.pts[v.i];let dx=tg[0]-v.x,dz=tg[1]-v.z,d
   v.v+=(tv-v.v)*Math.min(1,dt*3);const s=Math.min(v.v*dt,d);v.x+=dx/d*s;v.z+=dz/d*s;
   if(v.type==="tug"){const L=v.trail[v.trail.length-1];if(!L||Math.hypot(L[0]-v.x,L[1]-v.z)>=.25){v.trail.push([v.x,v.z]);if(v.trail.length>80)v.trail.shift()}}}
 function walkerUpdate(w,dt){if(w.wait>0){w.wait-=dt;w.mv=0;return}const tg=w.pts[w.i];const dx=tg[0]-w.x,dz=tg[1]-w.z,d=Math.hypot(dx,dz);
-  if(d<.2){if(w.once&&w.i===w.pts.length-1){w.mv=0;w.arrived=true;if(w.face!=null)w.h+=angDiff(w.h,w.face)*Math.min(1,dt*6);return}if(w.pts.length===1){w.mv=0;return}w.i=(w.i+1)%w.pts.length;w.wait=1+rnd()*2;return}w.h+=angDiff(w.h,Math.atan2(dx,dz))*Math.min(1,dt*6);const s=Math.min(w.sp*dt,d);w.x+=dx/d*s;w.z+=dz/d*s;w.ph+=s*2.8;w.mv=1}
+  if(d<.2){if(w.once&&w.i===w.pts.length-1){w.mv=0;w.arrived=true;if(w.face!=null)w.h+=angDiff(w.h,w.face)*Math.min(1,dt*6);return}if(w.pts.length===1){w.mv=0;return}w.i=(w.i+1)%w.pts.length;w.wait=w.fixed||1+rnd()*2;return}w.h+=angDiff(w.h,Math.atan2(dx,dz))*Math.min(1,dt*6);const s=Math.min(w.sp*dt,d);w.x+=dx/d*s;w.z+=dz/d*s;w.ph+=s*2.8;w.mv=1}
 let curL=55,dbT=0,beepT=0,pressPh=PRESSES.map(p=>p[2]);
 function noiseAt(x,z){let s=Math.pow(10,5.5);for(const [nx,nz,L] of NOISE){const d=Math.max(1,Math.hypot(x-nx,z-nz));s+=Math.pow(10,(L-20*Math.log10(d))/10)}
   for(const v of VEH){const d=Math.max(1,Math.hypot(x-v.x,z-v.z));s+=Math.pow(10,(76-20*Math.log10(d))/10)}return 10*Math.log10(s)}
@@ -462,14 +485,14 @@ function update(dt,t){
   const il=Math.hypot(ix,iy);if(il>1){ix/=il;iy/=il}
   const fx=-Math.sin(cam.yaw),fz=-Math.cos(cam.yaw),rx=Math.cos(cam.yaw),rz=-Math.sin(cam.yaw);
   const mx=fx*iy+rx*ix,mz=fz*iy+rz*ix,ml=Math.hypot(mx,mz);
-  if(ml>.05){const sp=4.3*Math.min(1,ml);pl.x+=mx/ml*sp*dt;pl.z+=mz/ml*sp*dt;pl.h+=angDiff(pl.h,Math.atan2(mx,mz))*Math.min(1,dt*10);pl.ph+=sp*dt*2.6;pl.mv=Math.min(1,pl.mv+dt*6)}else pl.mv=Math.max(0,pl.mv-dt*6);
+  if(ml>.05){const sp=4.3*Math.min(1,ml);pl.x+=mx/ml*sp*dt;pl.z+=mz/ml*sp*dt;pl.h+=angDiff(pl.h,cam.mode==="hombro"&&iy>-.3?Math.atan2(fx,fz):Math.atan2(mx,mz))*Math.min(1,dt*10);pl.ph+=sp*dt*2.6;pl.mv=Math.min(1,pl.mv+dt*6)}else pl.mv=Math.max(0,pl.mv-dt*6);
   collide(pl,.38);pl.y+=(groundY(pl.x,pl.z)-pl.y)*Math.min(1,dt*12);
   // vehículos y peatones
   for(const v of VEH){vehUpdate(v,dt,false);v.cool-=dt;const d=Math.hypot(pl.x-v.x,pl.z-v.z);
     if(d<1.95&&v.v>.25&&pl.y<.3){if(v.cool<=0){st.near++;v.cool=3;tone(330,.3,.06,"sawtooth");toast("<b>¡Casi accidente!</b> Un montacargas pasó demasiado cerca. Camina por los pasillos verdes y cruza por las cebras.",5);$("#nmv").textContent=st.near}
       const k=1.95/Math.max(d,.01);pl.x=v.x+(pl.x-v.x)*k;pl.z=v.z+(pl.z-v.z)*k}}
   for(const k in NPC)walkerUpdate(NPC[k],dt);
-  lineUpdate(dt);
+  lineUpdate(dt);engUpdate(dt);
   // prensas
   PRESSES.forEach((p,i)=>{const o=pressPh[i];pressPh[i]=(o+dt*2.4)%(Math.PI*2);if(o<Math.PI&&pressPh[i]>=Math.PI){const d=Math.hypot(pl.x-p[0],pl.z-p[1]);if(d<38)tone(55,.25,.22*(1-d/38),"sine")}});
   // partículas
@@ -502,15 +525,17 @@ function resize(){const dpr=Math.min(devicePixelRatio||1,1.6);cv.width=Math.roun
 addEventListener("resize",resize);resize();
 function camUpdate(dt,t){
   if(!st.started){const a=t*.05;cam.e=[Math.sin(a)*62,40,Math.cos(a)*48];cam.t=[0,0,0];return}
-  const tx=pl.x,ty=pl.y+1.6,tz=pl.z,cp=Math.cos(cam.pitch);const ex=Math.sin(cam.yaw)*cp,ey=Math.sin(cam.pitch),ez=Math.cos(cam.yaw)*cp;
+  const sh=cam.mode==="hombro",rxs=Math.cos(cam.yaw),rzs=-Math.sin(cam.yaw);
+  const tx=pl.x+(sh?rxs*.62:0),ty=pl.y+(sh?1.7:1.6),tz=pl.z+(sh?rzs*.62:0),cp=Math.cos(cam.pitch);const ex=Math.sin(cam.yaw)*cp,ey=Math.sin(cam.pitch),ez=Math.cos(cam.yaw)*cp;
   let dmax=cam.dist;for(let k=1;k<=12;k++){const s=k/12*cam.dist,px=tx+ex*s,py=ty+ey*s,pz=tz+ez*s;let hit=false;
     for(const o of OB){if(py<o[4]&&px>o[0]-.2&&px<o[1]+.2&&pz>o[2]-.2&&pz<o[3]+.2){hit=true;break}}if(hit){dmax=Math.max(1.6,s-cam.dist/12);break}}
   cam.dcur+=(dmax-cam.dcur)*Math.min(1,dt*(dmax<cam.dcur?12:3));const d=cam.dcur;
-  cam.e=[clamp(tx+ex*d,-59.3,59.3),Math.max(.6,ty+ey*d),clamp(tz+ez*d,-39.3,39.3)];cam.t=[tx,ty,tz]}
+  cam.e=[clamp(tx+ex*d,-59.3,59.3),Math.max(.6,ty+ey*d),clamp(tz+ez*d,-39.3,39.3)];
+  if(sh){cam.t=[tx-(cam.e[0]-tx)*1.6,ty-(cam.e[1]-ty)*1.6+.25,tz-(cam.e[2]-tz)*1.6]}else cam.t=[tx,ty,tz]}
 function render(t){
   pi=0;TQ.length=0;
   gl.clearColor(.137,.169,.2,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);
-  persp(PJ,55*Math.PI/180,cv.width/cv.height,.1,240);lookAt(VW,cam.e,cam.t,[0,1,0]);mul(VPm,PJ,VW);
+  persp(PJ,(cam.mode==="hombro"?62:55)*Math.PI/180,cv.width/cv.height,.1,240);lookAt(VW,cam.e,cam.t,[0,1,0]);mul(VPm,PJ,VW);
   gl.uniformMatrix4fv(U.uVP,false,VPm);gl.uniform3fv(U.uCam,cam.e);gl.uniform3f(U.uFogC,.137,.169,.2);gl.uniform2f(U.uFog,45,135);
   const L=[.4,.85,.3],ll=Math.hypot(...L);gl.uniform3f(U.uL,L[0]/ll,L[1]/ll,L[2]/ll);
   curV=null;draw(IDT,STAT,WHITE,null,1);
@@ -518,6 +543,10 @@ function render(t){
   PRESSES.forEach((p,i)=>{const y=3.9+1.35*Math.cos(pressPh[i]);part(BOXM,null,p[0],y,p[1],4.4,1.0,4.4,"#4b5a69");part(BOXM,null,p[0],y-.6,p[1],3.6,.25,3.6,"#9aa5b1")});
   CELLS.forEach(([cx,cz],ci)=>{let k=0;for(const sx of[-1,1])for(const sz of[-1,1])robot(cx+sx*3.4,cz+sz*2.8,cx,cz,t,ci*1.3+k++*1.7)});
   CARS.forEach(c=>car(c.x,c.col));
+  ENG.forEach(e=>{const b=P(null,e.x,.5,33,Math.PI/2);part(BOXM,b,0,.45,0,1.0,.8,1.4,"#7d8894");part(BOXM,b,0,.95,0,.8,.22,1.2,"#c0392b");part(CYLM,b,0,.55,.78,.5,.12,.5,"#3b4048",null,0,Math.PI/2,0);part(BOXM,b,.62,.5,0,.25,.5,.9,"#56636f")});
+  L2X.forEach((x,i)=>{const busy=ENG.some(e=>e.s===i&&e.w>0);part(CYLM,null,x,3.15,31.4,.22,.3,.22,busy?"#22c55e":"#f2c21b",busy?EMG:EMY);
+    const arm=busy?.9+.35*Math.sin(t*5+i*2):.15;person(x,0,35.3,Math.PI,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b",arm,skin:i%2?"#c98d63":"#d9a77e"});
+    if(i%2===1)person(x,0,30.7,0,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b",arm:busy?.9+.35*Math.sin(t*5+i):.15})});
   SX.forEach((x,i)=>{const busy=CARS.some(c=>c.s===i&&c.work>0),q=queueBefore(i);const red=i===BOT&&q>=1;
     const col=red?(Math.sin(t*6)>0?"#ff3b30":"#5a1a18"):busy?"#22c55e":"#f2c21b",em=red?(Math.sin(t*6)>0?EMR:null):busy?EMG:EMY;part(CYLM,null,x,3.35,-1.9,.22,.3,.22,col,em);
     const arm=busy?.9+.35*Math.sin(t*5+i):.15;person(x,0,2.4,Math.PI,{shirt:"#56636f",pants:"#2d3540",helm:"#f2c21b",vest:"#d6f21b",arm});
@@ -548,7 +577,7 @@ function render(t){
 /* ---------- pantallas ---------- */
 function showHelp(inGame){$("#pan").innerHTML=`<h1>🏭 Planta PES Motors</h1><p>Eres el <b>ingeniero a cargo</b> de una planta de autos. Es tu primer recorrido por el piso (<i>Gemba walk</i>): observa, mide y reporta.</p>
   <h3>Misiones</h3><ul>${MIS.map(m=>`<li>${m[1]}</li>`).join("")}</ul>
-  <p class="mut">Además hay <b>5 misiones secundarias</b>: busca al personal con ❗ sobre la cabeza. Al terminar las principales, entrega tu reporte en la oficina de ingeniería.</p><h3>Controles</h3><ul><li><b>Celular:</b> arrastra en la mitad izquierda para caminar y en la derecha para girar la cámara. Usa el botón amarillo para interactuar.</li><li><b>Computadora:</b> WASD o flechas para caminar, arrastra con el mouse para girar, rueda para acercar, <b>E</b> para interactuar, <b>M</b> para silenciar.</li></ul>
+  <p class="mut">Además hay <b>5 misiones secundarias</b>: busca al personal con ❗ sobre la cabeza. Al terminar las principales, entrega tu reporte en la oficina de ingeniería.</p><h3>Controles</h3><ul><li><b>Celular:</b> arrastra en la mitad izquierda para caminar y en la derecha para girar la cámara. Usa el botón amarillo para interactuar.</li><li><b>Computadora:</b> WASD o flechas para caminar, arrastra con el mouse para girar, rueda para acercar, <b>E</b> para interactuar, <b>C</b> para cambiar la cámara, <b>M</b> para silenciar.</li><li><b>Cámara:</b> «Al hombro» te pone detrás del ingeniero; «Aérea» te da una vista más amplia para ubicarte.</li></ul>
   <h3>Pistas</h3><ul><li>Las fugas silban: sigue el sonido y la flecha del detector ultrasónico.</li><li>Camina por los pasillos verdes; los montacargas tienen prioridad en las rutas amarillas.</li><li>Sobre 85 dB(A) necesitas protección auditiva.</li></ul>
   <p class="mut">Planta, marcas y datos ficticios con fines didácticos. Un juego de PES Labs.</p>
   <button class="btn" id="go">${inGame?"Continuar":"Comenzar recorrido"}</button>`;$("#ov").hidden=false;
@@ -565,7 +594,7 @@ function endGame(){if(st.ended)return;st.ended=true;running=false;const mm=Math.
 /* ---------- bucle ---------- */
 let last=performance.now();
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
-  if(running)update(dt,t);else if(!st.started){for(const v of VEH)vehUpdate(v,dt,true);for(const k in NPC)walkerUpdate(NPC[k],dt);lineUpdate(dt);PRESSES.forEach((p,i)=>pressPh[i]=(pressPh[i]+dt*2.4)%(Math.PI*2))}
+  if(running)update(dt,t);else if(!st.started){for(const v of VEH)vehUpdate(v,dt,true);for(const k in NPC)walkerUpdate(NPC[k],dt);lineUpdate(dt);engUpdate(dt);PRESSES.forEach((p,i)=>pressPh[i]=(pressPh[i]+dt*2.4)%(Math.PI*2))}
   camUpdate(dt,t);render(t);if(st.started)drawMap(t);requestAnimationFrame(frame)}
 renderMis();showHelp(false);requestAnimationFrame(frame);
 window.__G={st,pl,cam,INTER,LEAKS,NPC,VEH,CARS,doInteract,update,camUpdate,render,queueBefore,setRunning:v=>{running=v}};
