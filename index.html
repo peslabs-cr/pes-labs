@@ -2,7 +2,25 @@
 <html lang="es"><head>
 <meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PES Labs · Mejora continua y manufactura</title>
+<title>PES Labs · Aprende mejora continua jugando</title>
+<meta name="description" content="Minijuegos, artículos, videos y podcast gratis para aprender mejora continua, Lean, Six Sigma y seguridad, hechos desde la experiencia en planta. Por Ing. Ricardo Fonseca Pereira, con ayuda de IA.">
+<link rel="canonical" href="https://peslabs-cr.github.io/pes-labs/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PES Labs">
+<meta property="og:locale" content="es_CR">
+<meta property="og:title" content="PES Labs · Aprende mejora continua jugando">
+<meta property="og:description" content="Minijuegos, artículos, videos y podcast gratis para aprender mejora continua, Lean, Six Sigma y seguridad, hechos desde la experiencia en planta. Por Ing. Ricardo Fonseca Pereira, con ayuda de IA.">
+<meta property="og:url" content="https://peslabs-cr.github.io/pes-labs/">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="PES Labs: minijuegos, artículos, videos y podcast de mejora continua">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PES Labs · Aprende mejora continua jugando">
+<meta name="twitter:description" content="Minijuegos, artículos, videos y podcast gratis para aprender mejora continua, Lean, Six Sigma y seguridad, hechos desde la experiencia en planta. Por Ing. Ricardo Fonseca Pereira, con ayuda de IA.">
+<meta name="twitter:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"PES Labs","url":"https://peslabs-cr.github.io/pes-labs/","inLanguage":"es","description":"Minijuegos, artículos, videos y podcast gratis para aprender mejora continua, Lean, Six Sigma y seguridad, hechos desde la experiencia en planta. Por Ing. Ricardo Fonseca Pereira, con ayuda de IA.","author":{"@type":"Person","name":"Ricardo Fonseca Pereira","jobTitle":"Ingeniero de procesos"},"license":"https://creativecommons.org/licenses/by-nc/4.0/"}</script>
 <style>
 :root{--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--mut:#5b6573;--ac:#0a7d5a;--ac2:#0d5c8a;--bd:#dde1e6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161a;--fg:#e8ebee;--card:#1b2127;--mut:#9aa5b1;--ac:#34d399;--ac2:#60a5fa;--bd:#2b333b}}
@@ -112,4 +130,8 @@ $("#rd").onclick=e=>{if(e.target.id=="rd")closeA()};document.addEventListener("k
 $("#th").onclick=()=>{const r=document.documentElement,d=r.dataset.theme?r.dataset.theme=="dark":matchMedia("(prefers-color-scheme:dark)").matches;r.dataset.theme=d?"light":"dark"};
 $("#ct2").innerHTML=(SITE.linkedin?`<a class="btn" href="${SITE.linkedin}" target="_blank" rel="noopener">LinkedIn</a>`:"")+(SITE.correo?`<a class="btn o" href="mailto:${SITE.correo}">Escríbeme</a>`:"");
 gamesR();chips("#ca",ART,artR);artR("Todo");function hashA(){const h=location.hash;if(h.startsWith("#leer-")){const id=decodeURIComponent(h.slice(6));if(ART.find(x=>x.id==id)){openA(id)}}}addEventListener("hashchange",hashA);hashA();vidR();
-</script></body></html>
+</script><!-- Contador de visitas (GoatCounter, sin cookies) -->
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<script>/* cuenta también los artículos abiertos con #leer-… */
+addEventListener('hashchange',function(){try{if(location.hash.indexOf('#leer-')===0&&window.goatcounter&&goatcounter.count)goatcounter.count({path:location.pathname+location.hash,title:document.title})}catch(e){}});</script>
+</body></html>
