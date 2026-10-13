@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="utf-8">
+<html lang="es"><head>
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. --><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Operación 5S</title>
 <style>
@@ -109,4 +111,5 @@ function fin(){const t=G.sc.reduce((a,b)=>a+b,0),pts=G.pt.reduce((a,b)=>a+b,0),r
  <div class="ba"><div class="pane"><b>Antes</b><br>${mess}</div><div class="pane"><b>Después</b><br>${Z2.map((z,k)=>`<div style="margin-top:4px">${z.split(" ")[0]} ${G.p.filter(x=>x.z==k).map(x=>`<span class="e">${x.e}</span>`).join(" ")}</div>`).join("")}</div></div>
  <button class="main" onclick="home()">🔄 Jugar de nuevo</button></div>`}
 home();
-</script></body></html>
+</script><a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+</body></html>

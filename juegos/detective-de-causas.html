@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="utf-8">
+<html lang="es"><head>
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. --><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Detective de causas</title>
 <style>
@@ -100,4 +102,5 @@ function fin(){clearInterval(G.tm);const acc=G.tot?G.ok/G.tot:0;let s=acc>=.9?3:
  const solved=G.lives>0?G.cs.length:G.ci,u=[...new Set(G.miss)].slice(0,6);if(s>=2)tune([523,659,784,1047]);
  $("app").innerHTML=`<div class="card"><h2>${G.lives<=0?"💥 Sin vidas: investigación cerrada":"🏁 Investigación terminada"} · ${G.lv==2?"🔴 Experto":"🟢 Normal"}</h2><div style="font-size:26px">${"⭐".repeat(s)}${"☆".repeat(3-s)}</div><p>Casos resueltos: <b>${solved}/${G.cs.length}</b> · Aciertos: <b>${G.ok}/${G.tot}</b> (${Math.round(acc*100)}%) · Puntaje: <b>${G.pts}</b> <small style="color:var(--mut)">(tu mejor puntaje: ${BEST})</small></p>${bub("mgr",s>=2?"¡Excelente! Ahora los defectos no volverán, porque atacamos la causa y no el síntoma.":"Buen intento. Recuerden: cada «porqué» explica el anterior, y la acción debe eliminar la causa raíz.")}${u.length?`<p style="margin:6px 0 4px"><b>Para repasar</b></p><table>${u.map(x=>`<tr><td>${x}</td></tr>`).join("")}</table>`:"<p>🎉 ¡Sin errores!</p>"}<button class="main" onclick="home()">🔄 Jugar de nuevo</button></div>`}
 home();
-</script></body></html>
+</script><a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+</body></html>
