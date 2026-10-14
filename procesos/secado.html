@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Secado y psicrometría · Simulador PES Labs</title>
+<meta name="description" content="Simulador gratuito de secado con aire caliente: carta psicrométrica, humedad absoluta, bulbo húmedo, punto de rocío, aire necesario, energía del calentador y curva de secado.">
+<meta property="og:title" content="Simulador: Secado y psicrometría">
+<meta property="og:description" content="Simulador gratuito de secado con aire caliente: carta psicrométrica, humedad absoluta, bulbo húmedo, punto de rocío, aire necesario, energía del calentador y curva de secado.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌬️</text></svg>">
+<style>
+:root{--bg:#0b1219;--card:#142030;--line:#26384a;--fg:#eef3f7;--mut:#94a3b4;--ac:#2ed692;--blue:#60a5fa;--red:#ff6b6b;--gold:#ffca28;--pur:#c084fc}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(1000px 500px at 90% -10%,#0f3a2e 0%,transparent 60%),linear-gradient(180deg,#0a1118,#0c1620);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+a{color:var(--blue)}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,17,24,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top .t{font-weight:900;font-size:17px}.top .t b{color:var(--ac)}.top .sp{flex:1}
+.ib{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:12px;display:grid;grid-template-columns:340px 1fr;gap:12px;grid-template-areas:'ctl viz' 'ctl rest';align-items:start}
+.panel{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.panel h3{margin:2px 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+.ctl{margin:9px 0}
+.ctl label{display:flex;justify-content:space-between;font-size:13px;color:#cbd6e0}
+.ctl label b{color:var(--fg);font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:100%;accent-color:var(--ac)}
+.ctl small{color:var(--mut);font-size:11.5px;display:block;margin-top:1px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:4px}
+.seg button{flex:1;background:transparent;border:0;color:var(--mut);padding:6px 4px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:#0f3a2e;color:var(--ac);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.kpi .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}.kpi .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.kpi .u{font-size:12px;color:var(--mut);font-weight:600}
+.kpi.ok{border-color:#1f6f52}.kpi.warn{border-color:#8a6d12}.kpi.bad{border-color:#8a2b33;background:rgba(70,20,25,.6)}
+.chartbox{position:relative}
+canvas{width:100%;display:block;border-radius:12px;background:#0d1722;border:1px solid var(--line)}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#cbd6e0;margin:6px 2px}
+.leg i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:10px}
+.exp{font-size:14px;color:#d7e2ea}.exp p{margin:6px 0}.exp b{color:var(--gold)}
+.alert{border-radius:12px;padding:9px 11px;margin:6px 0;font-size:14px}
+.alert.bad{background:rgba(120,25,35,.55);border:1px solid #c0394a}.alert.warn{background:rgba(110,85,10,.45);border:1px solid #b8901a}.alert.ok{background:rgba(15,70,50,.5);border:1px solid #1f8f66}
+.ret{display:flex;gap:9px;align-items:flex-start;padding:8px 6px;border-bottom:1px dashed #22344a;font-size:13.5px}
+.ret .ck{font-size:18px;line-height:1.1}.ret.done{color:#bdf5dd}.ret .go{margin-left:auto;font-size:12px}
+.ret .rt{font-weight:700}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:#182a3c;color:var(--fg);border-radius:10px;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+.btn.go{background:linear-gradient(90deg,#16a37a,#0ea5a0);border:0;color:#fff;font-weight:700}
+.eq{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:#0d1722;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:#cfe3f3;overflow:auto}
+.foot{max-width:1240px;margin:0 auto;padding:4px 12px 40px;color:var(--mut);font-size:12.5px}
+.toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:50;background:#13402f;border:1px solid var(--ac);border-radius:12px;padding:9px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:92vw}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;grid-template-areas:'viz' 'ctl' 'rest'}.kpis{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}
+ #viz{position:sticky;top:49px;z-index:5;background:#0b1219;padding-bottom:6px;margin:0 -12px;padding:6px 12px}
+ #viz .kpis{gap:5px;margin-bottom:6px}#viz .kpi{padding:4px 7px}#viz .kpi .l{font-size:9.5px}#viz .kpi .v{font-size:15px}
+ #viz .leg{display:none}#viz .panel{padding:6px}}
+@media(max-width:480px){.kpi .v{font-size:17px}.top .hide,.top .hide2{display:none}}
+.top .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+</style>
+</head><body>
+<div class="top"><a class="ib" href="../index.html#procesos" title="Volver a PES Labs">←</a><div class="t">🌬️ Secado<span class="hide2"> y psicrometría</span> <b class="hide">· Simulador</b></div><span class="sp"></span>
+ <button class="ib" onclick="reset()">↺<span class="hide"> Reiniciar</span></button><a class="ib" href="../index.html#leer-secado">📖<span class="hide"> Teoría</span></a></div>
+<div class="wrap">
+ <aside style="grid-area:ctl">
+  <div class="panel"><h3>🌤️ Aire ambiente</h3>
+   <div class="ctl"><label>Temperatura <b id="v_Ta"></b></label><input type="range" data-k="Ta" min="5" max="40" step="0.5"></div>
+   <div class="ctl"><label>Humedad relativa <b id="v_RHa"></b></label><input type="range" data-k="RHa" min="10" max="100" step="1"><small>Época lluviosa en el Valle Central: fácilmente 85–95 %</small></div>
+   <div class="ctl"><label>Altitud <b id="v_alt"></b></label><input type="range" data-k="alt" min="0" max="3000" step="50"></div>
+  </div>
+  <div class="panel" style="margin-top:12px"><h3>🔥 Secador</h3>
+   <div class="ctl"><label>Aire después del calentador <b id="v_Td"></b></label><input type="range" data-k="Td" min="40" max="150" step="1"><small>Más caliente = más capacidad de absorber agua (cuidado con el producto)</small></div>
+   <div class="ctl"><label>Humedad relativa del aire a la salida <b id="v_RHo"></b></label><input type="range" data-k="RHo" min="15" max="90" step="1"><small>Salir más húmedo aprovecha mejor el aire, pero frena el secado al final</small></div>
+  </div>
+  <div class="panel" style="margin-top:12px"><h3>📦 Producto</h3>
+   <div class="ctl"><label>Producto húmedo que entra <b id="v_mf"></b></label><input type="range" data-k="mf" min="100" max="5000" step="50"></div>
+   <div class="ctl"><label>Humedad de entrada (base húmeda) <b id="v_xi"></b></label><input type="range" data-k="xi" min="10" max="80" step="1"></div>
+   <div class="ctl"><label>Humedad de salida (base húmeda) <b id="v_xo"></b></label><input type="range" data-k="xo" min="1" max="20" step="0.5"></div>
+  </div>
+ </aside>
+ <section id="viz" style="grid-area:viz">
+  <div class="kpis">
+   <div class="kpi" id="k1"><div class="l">Agua a evaporar</div><div class="v"><span class="n">–</span> <span class="u">kg/h</span></div></div>
+   <div class="kpi" id="k2"><div class="l">Aire seco necesario</div><div class="v"><span class="n">–</span> <span class="u">kg/h</span></div></div>
+   <div class="kpi" id="k3"><div class="l">Calentador</div><div class="v"><span class="n">–</span> <span class="u">kW</span></div></div>
+   <div class="kpi" id="k4"><div class="l">Energía por kg de agua</div><div class="v"><span class="n">–</span> <span class="u">kJ/kg</span></div></div>
+   <div class="kpi" id="k5"><div class="l">Bulbo húmedo</div><div class="v"><span class="n">–</span> <span class="u">°C</span></div></div>
+   <div class="kpi" id="k6"><div class="l">Tiempo de secado</div><div class="v"><span class="n">–</span> <span class="u">min</span></div></div>
+  </div>
+  <div class="panel"><canvas id="cv"></canvas>
+   <div class="leg"><span><i style="background:rgba(147,197,253,.6)"></i>Humedad relativa 10–100 %</span><span><i style="background:#60a5fa"></i>A: ambiente</span><span><i style="background:#ff6b6b"></i>B: después del calentador</span><span><i style="background:#2ed692"></i>C: salida del secador</span></div></div>
+ </section>
+ <section style="grid-area:rest">
+  <div class="two" style="margin-top:0">
+   <div class="panel exp"><h3>🧠 ¿Qué está pasando?</h3><div id="exp"></div></div>
+   <div class="panel"><h3>🎯 Retos</h3><div id="retos"></div></div>
+  </div>
+  <div class="two">
+   <div class="panel"><h3>📉 Curva de secado (ilustrativa)</h3><canvas id="cv2"></canvas>
+    <div class="leg"><span><i style="background:#ffca28"></i>Humedad del producto (base húmeda)</span><span><i style="background:rgba(255,255,255,.5)"></i>Meta</span></div><div class="exp" style="font-size:13.5px">Primero hay un periodo de <b>velocidad constante</b> (se evapora agua libre de la superficie, a la temperatura de bulbo húmedo). Después, por debajo de la humedad crítica, el agua tiene que salir desde adentro y la velocidad <b>cae</b>.</div></div>
+   <div class="panel"><h3>📐 Cómo se calcula</h3>
+    <div class="eq">P<sub>sat</sub>(T): Antoine · P<sub>v</sub> = HR·P<sub>sat</sub><br>W = 0,622·P<sub>v</sub>/(P − P<sub>v</sub>)  [kg agua/kg aire seco]<br>h = 1,006·T + W·(2501 + 1,86·T)  [kJ/kg a.s.]<br>Secador adiabático: h<sub>B</sub> = h<sub>C</sub><br>Agua = ṁ<sub>f</sub> − ṁ<sub>f</sub>·(1−x<sub>in</sub>)/(1−x<sub>out</sub>)<br>Aire = Agua / (W<sub>C</sub> − W<sub>A</sub>) · Q = Aire·(h<sub>B</sub> − h<sub>A</sub>)</div>
+    <div class="exp" id="detail" style="font-size:13px;margin-top:8px"></div></div>
+  </div>
+ </section>
+</div>
+
+<div class="foot">Simulador educativo: secador adiabático ideal (sin pérdidas), propiedades del aire húmedo con correlaciones estándar y una curva de secado genérica e ilustrativa: no reemplaza pruebas de secado del producto real · PES Labs · Ing. Ricardo Fonseca Pereira · Creado con ayuda de IA.</div>
+<script>
+// ===== Librería común de simuladores PES Labs =====
+const $=id=>document.getElementById(id);
+const fmt=(x,d)=>(isFinite(x)?x:0).toLocaleString('es-CR',{minimumFractionDigits:d,maximumFractionDigits:d});
+let S={},DONE=new Set(),KEY='',DEF={};
+function initState(key,def){KEY=key;DEF=def;S=Object.assign({},def);try{const s=JSON.parse(localStorage.getItem(key)||'null');if(s){Object.assign(S,s.S);DONE=new Set(s.done||[]);}}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({S,done:[...DONE]}));}catch(e){}}
+function bindAll(){
+ document.querySelectorAll('input[type=range][data-k]').forEach(el=>{const k=el.dataset.k;el.value=S[k];el.oninput=()=>{S[k]=+el.value;upd();};});
+ document.querySelectorAll('.seg[data-k]').forEach(sg=>{const k=sg.dataset.k;const bs=[...sg.querySelectorAll('button')];
+  bs.forEach(b=>{const v=isNaN(+b.dataset.v)?b.dataset.v:+b.dataset.v;b.classList.toggle('on',v===S[k]);b.onclick=()=>{S[k]=v;bs.forEach(x=>x.classList.toggle('on',x===b));upd();};});});
+}
+function reset(){S=Object.assign({},DEF);bindAll();upd();}
+function preset(o,msg){S=Object.assign({},DEF,o);bindAll();upd();if(msg)toast(msg);}
+function lbl(k,t){const e=$('v_'+k);if(e)e.textContent=t;}
+function setK(id,val,cls){const e=$(id);if(!e)return;e.querySelector('.n').textContent=val;e.className='kpi '+(cls||'');}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
+function setupCanvas(c,h){const r=window.devicePixelRatio||1;c.setAttribute('height',h);const w=c.clientWidth;c.width=w*r;c.height=h*r;c.style.height=h+'px';const x=c.getContext('2d');x.setTransform(r,0,0,r,0,0);x.clearRect(0,0,w,h);return {x,w,h};}
+const mobile=()=>window.innerWidth<980;
+// Ejes: o={h,xmin,xmax,ymin,ymax,xlab,ylab,xs,ys,y2:{min,max,lab,col,s},ml,mr,dx,dy}
+function plot(c,o){
+ const {x,w,h}=setupCanvas(c,o.h);const m={l:o.ml||50,r:o.y2?50:(o.mr||14),t:14,b:38};
+ const X=v=>m.l+(w-m.l-m.r)*(v-o.xmin)/(o.xmax-o.xmin),Y=v=>h-m.b-(h-m.t-m.b)*(v-o.ymin)/(o.ymax-o.ymin);
+ const Y2=o.y2?v=>h-m.b-(h-m.t-m.b)*(v-o.y2.min)/(o.y2.max-o.y2.min):null;
+ x.font='12px system-ui';x.strokeStyle='#1d2c3c';x.lineWidth=1;x.fillStyle='#8aa0b4';
+ const nice=(a,b,n)=>{const r=(b-a)/n,p=10**Math.floor(Math.log10(r)),f=r/p;return (f<1.5?1:f<3?2:f<7?5:10)*p;};
+ const xs=o.xs||nice(o.xmin,o.xmax,6),ys=o.ys||nice(o.ymin,o.ymax,5);
+ const dec=v=>Math.abs(v)<10&&v%1!==0?(Math.abs(v)<1?2:1):0;
+ for(let v=Math.ceil(o.xmin/xs)*xs;v<=o.xmax+1e-9;v+=xs){x.beginPath();x.moveTo(X(v),m.t);x.lineTo(X(v),h-m.b);x.stroke();const t=fmt(v,o.dx!=null?o.dx:dec(xs));x.fillText(t,X(v)-x.measureText(t).width/2,h-m.b+15);}
+ for(let v=Math.ceil(o.ymin/ys)*ys;v<=o.ymax+1e-9;v+=ys){x.beginPath();x.moveTo(m.l,Y(v));x.lineTo(w-m.r,Y(v));x.stroke();const t=fmt(v,o.dy!=null?o.dy:dec(ys));x.fillText(t,m.l-6-x.measureText(t).width,Y(v)+4);}
+ if(o.y2){const s2=o.y2.s||nice(o.y2.min,o.y2.max,5);x.fillStyle=o.y2.col||'#b48ae8';for(let v=Math.ceil(o.y2.min/s2)*s2;v<=o.y2.max+1e-9;v+=s2)x.fillText(fmt(v,dec(s2))+(o.y2.u||''),w-m.r+6,Y2(v)+4);}
+ x.fillStyle='#cbd6e0';x.fillText(o.xlab||'',(m.l+w-m.r)/2-x.measureText(o.xlab||'').width/2,h-4);
+ x.save();x.translate(13,(m.t+h-m.b)/2+x.measureText(o.ylab||'').width/2);x.rotate(-Math.PI/2);x.fillText(o.ylab||'',0,0);x.restore();
+ if(o.y2&&o.y2.lab){x.save();x.fillStyle=o.y2.col||'#b48ae8';x.translate(w-6,(m.t+h-m.b)/2-x.measureText(o.y2.lab).width/2);x.rotate(Math.PI/2);x.fillText(o.y2.lab,0,0);x.restore();}
+ return {x,w,h,m,X,Y,Y2,o};
+}
+function inBox(P,px,py){return px>=P.m.l-1&&px<=P.w-P.m.r+1&&py>=P.m.t-1&&py<=P.h-P.m.b+1;}
+function line(P,pts,col,wd,dash,y2){const x=P.x,Yf=y2?P.Y2:P.Y;x.strokeStyle=col;x.lineWidth=wd||2.5;x.setLineDash(dash||[]);x.beginPath();let st=false;
+ for(const [a,b] of pts){if(b==null||!isFinite(b)){st=false;continue;}const px=P.X(a),py=Yf(b);if(!inBox(P,px,py)){st=false;continue;}if(!st){x.moveTo(px,py);st=true;}else x.lineTo(px,py);}x.stroke();x.setLineDash([]);}
+function fn(P,f,col,wd,dash,n,y2){const pts=[];const N=n||200;for(let i=0;i<=N;i++){const a=P.o.xmin+(P.o.xmax-P.o.xmin)*i/N;pts.push([a,f(a)]);}line(P,pts,col,wd,dash,y2);}
+function dot(P,a,b,col,r,txt,y2){const x=P.x,px=P.X(a),py=(y2?P.Y2:P.Y)(b);x.fillStyle=col;x.beginPath();x.arc(px,py,r||6,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.stroke();
+ if(txt){x.font='bold 12px system-ui';x.fillStyle='#fff';const tw=x.measureText(txt).width;let lx=px+10;if(lx+tw>P.w-P.m.r)lx=px-tw-10;x.fillText(txt,lx,py-10);x.font='12px system-ui';}}
+function band(P,a,b,col){P.x.fillStyle=col;P.x.fillRect(P.X(a),P.m.t,P.X(b)-P.X(a),P.h-P.m.t-P.m.b);}
+function vline(P,a,col,txt){const x=P.x;x.strokeStyle=col;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(P.X(a),P.m.t);x.lineTo(P.X(a),P.h-P.m.b);x.stroke();x.setLineDash([]);if(txt){x.fillStyle=col;x.fillText(txt,P.X(a)+4,P.m.t+12);}}
+function hline(P,b,col,txt){const x=P.x;x.strokeStyle=col;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(P.m.l,P.Y(b));x.lineTo(P.w-P.m.r,P.Y(b));x.stroke();x.setLineDash([]);if(txt){x.fillStyle=col;x.fillText(txt,P.m.l+6,P.Y(b)-5);}}
+function text(P,a,b,t,col,bold){const x=P.x;x.font=(bold?'bold ':'')+'12px system-ui';x.fillStyle=col||'#fff';x.fillText(t,P.X(a),P.Y(b));x.font='12px system-ui';}
+// Retos: [{id,t,h,ok:()=>bool}]
+function renderRetos(RETOS,extra){let html='';
+ for(const r of RETOS){let ok=false;try{ok=r.ok();}catch(e){}if(ok&&!DONE.has(r.id)){DONE.add(r.id);toast('🎯 ¡Reto logrado! '+r.t);}
+  const d=DONE.has(r.id);html+=`<div class="ret ${d?'done':''}"><span class="ck">${d?'✅':'⬜'}</span><div><div class="rt">${r.t}</div><small style="color:var(--mut)">${r.h}</small></div></div>`;}
+ html+=`<div style="font-size:12.5px;color:var(--mut);margin-top:6px">${DONE.size} de ${RETOS.length} retos · tu avance se guarda en este navegador</div>`;
+ if(extra)html+=`<div class="btns">${extra}</div>`;$('retos').innerHTML=html;}
+function alertBox(cls,html){return `<div class="alert ${cls}">${html}</div>`;}
+let _rt;window.addEventListener('resize',()=>{clearTimeout(_rt);_rt=setTimeout(()=>upd(),120);});
+
+initState('pes_secado_v1',{Ta:25,RHa:75,alt:1150,Td:90,RHo:50,mf:1000,xi:40,xo:5});
+const psat=T=>10**(8.07131-1730.63/(233.426+T))*0.133322; // kPa
+const tsat=p=>1730.63/(8.07131-Math.log10(p/0.133322))-233.426;
+const patm=h=>101.325*(1-2.25577e-5*h)**5.25588;
+const Wf=(pv,P)=>0.622*pv/(P-pv);
+const hf=(T,W)=>1.006*T+W*(2501+1.86*T);
+const RHf=(T,W,P)=>{const pv=W*P/(0.622+W);return pv/psat(T);};
+function twb(T,W,P){let lo=-10,hi=T;for(let i=0;i<60;i++){const t=(lo+hi)/2;const Ws=Wf(psat(t),P);const Wc=((2501-2.326*t)*Ws-1.006*(T-t))/(2501+1.86*T-4.186*t);if(Wc>W)hi=t;else lo=t;}return (lo+hi)/2;}
+function state(T,W,P){return {T,W,h:hf(T,W),RH:RHf(T,W,P),td:tsat(W*P/(0.622+W)),wb:twb(T,W,P),v:0.287042*(T+273.15)*(1+1.6078*W)/P};}
+let R;
+function calc(s){
+ const P=patm(s.alt);const WA=Wf(s.RHa/100*psat(s.Ta),P);const A=state(s.Ta,WA,P);const B=state(s.Td,WA,P);
+ // salida: misma entalpía que B y HR = RHo
+ let lo=B.wb,hi=s.Td;for(let i=0;i<60;i++){const T=(lo+hi)/2;const W=(B.h-1.006*T)/(2501+1.86*T);if(RHf(T,W,P)>s.RHo/100)lo=T;else hi=T;}
+ const Tc=(lo+hi)/2,Cst=state(Tc,(B.h-1.006*Tc)/(2501+1.86*Tc),P);
+ const sol=s.mf*(1-s.xi/100),pout=sol/(1-s.xo/100),water=s.mf-pout;
+ const dW=Cst.W-A.W,air=dW>1e-6?water/dW:Infinity,Q=air*(B.h-A.h)/3600,ekg=Q*3600/water;
+ // curva de secado (ilustrativa): base seca
+ const X0=s.xi/(100-s.xi),Xf=s.xo/(100-s.xo),Xc=0.25,Xe=Math.min(Xf*0.6,0.02);const Rc=5e-6*(s.Td-B.wb); // 1/s por unidad
+ const curve=[];let X=X0,t=0,tdone=null;const dt=10;
+ while(t<=4*3600){curve.push([t/60,X/(1+X)*100]);if(tdone==null&&X<=Xf)tdone=t/60;const r=X>Xc?Rc:Rc*Math.max(0,(X-Xe)/(Xc-Xe));X=Math.max(Xe,X-r*dt);t+=dt;if(tdone!=null&&t/60>tdone*1.4+5)break;}
+ return {P,A,B,C:Cst,water,air,Q,ekg,pout,curve,tdone,vol:air*A.v};
+}
+function upd(){
+ if(S.xo>=S.xi-1){S.xo=Math.max(1,S.xi-5);bindAll();}
+ lbl('Ta',fmt(S.Ta,1)+' °C');lbl('RHa',S.RHa+' %');lbl('alt',S.alt+' m');lbl('Td',S.Td+' °C');lbl('RHo',S.RHo+' %');lbl('mf',fmt(S.mf,0)+' kg/h');lbl('xi',S.xi+' %');lbl('xo',fmt(S.xo,1)+' %');
+ R=calc(S);
+ setK('k1',fmt(R.water,0));setK('k2',isFinite(R.air)?fmt(R.air,0):'∞',R.air>60*R.water?'warn':'');setK('k3',isFinite(R.Q)?fmt(R.Q,0):'–');
+ setK('k4',isFinite(R.ekg)?fmt(R.ekg,0):'–',R.ekg<3500?'ok':R.ekg>6000?'bad':'warn');setK('k5',fmt(R.B.wb,1));setK('k6',R.tdone!=null?fmt(R.tdone,0):'> 240',R.tdone!=null&&R.tdone<=30?'ok':'');
+ draw();draw2();explain();
+ renderRetos(RETOS,`<button class="btn" onclick="preset({Ta:20,RHa:95},'🌧️ Día lluvioso en el Valle Central: el aire ya viene cargado de agua.')">Escenario: día lluvioso</button><button class="btn" onclick="preset({Td:140,RHo:40},'🔥 Aire muy caliente: menos aire y secado más rápido.')">Escenario: aire muy caliente</button><button class="btn" onclick="preset({RHo:20},'💨 Aire que sale casi seco: se desperdicia energía.')">Escenario: aire desaprovechado</button>`);
+ persist();
+}
+function draw(){
+ const P=R.P,Tmax=Math.max(60,Math.ceil((S.Td+10)/10)*10),Wmax=Math.max(0.03,Math.ceil(Math.max(R.C.W,R.A.W)*1000*1.35/5)*5/1000);
+ const G=plot($('cv'),{h:mobile()?Math.min(260,Math.round(innerHeight*.31)):420,xmin:0,xmax:Tmax,ymin:0,ymax:Wmax*1000,xlab:'Temperatura de bulbo seco (°C)',ylab:'Humedad absoluta W (g agua / kg aire seco)'});
+ for(let rh=10;rh<=100;rh+=10){const pts=[];for(let T=0;T<=Tmax;T+=0.5){const W=Wf(rh/100*psat(T),P);if(W*1000>Wmax*1000*1.02)break;pts.push([T,W*1000]);}line(G,pts,rh===100?'rgba(147,197,253,.9)':'rgba(147,197,253,.28)',rh===100?2:1);
+  const last=pts[pts.length-1];if(last&&rh%20===0&&last[1]>Wmax*1000*0.9)text(G,last[0]-3,last[1]-1,rh+'%','rgba(147,197,253,.8)');}
+ // línea adiabática B→C
+ const a=R.B,c=R.C;line(G,[[R.A.T,R.A.W*1000],[a.T,a.W*1000]],'#ff6b6b',3);line(G,[[a.T,a.W*1000],[c.T,c.W*1000]],'#2ed692',3);
+ dot(G,R.A.T,R.A.W*1000,'#60a5fa',6,'A');dot(G,a.T,a.W*1000,'#ff6b6b',6,'B');dot(G,c.T,c.W*1000,'#2ed692',6,'C');
+ // punto de rocío
+ G.x.setLineDash([3,4]);G.x.strokeStyle='rgba(96,165,250,.6)';G.x.beginPath();G.x.moveTo(G.X(R.A.td),G.Y(R.A.W*1000));G.x.lineTo(G.X(R.A.T),G.Y(R.A.W*1000));G.x.stroke();G.x.setLineDash([]);
+ text(G,Math.max(0.5,R.A.td-6),R.A.W*1000+Wmax*1000*0.04,'rocío '+fmt(R.A.td,1)+' °C','#93c5fd');
+}
+function draw2(){
+ const c=R.curve,tmax=c[c.length-1][0];const G=plot($('cv2'),{h:220,xmin:0,xmax:tmax,ymin:0,ymax:Math.ceil(S.xi/10)*10,xlab:'Tiempo (min)',ylab:'Humedad (% b.h.)'});
+ hline(G,S.xo,'rgba(255,255,255,.6)','meta '+fmt(S.xo,1)+' %');line(G,c,'#ffca28',3);if(R.tdone!=null)vline(G,R.tdone,'rgba(46,214,146,.7)',fmt(R.tdone,0)+' min');
+}
+function explain(){
+ const e=[];
+ e.push(`<p>Para bajar ${fmt(S.mf,0)} kg/h de producto de ${S.xi} % a ${fmt(S.xo,1)} % de humedad hay que evaporar <b>${fmt(R.water,0)} kg/h de agua</b> (sale ${fmt(R.pout,0)} kg/h de producto seco).</p>`);
+ e.push(`<p>El aire ambiente (A) trae ${fmt(R.A.W*1000,1)} g de agua por kg. Se calienta hasta ${S.Td} °C (B) sin cambiar su humedad, y en el secador absorbe agua y se enfría hasta ${fmt(R.C.T,1)} °C (C), saliendo con ${fmt(R.C.W*1000,1)} g/kg. Cada kg de aire se lleva solo <b>${fmt((R.C.W-R.A.W)*1000,1)} g de agua</b>: por eso hacen falta ${fmt(R.air,0)} kg/h de aire (≈ ${fmt(R.vol,0)} m³/h).</p>`);
+ e.push(alertBox(R.ekg<3500?'ok':R.ekg>6000?'bad':'warn',`🔥 El calentador consume <b>${fmt(R.Q,0)} kW</b>: unos <b>${fmt(R.ekg,0)} kJ por kg de agua</b>. Evaporar agua cuesta como mínimo ~2400 kJ/kg; lo demás se va con el aire caliente que sale.`));
+ if(S.RHa>=88)e.push(`<p>🌧️ Con ${S.RHa} % de humedad relativa el aire ambiente ya viene cargado: cada kg absorbe menos y necesitas más aire y más energía. En plantas de Costa Rica esto cambia mucho entre la época seca y la lluviosa.</p>`);
+ if(S.RHo<30)e.push(`<p>💨 El aire sale con solo ${S.RHo} % de humedad relativa: todavía podía cargar mucha más agua. Estás botando aire caliente casi sin usar.</p>`);
+ $('exp').innerHTML=e.join('');
+ $('detail').innerHTML=`P = ${fmt(R.P,1)} kPa a ${S.alt} m<br>A: ${fmt(R.A.T,1)} °C, W = ${fmt(R.A.W*1000,2)} g/kg, h = ${fmt(R.A.h,1)} kJ/kg, rocío ${fmt(R.A.td,1)} °C<br>B: ${fmt(R.B.T,1)} °C, h = ${fmt(R.B.h,1)} kJ/kg, bulbo húmedo ${fmt(R.B.wb,1)} °C<br>C: ${fmt(R.C.T,1)} °C, W = ${fmt(R.C.W*1000,2)} g/kg, HR = ${fmt(R.C.RH*100,0)} %`;
+}
+const RETOS=[
+ {id:'s1',t:'Seca gastando menos de 3500 kJ por kg de agua',h:'Más temperatura en el calentador y aprovecha bien el aire.',ok:()=>R.ekg<3500},
+ {id:'s2',t:'Día lluvioso (HR ≥ 90 %): menos de 3600 kJ/kg',h:'El aire viene húmedo: compénsalo con temperatura y humedad de salida.',ok:()=>S.RHa>=90&&R.ekg<3600},
+ {id:'s3',t:'Seca en 30 min o menos',h:'Aire más caliente acelera el periodo de velocidad constante.',ok:()=>R.tdone!=null&&R.tdone<=30},
+ {id:'s4',t:'1000 kg/h de 50 % a 5 % con menos de 30 000 kg/h de aire',h:'Ajusta el producto y busca que cada kg de aire cargue más agua.',ok:()=>S.mf>=1000&&S.xi>=50&&S.xo<=5&&R.air<30000},
+ {id:'s5',t:'Encuentra un ambiente con punto de rocío sobre 24 °C',h:'Aire caliente y muy húmedo: así se condensa agua en tuberías frías.',ok:()=>R.A.td>24}];
+bindAll();upd();
+
+</script>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>

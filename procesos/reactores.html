@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reactores CSTR vs PFR · Simulador PES Labs</title>
+<meta name="description" content="Simulador gratuito de reactores ideales: conversión en CSTR, PFR y tanques en serie, efecto de la temperatura con Arrhenius y gráfica de Levenspiel.">
+<meta property="og:title" content="Simulador: Reactores CSTR vs PFR">
+<meta property="og:description" content="Simulador gratuito de reactores ideales: conversión en CSTR, PFR y tanques en serie, efecto de la temperatura con Arrhenius y gráfica de Levenspiel.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<style>
+:root{--bg:#0b1219;--card:#142030;--line:#26384a;--fg:#eef3f7;--mut:#94a3b4;--ac:#2ed692;--blue:#60a5fa;--red:#ff6b6b;--gold:#ffca28;--pur:#c084fc}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(1000px 500px at 90% -10%,#0f3a2e 0%,transparent 60%),linear-gradient(180deg,#0a1118,#0c1620);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+a{color:var(--blue)}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,17,24,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top .t{font-weight:900;font-size:17px}.top .t b{color:var(--ac)}.top .sp{flex:1}
+.ib{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:12px;display:grid;grid-template-columns:340px 1fr;gap:12px;grid-template-areas:'ctl viz' 'ctl rest';align-items:start}
+.panel{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.panel h3{margin:2px 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+.ctl{margin:9px 0}
+.ctl label{display:flex;justify-content:space-between;font-size:13px;color:#cbd6e0}
+.ctl label b{color:var(--fg);font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:100%;accent-color:var(--ac)}
+.ctl small{color:var(--mut);font-size:11.5px;display:block;margin-top:1px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:4px}
+.seg button{flex:1;background:transparent;border:0;color:var(--mut);padding:6px 4px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:#0f3a2e;color:var(--ac);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.kpi .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}.kpi .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.kpi .u{font-size:12px;color:var(--mut);font-weight:600}
+.kpi.ok{border-color:#1f6f52}.kpi.warn{border-color:#8a6d12}.kpi.bad{border-color:#8a2b33;background:rgba(70,20,25,.6)}
+.chartbox{position:relative}
+canvas{width:100%;display:block;border-radius:12px;background:#0d1722;border:1px solid var(--line)}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#cbd6e0;margin:6px 2px}
+.leg i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:10px}
+.exp{font-size:14px;color:#d7e2ea}.exp p{margin:6px 0}.exp b{color:var(--gold)}
+.alert{border-radius:12px;padding:9px 11px;margin:6px 0;font-size:14px}
+.alert.bad{background:rgba(120,25,35,.55);border:1px solid #c0394a}.alert.warn{background:rgba(110,85,10,.45);border:1px solid #b8901a}.alert.ok{background:rgba(15,70,50,.5);border:1px solid #1f8f66}
+.ret{display:flex;gap:9px;align-items:flex-start;padding:8px 6px;border-bottom:1px dashed #22344a;font-size:13.5px}
+.ret .ck{font-size:18px;line-height:1.1}.ret.done{color:#bdf5dd}.ret .go{margin-left:auto;font-size:12px}
+.ret .rt{font-weight:700}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:#182a3c;color:var(--fg);border-radius:10px;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+.btn.go{background:linear-gradient(90deg,#16a37a,#0ea5a0);border:0;color:#fff;font-weight:700}
+.eq{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:#0d1722;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:#cfe3f3;overflow:auto}
+.foot{max-width:1240px;margin:0 auto;padding:4px 12px 40px;color:var(--mut);font-size:12.5px}
+.toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:50;background:#13402f;border:1px solid var(--ac);border-radius:12px;padding:9px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:92vw}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;grid-template-areas:'viz' 'ctl' 'rest'}.kpis{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}
+ #viz{position:sticky;top:49px;z-index:5;background:#0b1219;padding-bottom:6px;margin:0 -12px;padding:6px 12px}
+ #viz .kpis{gap:5px;margin-bottom:6px}#viz .kpi{padding:4px 7px}#viz .kpi .l{font-size:9.5px}#viz .kpi .v{font-size:15px}
+ #viz .leg{display:none}#viz .panel{padding:6px}}
+@media(max-width:480px){.kpi .v{font-size:17px}.top .hide,.top .hide2{display:none}}
+.top .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+</style>
+</head><body>
+<div class="top"><a class="ib" href="../index.html#procesos" title="Volver a PES Labs">←</a><div class="t">🧪 Reactores<span class="hide2"> CSTR vs PFR</span> <b class="hide">· Simulador</b></div><span class="sp"></span>
+ <button class="ib" onclick="reset()">↺<span class="hide"> Reiniciar</span></button><a class="ib" href="../index.html#leer-reactores">📖<span class="hide"> Teoría</span></a></div>
+<div class="wrap">
+ <aside style="grid-area:ctl">
+  <div class="panel"><h3>⚛️ Reacción A → productos</h3>
+   <div class="ctl"><label>Orden de reacción</label><div class="seg" data-k="n"><button data-v="1">1er orden</button><button data-v="2">2º orden</button></div><small>−r<sub>A</sub> = k·C<sub>A</sub><sup>n</sup></small></div>
+   <div class="ctl"><label>k a 50 °C <b id="v_kr"></b></label><input type="range" data-k="kr" min="0.01" max="1" step="0.01"></div>
+   <div class="ctl"><label>Energía de activación <b id="v_ea"></b></label><input type="range" data-k="ea" min="20" max="120" step="1"><small>Cuanto mayor, más sensible a la temperatura</small></div>
+   <div class="ctl"><label>Temperatura <b id="v_T"></b></label><input type="range" data-k="T" min="20" max="120" step="1"></div>
+   <div class="ctl"><label>Concentración inicial (CA0) <b id="v_c0"></b></label><input type="range" data-k="c0" min="0.5" max="5" step="0.1"></div>
+  </div>
+  <div class="panel" style="margin-top:12px"><h3>🛢️ Reactor</h3>
+   <div class="ctl"><label>Volumen <b id="v_V"></b></label><input type="range" data-k="V" min="10" max="2000" step="10"></div>
+   <div class="ctl"><label>Caudal de alimentación <b id="v_q"></b></label><input type="range" data-k="q" min="1" max="100" step="1"></div>
+   <div class="ctl"><label>Tanques agitados en serie <b id="v_N"></b></label><input type="range" data-k="N" min="1" max="8" step="1"><small>Dividir el mismo volumen en varios tanques acerca el resultado al del tubular</small></div>
+   <div class="ctl"><label>Conversión objetivo <b id="v_xt"></b></label><input type="range" data-k="xt" min="0.5" max="0.99" step="0.01"></div>
+  </div>
+ </aside>
+ <section id="viz" style="grid-area:viz">
+  <div class="kpis">
+   <div class="kpi" id="k1"><div class="l">X tanque (CSTR)</div><div class="v"><span class="n">–</span> <span class="u">%</span></div></div>
+   <div class="kpi" id="k2"><div class="l">X tubular (PFR)</div><div class="v"><span class="n">–</span> <span class="u">%</span></div></div>
+   <div class="kpi" id="k3"><div class="l">X tanques en serie</div><div class="v"><span class="n">–</span> <span class="u">%</span></div></div>
+   <div class="kpi" id="k4"><div class="l">Tiempo de residencia τ</div><div class="v"><span class="n">–</span> <span class="u">min</span></div></div>
+   <div class="kpi" id="k5"><div class="l">k a esta T</div><div class="v"><span class="n">–</span> <span class="u" id="ku">1/min</span></div></div>
+   <div class="kpi" id="k6"><div class="l">+10 °C multiplica k ×</div><div class="v"><span class="n">–</span></div></div>
+  </div>
+  <div class="panel"><canvas id="cv"></canvas>
+   <div class="leg"><span><i style="background:#ff6b6b"></i>Tanque agitado (CSTR)</span><span><i style="background:#60a5fa"></i>Tubular (PFR)</span><span><i style="background:#ffca28"></i>N tanques en serie</span><span><i style="background:rgba(255,255,255,.5)"></i>Tu τ actual</span></div></div>
+ </section>
+ <section style="grid-area:rest">
+  <div class="two" style="margin-top:0">
+   <div class="panel exp"><h3>🧠 ¿Qué está pasando?</h3><div id="exp"></div></div>
+   <div class="panel"><h3>🎯 Retos</h3><div id="retos"></div></div>
+  </div>
+  <div class="two">
+   <div class="panel"><h3>📊 Gráfica de Levenspiel</h3><canvas id="cv2"></canvas>
+    <div class="leg"><span><i style="background:rgba(255,107,107,.45);height:10px"></i>Volumen CSTR (rectángulo)</span><span><i style="background:rgba(96,165,250,.5);height:10px"></i>Volumen PFR (área bajo la curva)</span></div><div class="exp" id="lev" style="font-size:13.5px"></div></div>
+   <div class="panel"><h3>📐 Cómo se calcula</h3>
+    <div class="eq">Arrhenius: k(T) = k<sub>50</sub>·exp[−E<sub>a</sub>/R·(1/T − 1/323,15)]<br>τ = V / v₀ · Da = k·τ·C<sub>A0</sub><sup>n−1</sup><br>1er orden: X<sub>CSTR</sub> = Da/(1+Da) · X<sub>PFR</sub> = 1 − e<sup>−Da</sup><br>2º orden: X<sub>PFR</sub> = Da/(1+Da) · X<sub>CSTR</sub>: Da(1−X)² = X<br>Levenspiel: V = F<sub>A0</sub>·∫dX/(−r<sub>A</sub>) (PFR) · V = F<sub>A0</sub>·X/(−r<sub>A</sub>) (CSTR)</div>
+    <div class="exp" id="detail" style="font-size:13px;margin-top:8px"></div></div>
+  </div>
+ </section>
+</div>
+
+<div class="foot">Simulador educativo de reactores ideales, isotérmicos y de densidad constante, con una reacción genérica A → productos: no reemplaza un diseño de reactor real (seguridad, calor de reacción, mezclado) · PES Labs · Ing. Ricardo Fonseca Pereira · Creado con ayuda de IA.</div>
+<script>
+// ===== Librería común de simuladores PES Labs =====
+const $=id=>document.getElementById(id);
+const fmt=(x,d)=>(isFinite(x)?x:0).toLocaleString('es-CR',{minimumFractionDigits:d,maximumFractionDigits:d});
+let S={},DONE=new Set(),KEY='',DEF={};
+function initState(key,def){KEY=key;DEF=def;S=Object.assign({},def);try{const s=JSON.parse(localStorage.getItem(key)||'null');if(s){Object.assign(S,s.S);DONE=new Set(s.done||[]);}}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({S,done:[...DONE]}));}catch(e){}}
+function bindAll(){
+ document.querySelectorAll('input[type=range][data-k]').forEach(el=>{const k=el.dataset.k;el.value=S[k];el.oninput=()=>{S[k]=+el.value;upd();};});
+ document.querySelectorAll('.seg[data-k]').forEach(sg=>{const k=sg.dataset.k;const bs=[...sg.querySelectorAll('button')];
+  bs.forEach(b=>{const v=isNaN(+b.dataset.v)?b.dataset.v:+b.dataset.v;b.classList.toggle('on',v===S[k]);b.onclick=()=>{S[k]=v;bs.forEach(x=>x.classList.toggle('on',x===b));upd();};});});
+}
+function reset(){S=Object.assign({},DEF);bindAll();upd();}
+function preset(o,msg){S=Object.assign({},DEF,o);bindAll();upd();if(msg)toast(msg);}
+function lbl(k,t){const e=$('v_'+k);if(e)e.textContent=t;}
+function setK(id,val,cls){const e=$(id);if(!e)return;e.querySelector('.n').textContent=val;e.className='kpi '+(cls||'');}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
+function setupCanvas(c,h){const r=window.devicePixelRatio||1;c.setAttribute('height',h);const w=c.clientWidth;c.width=w*r;c.height=h*r;c.style.height=h+'px';const x=c.getContext('2d');x.setTransform(r,0,0,r,0,0);x.clearRect(0,0,w,h);return {x,w,h};}
+const mobile=()=>window.innerWidth<980;
+// Ejes: o={h,xmin,xmax,ymin,ymax,xlab,ylab,xs,ys,y2:{min,max,lab,col,s},ml,mr,dx,dy}
+function plot(c,o){
+ const {x,w,h}=setupCanvas(c,o.h);const m={l:o.ml||50,r:o.y2?50:(o.mr||14),t:14,b:38};
+ const X=v=>m.l+(w-m.l-m.r)*(v-o.xmin)/(o.xmax-o.xmin),Y=v=>h-m.b-(h-m.t-m.b)*(v-o.ymin)/(o.ymax-o.ymin);
+ const Y2=o.y2?v=>h-m.b-(h-m.t-m.b)*(v-o.y2.min)/(o.y2.max-o.y2.min):null;
+ x.font='12px system-ui';x.strokeStyle='#1d2c3c';x.lineWidth=1;x.fillStyle='#8aa0b4';
+ const nice=(a,b,n)=>{const r=(b-a)/n,p=10**Math.floor(Math.log10(r)),f=r/p;return (f<1.5?1:f<3?2:f<7?5:10)*p;};
+ const xs=o.xs||nice(o.xmin,o.xmax,6),ys=o.ys||nice(o.ymin,o.ymax,5);
+ const dec=v=>Math.abs(v)<10&&v%1!==0?(Math.abs(v)<1?2:1):0;
+ for(let v=Math.ceil(o.xmin/xs)*xs;v<=o.xmax+1e-9;v+=xs){x.beginPath();x.moveTo(X(v),m.t);x.lineTo(X(v),h-m.b);x.stroke();const t=fmt(v,o.dx!=null?o.dx:dec(xs));x.fillText(t,X(v)-x.measureText(t).width/2,h-m.b+15);}
+ for(let v=Math.ceil(o.ymin/ys)*ys;v<=o.ymax+1e-9;v+=ys){x.beginPath();x.moveTo(m.l,Y(v));x.lineTo(w-m.r,Y(v));x.stroke();const t=fmt(v,o.dy!=null?o.dy:dec(ys));x.fillText(t,m.l-6-x.measureText(t).width,Y(v)+4);}
+ if(o.y2){const s2=o.y2.s||nice(o.y2.min,o.y2.max,5);x.fillStyle=o.y2.col||'#b48ae8';for(let v=Math.ceil(o.y2.min/s2)*s2;v<=o.y2.max+1e-9;v+=s2)x.fillText(fmt(v,dec(s2))+(o.y2.u||''),w-m.r+6,Y2(v)+4);}
+ x.fillStyle='#cbd6e0';x.fillText(o.xlab||'',(m.l+w-m.r)/2-x.measureText(o.xlab||'').width/2,h-4);
+ x.save();x.translate(13,(m.t+h-m.b)/2+x.measureText(o.ylab||'').width/2);x.rotate(-Math.PI/2);x.fillText(o.ylab||'',0,0);x.restore();
+ if(o.y2&&o.y2.lab){x.save();x.fillStyle=o.y2.col||'#b48ae8';x.translate(w-6,(m.t+h-m.b)/2-x.measureText(o.y2.lab).width/2);x.rotate(Math.PI/2);x.fillText(o.y2.lab,0,0);x.restore();}
+ return {x,w,h,m,X,Y,Y2,o};
+}
+function inBox(P,px,py){return px>=P.m.l-1&&px<=P.w-P.m.r+1&&py>=P.m.t-1&&py<=P.h-P.m.b+1;}
+function line(P,pts,col,wd,dash,y2){const x=P.x,Yf=y2?P.Y2:P.Y;x.strokeStyle=col;x.lineWidth=wd||2.5;x.setLineDash(dash||[]);x.beginPath();let st=false;
+ for(const [a,b] of pts){if(b==null||!isFinite(b)){st=false;continue;}const px=P.X(a),py=Yf(b);if(!inBox(P,px,py)){st=false;continue;}if(!st){x.moveTo(px,py);st=true;}else x.lineTo(px,py);}x.stroke();x.setLineDash([]);}
+function fn(P,f,col,wd,dash,n,y2){const pts=[];const N=n||200;for(let i=0;i<=N;i++){const a=P.o.xmin+(P.o.xmax-P.o.xmin)*i/N;pts.push([a,f(a)]);}line(P,pts,col,wd,dash,y2);}
+function dot(P,a,b,col,r,txt,y2){const x=P.x,px=P.X(a),py=(y2?P.Y2:P.Y)(b);x.fillStyle=col;x.beginPath();x.arc(px,py,r||6,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.stroke();
+ if(txt){x.font='bold 12px system-ui';x.fillStyle='#fff';const tw=x.measureText(txt).width;let lx=px+10;if(lx+tw>P.w-P.m.r)lx=px-tw-10;x.fillText(txt,lx,py-10);x.font='12px system-ui';}}
+function band(P,a,b,col){P.x.fillStyle=col;P.x.fillRect(P.X(a),P.m.t,P.X(b)-P.X(a),P.h-P.m.t-P.m.b);}
+function vline(P,a,col,txt){const x=P.x;x.strokeStyle=col;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(P.X(a),P.m.t);x.lineTo(P.X(a),P.h-P.m.b);x.stroke();x.setLineDash([]);if(txt){x.fillStyle=col;x.fillText(txt,P.X(a)+4,P.m.t+12);}}
+function hline(P,b,col,txt){const x=P.x;x.strokeStyle=col;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(P.m.l,P.Y(b));x.lineTo(P.w-P.m.r,P.Y(b));x.stroke();x.setLineDash([]);if(txt){x.fillStyle=col;x.fillText(txt,P.m.l+6,P.Y(b)-5);}}
+function text(P,a,b,t,col,bold){const x=P.x;x.font=(bold?'bold ':'')+'12px system-ui';x.fillStyle=col||'#fff';x.fillText(t,P.X(a),P.Y(b));x.font='12px system-ui';}
+// Retos: [{id,t,h,ok:()=>bool}]
+function renderRetos(RETOS,extra){let html='';
+ for(const r of RETOS){let ok=false;try{ok=r.ok();}catch(e){}if(ok&&!DONE.has(r.id)){DONE.add(r.id);toast('🎯 ¡Reto logrado! '+r.t);}
+  const d=DONE.has(r.id);html+=`<div class="ret ${d?'done':''}"><span class="ck">${d?'✅':'⬜'}</span><div><div class="rt">${r.t}</div><small style="color:var(--mut)">${r.h}</small></div></div>`;}
+ html+=`<div style="font-size:12.5px;color:var(--mut);margin-top:6px">${DONE.size} de ${RETOS.length} retos · tu avance se guarda en este navegador</div>`;
+ if(extra)html+=`<div class="btns">${extra}</div>`;$('retos').innerHTML=html;}
+function alertBox(cls,html){return `<div class="alert ${cls}">${html}</div>`;}
+let _rt;window.addEventListener('resize',()=>{clearTimeout(_rt);_rt=setTimeout(()=>upd(),120);});
+
+initState('pes_reactores_v1',{n:1,kr:0.1,ea:80,T:50,c0:2,V:200,q:10,N:3,xt:0.9});
+const RG=8.314;
+const kT=s=>s.kr*Math.exp(-s.ea*1000/RG*(1/(s.T+273.15)-1/323.15));
+function Xc(k,t,s){const Da=k*t*(s.n===2?s.c0:1);if(Da<=0)return 0;if(s.n===1)return Da/(1+Da);return ((2*Da+1)-Math.sqrt(4*Da+1))/(2*Da);}
+function Xp(k,t,s){const Da=k*t*(s.n===2?s.c0:1);return s.n===1?1-Math.exp(-Da):Da/(1+Da);}
+function Xs(k,t,s){const ti=t/s.N;let C=s.c0;for(let i=0;i<s.N;i++){if(s.n===1)C=C/(1+k*ti);else{const a=k*ti;C=a>0?(-1+Math.sqrt(1+4*a*C))/(2*a):C;}}return 1-C/s.c0;}
+function tauFor(k,X,s){if(s.n===1)return {c:X/(k*(1-X)),p:-Math.log(1-X)/k};return {c:X/(k*s.c0*(1-X)**2),p:X/(k*s.c0*(1-X))};}
+let R;
+function upd(){
+ lbl('kr',fmt(S.kr,2)+(S.n===1?' 1/min':' L/(mol·min)'));lbl('ea',S.ea+' kJ/mol');lbl('T',S.T+' °C');lbl('c0',fmt(S.c0,1)+' mol/L');lbl('V',S.V+' L');lbl('q',S.q+' L/min');lbl('N',S.N);lbl('xt',fmt(S.xt*100,0)+' %');
+ const k=kT(S),tau=S.V/S.q;const xc=Xc(k,tau,S),xp=Xp(k,tau,S),xs=Xs(k,tau,S);const f10=Math.exp(S.ea*1000/RG*(1/(S.T+273.15)-1/(S.T+283.15)));
+ const tf=tauFor(k,S.xt,S);R={k,tau,xc,xp,xs,f10,tf,Vc:tf.c*S.q,Vp:tf.p*S.q};
+ $('ku').textContent=S.n===1?'1/min':'L/mol·min';
+ setK('k1',fmt(xc*100,1),xc>=S.xt?'ok':'');setK('k2',fmt(xp*100,1),xp>=S.xt?'ok':'');setK('k3',fmt(xs*100,1),xs>=S.xt?'ok':'');setK('k4',fmt(tau,1));setK('k5',k<0.01?k.toExponential(2):fmt(k,3));setK('k6',fmt(f10,2),f10>=1.9&&f10<=2.1?'ok':'');
+ draw();draw2();explain();
+ renderRetos(RETOS,`<button class="btn" onclick="preset({T:70},'🔥 +20 °C: mira cómo sube la conversión con Arrhenius.')">Escenario: calentar 20 °C</button><button class="btn" onclick="preset({N:8},'🛢️ 8 tanques en serie: casi se comporta como un tubular.')">Escenario: 8 tanques</button><button class="btn" onclick="preset({n:2,xt:0.95},'⚛️ 2º orden y 95 %: el CSTR necesita muchísimo más volumen.')">Escenario: 2º orden</button>`);
+ persist();
+}
+function draw(){
+ const tmax=Math.max(R.tau*2.5,R.tf.p*1.3,1);
+ const P=plot($('cv'),{h:mobile()?Math.min(250,Math.round(innerHeight*.3)):400,xmin:0,xmax:tmax,ymin:0,ymax:100,xlab:'Tiempo de residencia τ (min)',ylab:'Conversión X (%)',ys:20});
+ hline(P,S.xt*100,'rgba(46,214,146,.7)','objetivo '+fmt(S.xt*100,0)+' %');
+ fn(P,t=>Xp(R.k,t,S)*100,'#60a5fa',3);fn(P,t=>Xc(R.k,t,S)*100,'#ff6b6b',3);if(S.N>1)fn(P,t=>Xs(R.k,t,S)*100,'#ffca28',2.5,[6,4]);
+ vline(P,R.tau,'rgba(255,255,255,.6)','τ = '+fmt(R.tau,1)+' min');
+ dot(P,R.tau,R.xp*100,'#60a5fa',5);dot(P,R.tau,R.xc*100,'#ff6b6b',5);if(S.N>1)dot(P,R.tau,R.xs*100,'#ffca28',5);
+}
+function draw2(){
+ const FA0=S.q*S.c0;const g=X=>FA0/(R.k*Math.pow(S.c0*(1-X),S.n)); // L por unidad de X
+ const ym=g(S.xt)*1.15;const P=plot($('cv2'),{h:220,xmin:0,xmax:1,ymin:0,ymax:ym,xlab:'Conversión X',ylab:'F_A0 / (−r_A)  (L)',xs:0.2,dx:1});
+ const x=P.x;x.fillStyle='rgba(255,107,107,.28)';x.fillRect(P.X(0),P.Y(g(S.xt)),P.X(S.xt)-P.X(0),P.Y(0)-P.Y(g(S.xt)));
+ x.fillStyle='rgba(96,165,250,.45)';x.beginPath();x.moveTo(P.X(0),P.Y(0));for(let i=0;i<=100;i++){const X=S.xt*i/100;x.lineTo(P.X(X),P.Y(g(X)));}x.lineTo(P.X(S.xt),P.Y(0));x.closePath();x.fill();
+ fn(P,X=>X<0.995?g(X):null,'#fff',2);vline(P,S.xt,'rgba(46,214,146,.8)');
+ $('lev').innerHTML=`Para llegar a <b>${fmt(S.xt*100,0)} %</b> de conversión con ${S.q} L/min: un CSTR necesita <b>${fmt(R.Vc,0)} L</b> y un PFR <b>${fmt(R.Vp,0)} L</b> (${fmt(R.Vc/R.Vp,1)} veces menos).`;
+}
+function explain(){
+ const e=[];
+ e.push(`<p>Con τ = ${fmt(R.tau,1)} min, el tubular (PFR) convierte <b>${fmt(R.xp*100,1)} %</b> y el tanque agitado (CSTR) solo <b>${fmt(R.xc*100,1)} %</b>.${S.N>1?` Dividido en ${S.N} tanques en serie llegas a ${fmt(R.xs*100,1)} %.`:''}</p>`);
+ e.push(`<p>¿Por qué? En el CSTR todo el tanque está a la concentración de <b>salida</b>, que es baja, y la velocidad de reacción también. En el PFR el reactivo se va gastando a lo largo del tubo y la mayor parte del volumen trabaja a concentración alta.</p>`);
+ e.push(alertBox(R.f10>=1.9&&R.f10<=2.1?'ok':'warn',`🌡️ A ${S.T} °C, subir 10 °C multiplica la velocidad por <b>×${fmt(R.f10,2)}</b>. La famosa regla de que «cada 10 °C se duplica» solo se cumple para ciertas combinaciones de E<sub>a</sub> y temperatura.`));
+ if(S.n===2&&S.xt>=0.9)e.push(`<p>⚛️ En 2º orden la velocidad cae con el cuadrado de la concentración: a conversiones altas el CSTR se vuelve enorme frente al PFR.</p>`);
+ $('exp').innerHTML=e.join('');
+ $('detail').innerHTML=`k(${S.T} °C) = ${R.k<0.01?R.k.toExponential(2):fmt(R.k,4)} · Da = ${fmt(R.k*R.tau*(S.n===2?S.c0:1),2)}<br>τ para ${fmt(S.xt*100,0)} %: CSTR ${fmt(R.tf.c,1)} min · PFR ${fmt(R.tf.p,1)} min`;
+}
+const RETOS=[
+ {id:'q1',t:'90 % de conversión en un solo CSTR con 500 L o menos',h:'Temperatura, volumen y caudal: todo cuenta.',ok:()=>R.xc>=0.9&&S.V<=500&&S.N>=1},
+ {id:'q2',t:'Con 3 tanques en serie, queda a menos de 3 puntos del PFR',h:'N = 3 y compara las curvas amarilla y azul.',ok:()=>S.N===3&&R.xp-R.xs<0.03},
+ {id:'q3',t:'Encuentra un caso donde +10 °C duplique k (×1,9 a ×2,1)',h:'Ajusta la energía de activación y la temperatura.',ok:()=>R.f10>=1.9&&R.f10<=2.1},
+ {id:'q4',t:'Haz que el CSTR necesite 5 veces o más el volumen del PFR',h:'Pista: conversiones altas y 2º orden.',ok:()=>R.Vc/R.Vp>=5},
+ {id:'q5',t:'99 % de conversión en el PFR con τ de 30 min o menos',h:'Más temperatura o una reacción más rápida.',ok:()=>R.xp>=0.99&&R.tau<=30}];
+bindAll();upd();
+
+</script>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>

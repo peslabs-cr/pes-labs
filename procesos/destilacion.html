@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Destilación McCabe-Thiele · Simulador PES Labs</title>
+<meta name="description" content="Simulador gratuito de destilación binaria con el método de McCabe-Thiele: volatilidad relativa, línea q, reflujo mínimo, etapas teóricas, plato de alimentación y ecuación de Fenske.">
+<meta property="og:title" content="Simulador: Destilación McCabe-Thiele">
+<meta property="og:description" content="Simulador gratuito de destilación binaria con el método de McCabe-Thiele: volatilidad relativa, línea q, reflujo mínimo, etapas teóricas, plato de alimentación y ecuación de Fenske.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+<style>
+:root{--bg:#0b1219;--card:#142030;--line:#26384a;--fg:#eef3f7;--mut:#94a3b4;--ac:#2ed692;--blue:#60a5fa;--red:#ff6b6b;--gold:#ffca28;--pur:#c084fc}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(1000px 500px at 90% -10%,#0f3a2e 0%,transparent 60%),linear-gradient(180deg,#0a1118,#0c1620);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+a{color:var(--blue)}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,17,24,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top .t{font-weight:900;font-size:17px}.top .t b{color:var(--ac)}.top .sp{flex:1}
+.ib{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:12px;display:grid;grid-template-columns:340px 1fr;gap:12px;grid-template-areas:'ctl viz' 'ctl rest';align-items:start}
+.panel{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.panel h3{margin:2px 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+.ctl{margin:9px 0}
+.ctl label{display:flex;justify-content:space-between;font-size:13px;color:#cbd6e0}
+.ctl label b{color:var(--fg);font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:100%;accent-color:var(--ac)}
+.ctl small{color:var(--mut);font-size:11.5px;display:block;margin-top:1px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:4px}
+.seg button{flex:1;background:transparent;border:0;color:var(--mut);padding:6px 4px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:#0f3a2e;color:var(--ac);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.kpi .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}.kpi .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.kpi .u{font-size:12px;color:var(--mut);font-weight:600}
+.kpi.ok{border-color:#1f6f52}.kpi.warn{border-color:#8a6d12}.kpi.bad{border-color:#8a2b33;background:rgba(70,20,25,.6)}
+.chartbox{position:relative}
+canvas{width:100%;display:block;border-radius:12px;background:#0d1722;border:1px solid var(--line)}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#cbd6e0;margin:6px 2px}
+.leg i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:10px}
+.exp{font-size:14px;color:#d7e2ea}.exp p{margin:6px 0}.exp b{color:var(--gold)}
+.alert{border-radius:12px;padding:9px 11px;margin:6px 0;font-size:14px}
+.alert.bad{background:rgba(120,25,35,.55);border:1px solid #c0394a}.alert.warn{background:rgba(110,85,10,.45);border:1px solid #b8901a}.alert.ok{background:rgba(15,70,50,.5);border:1px solid #1f8f66}
+.ret{display:flex;gap:9px;align-items:flex-start;padding:8px 6px;border-bottom:1px dashed #22344a;font-size:13.5px}
+.ret .ck{font-size:18px;line-height:1.1}.ret.done{color:#bdf5dd}.ret .go{margin-left:auto;font-size:12px}
+.ret .rt{font-weight:700}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:#182a3c;color:var(--fg);border-radius:10px;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+.btn.go{background:linear-gradient(90deg,#16a37a,#0ea5a0);border:0;color:#fff;font-weight:700}
+.eq{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:#0d1722;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:#cfe3f3;overflow:auto}
+.foot{max-width:1240px;margin:0 auto;padding:4px 12px 40px;color:var(--mut);font-size:12.5px}
+.toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:50;background:#13402f;border:1px solid var(--ac);border-radius:12px;padding:9px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:92vw}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;grid-template-areas:'viz' 'ctl' 'rest'}.kpis{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}
+ #viz{position:sticky;top:49px;z-index:5;background:#0b1219;padding-bottom:6px;margin:0 -12px;padding:6px 12px}
+ #viz .kpis{gap:5px;margin-bottom:6px}#viz .kpi{padding:4px 7px}#viz .kpi .l{font-size:9.5px}#viz .kpi .v{font-size:15px}
+ #viz .leg{display:none}#viz .panel{padding:6px}}
+@media(max-width:480px){.kpi .v{font-size:17px}.top .hide,.top .hide2{display:none}}
+.top .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+</style>
+</head><body>
+<div class="top"><a class="ib" href="../index.html#procesos" title="Volver a PES Labs">←</a><div class="t">⚗️ Destilación<span class="hide2"> McCabe-Thiele</span> <b class="hide">· Simulador</b></div><span class="sp"></span>
+ <button class="ib" onclick="reset()">↺<span class="hide"> Reiniciar</span></button><a class="ib" href="../index.html#leer-destilacion">📖<span class="hide"> Teoría</span></a></div>
+<div class="wrap">
+ <aside style="grid-area:ctl">
+  <div class="panel"><h3>🧪 Mezcla</h3>
+   <div class="ctl"><label>Volatilidad relativa α <b id="v_al"></b></label><input type="range" data-k="al" min="1.2" max="6" step="0.05"><small>Ejemplos aproximados: benceno–tolueno ≈ 2,4 · propano–propileno ≈ 1,1 · mezclas fáciles &gt; 4. Cuanto más cerca de 1, más difícil.</small></div>
+  </div>
+  <div class="panel" style="margin-top:12px"><h3>📥 Alimentación (F = 100 kmol/h)</h3>
+   <div class="ctl"><label>Fracción del ligero en la alimentación <b id="v_xf"></b></label><input type="range" data-k="xf" min="0.1" max="0.9" step="0.01"></div>
+   <div class="ctl"><label>Condición térmica (q)</label><div class="seg" data-k="q"><button data-v="1.2">Subenfriado</button><button data-v="1">Líquido sat.</button><button data-v="0.5">Mezcla</button><button data-v="0">Vapor sat.</button></div><small>q = fracción de la alimentación que entra como líquido</small></div>
+  </div>
+  <div class="panel" style="margin-top:12px"><h3>🎯 Especificaciones</h3>
+   <div class="ctl"><label>Pureza del destilado (xD) <b id="v_xd"></b></label><input type="range" data-k="xd" min="0.8" max="0.995" step="0.005"></div>
+   <div class="ctl"><label>Ligero en el fondo (xB) <b id="v_xb"></b></label><input type="range" data-k="xb" min="0.005" max="0.2" step="0.005"></div>
+  </div>
+  <div class="panel" style="margin-top:12px"><h3>🔁 Reflujo</h3>
+   <div class="ctl"><label>Reflujo como múltiplo del mínimo <b id="v_rr"></b></label><input type="range" data-k="rr" min="1.05" max="5" step="0.05"><small>Más reflujo = menos etapas, pero más energía en el rehervidor y el condensador</small></div>
+  </div>
+ </aside>
+ <section id="viz" style="grid-area:viz">
+  <div class="kpis">
+   <div class="kpi" id="k1"><div class="l">Etapas teóricas</div><div class="v"><span class="n">–</span></div></div>
+   <div class="kpi" id="k2"><div class="l">Alimentación en</div><div class="v"><span class="n">–</span> <span class="u">etapa</span></div></div>
+   <div class="kpi" id="k3"><div class="l">Reflujo R</div><div class="v"><span class="n">–</span></div></div>
+   <div class="kpi" id="k4"><div class="l">R mínimo</div><div class="v"><span class="n">–</span></div></div>
+   <div class="kpi" id="k5"><div class="l">N mínimo (Fenske)</div><div class="v"><span class="n">–</span></div></div>
+   <div class="kpi" id="k6"><div class="l">Condensador</div><div class="v"><span class="n">–</span> <span class="u">kW</span></div></div>
+  </div>
+  <div class="panel"><canvas id="cv"></canvas>
+   <div class="leg"><span><i style="background:#c084fc"></i>Equilibrio</span><span><i style="background:#ffca28"></i>Línea q</span><span><i style="background:#60a5fa"></i>Rectificación</span><span><i style="background:#ff6b6b"></i>Agotamiento</span><span><i style="background:#fff"></i>Etapas</span></div></div>
+ </section>
+ <section style="grid-area:rest">
+  <div class="two" style="margin-top:0">
+   <div class="panel exp"><h3>🧠 ¿Qué está pasando?</h3><div id="exp"></div></div>
+   <div class="panel"><h3>🎯 Retos</h3><div id="retos"></div></div>
+  </div>
+  <div class="two">
+   <div class="panel"><h3>⚖️ Etapas contra energía</h3><canvas id="cv2"></canvas>
+    <div class="leg"><span><i style="background:#60a5fa"></i>Etapas teóricas</span><span><i style="background:#ff6b6b"></i>Calor del condensador (kW)</span></div><div class="exp" style="font-size:13.5px">Cerca del reflujo mínimo necesitas infinitas etapas; con reflujo alto, pocas etapas pero mucha energía. En la práctica se diseña entre <b>1,2 y 1,5 veces el reflujo mínimo</b>.</div></div>
+   <div class="panel"><h3>📐 Cómo se calcula</h3>
+    <div class="eq">Equilibrio: y = α·x / (1 + (α−1)·x)<br>Línea q: y = q/(q−1)·x − x<sub>F</sub>/(q−1)<br>Rectificación: y = R/(R+1)·x + x<sub>D</sub>/(R+1)<br>R<sub>min</sub> = (x<sub>D</sub> − y*) / (y* − x*)<br>Fenske: N<sub>min</sub> = ln[(x<sub>D</sub>/(1−x<sub>D</sub>))·((1−x<sub>B</sub>)/x<sub>B</sub>)] / ln α<br>D = F·(x<sub>F</sub> − x<sub>B</sub>)/(x<sub>D</sub> − x<sub>B</sub>)</div>
+    <div class="exp" id="detail" style="font-size:13px;margin-top:8px"></div></div>
+  </div>
+ </section>
+</div>
+
+<div class="foot">Simulador educativo con volatilidad relativa constante y flujos molares constantes (supuestos de McCabe-Thiele): no reemplaza un simulador de procesos con modelos termodinámicos. Calor latente ilustrativo de 30 MJ/kmol · PES Labs · Ing. Ricardo Fonseca Pereira · Creado con ayuda de IA.</div>
+<script>
+// ===== Librería común de simuladores PES Labs =====
+const $=id=>document.getElementById(id);
+const fmt=(x,d)=>(isFinite(x)?x:0).toLocaleString('es-CR',{minimumFractionDigits:d,maximumFractionDigits:d});
+let S={},DONE=new Set(),KEY='',DEF={};
+function initState(key,def){KEY=key;DEF=def;S=Object.assign({},def);try{const s=JSON.parse(localStorage.getItem(key)||'null');if(s){Object.assign(S,s.S);DONE=new Set(s.done||[]);}}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({S,done:[...DONE]}));}catch(e){}}
+function bindAll(){
+ document.querySelectorAll('input[type=range][data-k]').forEach(el=>{const k=el.dataset.k;el.value=S[k];el.oninput=()=>{S[k]=+el.value;upd();};});
+ document.querySelectorAll('.seg[data-k]').forEach(sg=>{const k=sg.dataset.k;const bs=[...sg.querySelectorAll('button')];
+  bs.forEach(b=>{const v=isNaN(+b.dataset.v)?b.dataset.v:+b.dataset.v;b.classList.toggle('on',v===S[k]);b.onclick=()=>{S[k]=v;bs.forEach(x=>x.classList.toggle('on',x===b));upd();};});});
+}
+function reset(){S=Object.assign({},DEF);bindAll();upd();}
+function preset(o,msg){S=Object.assign({},DEF,o);bindAll();upd();if(msg)toast(msg);}
+function lbl(k,t){const e=$('v_'+k);if(e)e.textContent=t;}
+function setK(id,val,cls){const e=$(id);if(!e)return;e.querySelector('.n').textContent=val;e.className='kpi '+(cls||'');}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
+function setupCanvas(c,h){const r=window.devicePixelRatio||1;c.setAttribute('height',h);const w=c.clientWidth;c.width=w*r;c.height=h*r;c.style.height=h+'px';const x=c.getContext('2d');x.setTransform(r,0,0,r,0,0);x.clearRect(0,0,w,h);return {x,w,h};}
+const mobile=()=>window.innerWidth<980;
+// Ejes: o={h,xmin,xmax,ymin,ymax,xlab,ylab,xs,ys,y2:{min,max,lab,col,s},ml,mr,dx,dy}
+function plot(c,o){
+ const {x,w,h}=setupCanvas(c,o.h);const m={l:o.ml||50,r:o.y2?50:(o.mr||14),t:14,b:38};
+ const X=v=>m.l+(w-m.l-m.r)*(v-o.xmin)/(o.xmax-o.xmin),Y=v=>h-m.b-(h-m.t-m.b)*(v-o.ymin)/(o.ymax-o.ymin);
+ const Y2=o.y2?v=>h-m.b-(h-m.t-m.b)*(v-o.y2.min)/(o.y2.max-o.y2.min):null;
+ x.font='12px system-ui';x.strokeStyle='#1d2c3c';x.lineWidth=1;x.fillStyle='#8aa0b4';
+ const nice=(a,b,n)=>{const r=(b-a)/n,p=10**Math.floor(Math.log10(r)),f=r/p;return (f<1.5?1:f<3?2:f<7?5:10)*p;};
+ const xs=o.xs||nice(o.xmin,o.xmax,6),ys=o.ys||nice(o.ymin,o.ymax,5);
+ const dec=v=>Math.abs(v)<10&&v%1!==0?(Math.abs(v)<1?2:1):0;
+ for(let v=Math.ceil(o.xmin/xs)*xs;v<=o.xmax+1e-9;v+=xs){x.beginPath();x.moveTo(X(v),m.t);x.lineTo(X(v),h-m.b);x.stroke();const t=fmt(v,o.dx!=null?o.dx:dec(xs));x.fillText(t,X(v)-x.measureText(t).width/2,h-m.b+15);}
+ for(let v=Math.ceil(o.ymin/ys)*ys;v<=o.ymax+1e-9;v+=ys){x.beginPath();x.moveTo(m.l,Y(v));x.lineTo(w-m.r,Y(v));x.stroke();const t=fmt(v,o.dy!=null?o.dy:dec(ys));x.fillText(t,m.l-6-x.measureText(t).width,Y(v)+4);}
+ if(o.y2){const s2=o.y2.s||nice(o.y2.min,o.y2.max,5);x.fillStyle=o.y2.col||'#b48ae8';for(let v=Math.ceil(o.y2.min/s2)*s2;v<=o.y2.max+1e-9;v+=s2)x.fillText(fmt(v,dec(s2))+(o.y2.u||''),w-m.r+6,Y2(v)+4);}
+ x.fillStyle='#cbd6e0';x.fillText(o.xlab||'',(m.l+w-m.r)/2-x.measureText(o.xlab||'').width/2,h-4);
+ x.save();x.translate(13,(m.t+h-m.b)/2+x.measureText(o.ylab||'').width/2);x.rotate(-Math.PI/2);x.fillText(o.ylab||'',0,0);x.restore();
+ if(o.y2&&o.y2.lab){x.save();x.fillStyle=o.y2.col||'#b48ae8';x.translate(w-6,(m.t+h-m.b)/2-x.measureText(o.y2.lab).width/2);x.rotate(Math.PI/2);x.fillText(o.y2.lab,0,0);x.restore();}
+ return {x,w,h,m,X,Y,Y2,o};
+}
+function inBox(P,px,py){return px>=P.m.l-1&&px<=P.w-P.m.r+1&&py>=P.m.t-1&&py<=P.h-P.m.b+1;}
+function line(P,pts,col,wd,dash,y2){const x=P.x,Yf=y2?P.Y2:P.Y;x.strokeStyle=col;x.lineWidth=wd||2.5;x.setLineDash(dash||[]);x.beginPath();let st=false;
+ for(const [a,b] of pts){if(b==null||!isFinite(b)){st=false;continue;}const px=P.X(a),py=Yf(b);if(!inBox(P,px,py)){st=false;continue;}if(!st){x.moveTo(px,py);st=true;}else x.lineTo(px,py);}x.stroke();x.setLineDash([]);}
+function fn(P,f,col,wd,dash,n,y2){const pts=[];const N=n||200;for(let i=0;i<=N;i++){const a=P.o.xmin+(P.o.xmax-P.o.xmin)*i/N;pts.push([a,f(a)]);}line(P,pts,col,wd,dash,y2);}
+function dot(P,a,b,col,r,txt,y2){const x=P.x,px=P.X(a),py=(y2?P.Y2:P.Y)(b);x.fillStyle=col;x.beginPath();x.arc(px,py,r||6,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.stroke();
+ if(txt){x.font='bold 12px system-ui';x.fillStyle='#fff';const tw=x.measureText(txt).width;let lx=px+10;if(lx+tw>P.w-P.m.r)lx=px-tw-10;x.fillText(txt,lx,py-10);x.font='12px system-ui';}}
+function band(P,a,b,col){P.x.fillStyle=col;P.x.fillRect(P.X(a),P.m.t,P.X(b)-P.X(a),P.h-P.m.t-P.m.b);}
+function vline(P,a,col,txt){const x=P.x;x.strokeStyle=col;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(P.X(a),P.m.t);x.lineTo(P.X(a),P.h-P.m.b);x.stroke();x.setLineDash([]);if(txt){x.fillStyle=col;x.fillText(txt,P.X(a)+4,P.m.t+12);}}
+function hline(P,b,col,txt){const x=P.x;x.strokeStyle=col;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(P.m.l,P.Y(b));x.lineTo(P.w-P.m.r,P.Y(b));x.stroke();x.setLineDash([]);if(txt){x.fillStyle=col;x.fillText(txt,P.m.l+6,P.Y(b)-5);}}
+function text(P,a,b,t,col,bold){const x=P.x;x.font=(bold?'bold ':'')+'12px system-ui';x.fillStyle=col||'#fff';x.fillText(t,P.X(a),P.Y(b));x.font='12px system-ui';}
+// Retos: [{id,t,h,ok:()=>bool}]
+function renderRetos(RETOS,extra){let html='';
+ for(const r of RETOS){let ok=false;try{ok=r.ok();}catch(e){}if(ok&&!DONE.has(r.id)){DONE.add(r.id);toast('🎯 ¡Reto logrado! '+r.t);}
+  const d=DONE.has(r.id);html+=`<div class="ret ${d?'done':''}"><span class="ck">${d?'✅':'⬜'}</span><div><div class="rt">${r.t}</div><small style="color:var(--mut)">${r.h}</small></div></div>`;}
+ html+=`<div style="font-size:12.5px;color:var(--mut);margin-top:6px">${DONE.size} de ${RETOS.length} retos · tu avance se guarda en este navegador</div>`;
+ if(extra)html+=`<div class="btns">${extra}</div>`;$('retos').innerHTML=html;}
+function alertBox(cls,html){return `<div class="alert ${cls}">${html}</div>`;}
+let _rt;window.addEventListener('resize',()=>{clearTimeout(_rt);_rt=setTimeout(()=>upd(),120);});
+
+initState('pes_destilacion_v1',{al:2.4,xf:0.5,q:1,xd:0.95,xb:0.05,rr:1.8});
+const F=100,LAT=30000; // kmol/h, kJ/kmol
+const eq=(x,a)=>a*x/(1+(a-1)*x), eqInv=(y,a)=>y/(a-(a-1)*y);
+function pinch(s){ // intersección línea q - equilibrio
+ if(Math.abs(s.q-1)<1e-9)return {x:s.xf,y:eq(s.xf,s.al)};
+ const ql=x=>s.q/(s.q-1)*x-s.xf/(s.q-1);
+ let lo=0,hi=1;const f=x=>eq(x,s.al)-ql(x);
+ // buscar raíz en (0,1)
+ const N=400;let a=0.0001,fa=f(a);for(let i=1;i<=N;i++){const b=i/N*0.9999;const fb=f(b);if(fa*fb<=0){lo=a;hi=b;break;}a=b;fa=fb;}
+ for(let i=0;i<60;i++){const m=(lo+hi)/2;if(f(lo)*f(m)<=0)hi=m;else lo=m;}const x=(lo+hi)/2;return {x,y:eq(x,s.al)};
+}
+function design(s,rr){
+ const p=pinch(s);const Rmin=Math.max(0.01,(s.xd-p.y)/(p.y-p.x));const R=rr*Rmin;
+ const rect=x=>R/(R+1)*x+s.xd/(R+1);
+ let xi,yi;if(Math.abs(s.q-1)<1e-9){xi=s.xf;yi=rect(xi);}else{const m=s.q/(s.q-1),c=-s.xf/(s.q-1);xi=(s.xd/(R+1)-c)/(m-R/(R+1));yi=rect(xi);}
+ const strip=x=>s.xb+(yi-s.xb)/(xi-s.xb)*(x-s.xb);
+ const st=[];let y=s.xd,x=s.xd,feed=null,n=0;
+ while(n<120){const xn=eqInv(y,s.al);st.push([x,y,xn]);n++;if(feed==null&&xn<xi)feed=n;if(xn<=s.xb)break;x=xn;y=xn>xi?rect(xn):strip(xn);if(y<=xn+1e-6){n=999;break;}}
+ const D=F*(s.xf-s.xb)/(s.xd-s.xb),B=F-D,V=(R+1)*D;
+ return {p,Rmin,R,rect,strip,xi,yi,st,N:n,feed:feed||n,D,B,V,Qc:V*LAT/3600,ok:n<120};
+}
+let R;
+function upd(){
+ // coherencia xb < xf < xd
+ let fix=false;if(S.xb>=S.xf-0.02){S.xb=Math.max(0.005,+(S.xf-0.03).toFixed(3));fix=true;}if(S.xd<=S.xf+0.02){S.xd=Math.min(0.995,+(S.xf+0.05).toFixed(3));fix=true;}if(fix)bindAll();
+ lbl('al',fmt(S.al,2));lbl('xf',fmt(S.xf,2));lbl('xd',fmt(S.xd,3));lbl('xb',fmt(S.xb,3));lbl('rr',fmt(S.rr,2)+' × R mín');
+ R=design(S,S.rr);const Nmin=Math.log((S.xd/(1-S.xd))*((1-S.xb)/S.xb))/Math.log(S.al);R.Nmin=Nmin;
+ setK('k1',R.ok?R.N:'> 100',R.ok?(R.N<=Math.ceil(Nmin)+2?'warn':''):'bad');setK('k2',R.ok?R.feed:'–');setK('k3',fmt(R.R,2),S.rr>=1.2&&S.rr<=1.5?'ok':'');setK('k4',fmt(R.Rmin,2));setK('k5',fmt(Nmin,1));setK('k6',fmt(R.Qc,0));
+ draw();draw2();explain();
+ renderRetos(RETOS,`<button class="btn" onclick="preset({al:1.4,xd:0.95,xb:0.05},'🧪 Mezcla difícil (α = 1,4): mira cuántas etapas hacen falta.')">Escenario: mezcla difícil</button><button class="btn" onclick="preset({rr:1.05},'🔁 Casi en el reflujo mínimo: las etapas se amontonan en el punto de pellizco.')">Escenario: pellizco</button><button class="btn" onclick="preset({q:0},'💨 Alimentación como vapor: la línea q queda horizontal.')">Escenario: alimentar vapor</button>`);
+ persist();
+}
+function draw(){
+ const P=plot($('cv'),{h:mobile()?Math.min(280,Math.round(innerHeight*.33)):460,xmin:0,xmax:1,ymin:0,ymax:1,xlab:'x: fracción del ligero en el líquido',ylab:'y: fracción del ligero en el vapor',xs:0.1,ys:0.1,dx:1,dy:1});
+ fn(P,x=>x,'rgba(255,255,255,.35)',1.5);fn(P,x=>eq(x,S.al),'#c084fc',3);
+ // línea q
+ const ql=[[S.xf,S.xf],[R.xi,R.yi]];line(P,ql,'#ffca28',2.5);
+ line(P,[[S.xd,S.xd],[R.xi,R.yi]],'#60a5fa',2.5);line(P,[[R.xi,R.yi],[S.xb,S.xb]],'#ff6b6b',2.5);
+ // etapas
+ const x=P.x;x.strokeStyle='#fff';x.lineWidth=1.6;x.beginPath();x.moveTo(P.X(S.xd),P.Y(S.xd));
+ R.st.forEach(([x0,y0,x1],i)=>{x.lineTo(P.X(x1),P.Y(y0));const yn=i+1<R.st.length?R.st[i+1][1]:Math.max(x1,0);x.lineTo(P.X(x1),P.Y(i+1<R.st.length?yn:x1));});x.stroke();
+ if(R.st.length<=40){x.font='bold 11px system-ui';R.st.forEach(([x0,y0,x1],i)=>{x.fillStyle=i+1===R.feed?'#ffca28':'#fff';x.fillText(i+1,P.X(x1)-12,P.Y(y0)-3);});x.font='12px system-ui';}
+ for(const [v,c,t] of [[S.xd,'#60a5fa','x_D'],[S.xb,'#ff6b6b','x_B'],[S.xf,'#ffca28','x_F']]){vline(P,v,c);text(P,v+0.01,0.02,t.replace('_',''),c,true);}
+ dot(P,R.p.x,R.p.y,'#2ed692',4);
+}
+function draw2(){
+ const pts=[],vs=[];let maxN=0;for(let r=1.05;r<=5.001;r+=0.05){const d=design(S,r);const n=d.ok?d.N:null;if(n)maxN=Math.max(maxN,n);pts.push([r,n]);vs.push([r,d.Qc]);}
+ const maxV=Math.max(...vs.map(p=>p[1]));
+ const P=plot($('cv2'),{h:220,xmin:1,xmax:5,ymin:0,ymax:Math.min(100,Math.ceil(maxN*1.1/5)*5||10),xlab:'R / R mínimo',ylab:'Etapas',xs:0.5,y2:{min:0,max:Math.ceil(maxV*1.1/500)*500,lab:'kW',col:'#ff6b6b'}});
+ band(P,1.2,1.5,'rgba(46,214,146,.12)');line(P,pts,'#60a5fa',2.5);line(P,vs,'#ff6b6b',2.5,null,true);
+ if(R.ok)dot(P,S.rr,R.N,'#fff',5);
+}
+function explain(){
+ const e=[];const rec=R.D*S.xd/(F*S.xf);
+ if(!R.ok){e.push(alertBox('bad',`⛔ Con este reflujo la separación necesita más de 100 etapas: estás demasiado cerca del <b>reflujo mínimo</b> o la mezcla es muy difícil. Sube R/Rmin.`));}
+ else e.push(`<p>Para pasar de ${fmt(S.xf*100,0)} % del ligero en la alimentación a <b>${fmt(S.xd*100,1)} %</b> arriba y ${fmt(S.xb*100,1)} % abajo necesitas <b>${R.N} etapas teóricas</b>, alimentando en la etapa ${R.feed}.</p>`);
+ e.push(`<p>Salen <b>${fmt(R.D,1)} kmol/h</b> de destilado y ${fmt(R.B,1)} kmol/h de fondo. Se recupera el ${fmt(rec*100,0)} % del ligero por arriba.</p>`);
+ if(S.rr<1.15)e.push(alertBox('warn',`📌 Muy cerca del reflujo mínimo: las etapas se amontonan donde la línea de operación toca el equilibrio (el <b>punto de pellizco</b>, en verde). Ahí cada etapa casi no avanza.`));
+ if(S.rr>2.5)e.push(alertBox('warn',`🔥 Reflujo alto: pocas etapas, pero el condensador maneja <b>${fmt(R.Qc,0)} kW</b> y el rehervidor algo parecido. Es energía que se paga todos los días.`));
+ if(S.rr>=1.2&&S.rr<=1.5)e.push(alertBox('ok',`✅ Estás en la zona típica de diseño (1,2 a 1,5 × R<sub>min</sub>): buen balance entre tamaño de la torre y energía.`));
+ if(S.al<1.6)e.push(`<p>🧪 Con α = ${fmt(S.al,2)} los componentes hierven casi igual: la curva de equilibrio se pega a la diagonal y hacen falta muchas etapas.</p>`);
+ $('exp').innerHTML=e.join('');
+ $('detail').innerHTML=`Punto de pellizco: x* = ${fmt(R.p.x,3)}, y* = ${fmt(R.p.y,3)} → R<sub>min</sub> = ${fmt(R.Rmin,2)}<br>Cruce de las líneas de operación: x = ${fmt(R.xi,3)}, y = ${fmt(R.yi,3)}<br>Vapor en la sección superior V = (R+1)·D = ${fmt(R.V,1)} kmol/h → condensador ≈ ${fmt(R.Qc,0)} kW`;
+}
+const RETOS=[
+ {id:'d1',t:'Logra 99 % de pureza arriba con 20 etapas o menos',h:'x_D ≥ 0,99. Juega con el reflujo y la volatilidad.',ok:()=>R.ok&&S.xd>=0.99&&R.N<=20},
+ {id:'d2',t:'Diseña en la zona económica con 95 % de pureza',h:'R entre 1,2 y 1,5 veces el mínimo y x_D ≥ 0,95.',ok:()=>R.ok&&S.xd>=0.95&&S.rr>=1.2&&S.rr<=1.5},
+ {id:'d3',t:'Separa una mezcla difícil (α ≤ 1,5) al 95 %',h:'Vas a necesitar muchas etapas: que sean menos de 100.',ok:()=>R.ok&&S.al<=1.5&&S.xd>=0.95},
+ {id:'d4',t:'Acércate al reflujo total: N ≤ N mínimo + 2',h:'Sube mucho el reflujo y mira cómo te acercas al resultado de Fenske.',ok:()=>R.ok&&R.N<=Math.ceil(R.Nmin)+2},
+ {id:'d5',t:'Recupera 98 % del ligero arriba con x_D ≥ 0,95',h:'Recuperación = D·x_D / (F·x_F). Pista: x_B muy bajo.',ok:()=>R.ok&&S.xd>=0.95&&R.D*S.xd/(F*S.xf)>=0.98}];
+bindAll();upd();
+
+</script>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>

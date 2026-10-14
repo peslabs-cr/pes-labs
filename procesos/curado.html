@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Curado y cinética · Simulador PES Labs</title>
+<meta name="description" content="Simulador gratuito de curado térmico: conducción de calor en una pieza gruesa, cinética de Arrhenius, centro contra superficie, sobrecurado y post-curado.">
+<meta property="og:title" content="Simulador: Curado y cinética">
+<meta property="og:description" content="Simulador gratuito de curado térmico: conducción de calor en una pieza gruesa, cinética de Arrhenius, centro contra superficie, sobrecurado y post-curado.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♨️</text></svg>">
+<style>
+:root{--bg:#0b1219;--card:#142030;--line:#26384a;--fg:#eef3f7;--mut:#94a3b4;--ac:#2ed692;--blue:#60a5fa;--red:#ff6b6b;--gold:#ffca28;--pur:#c084fc}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(1000px 500px at 90% -10%,#0f3a2e 0%,transparent 60%),linear-gradient(180deg,#0a1118,#0c1620);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+a{color:var(--blue)}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,17,24,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top .t{font-weight:900;font-size:17px}.top .t b{color:var(--ac)}.top .sp{flex:1}
+.ib{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:12px;display:grid;grid-template-columns:340px 1fr;gap:12px;grid-template-areas:'ctl viz' 'ctl rest';align-items:start}
+.panel{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.panel h3{margin:2px 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+.ctl{margin:9px 0}
+.ctl label{display:flex;justify-content:space-between;font-size:13px;color:#cbd6e0}
+.ctl label b{color:var(--fg);font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:100%;accent-color:var(--ac)}
+.ctl small{color:var(--mut);font-size:11.5px;display:block;margin-top:1px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:4px}
+.seg button{flex:1;background:transparent;border:0;color:var(--mut);padding:6px 4px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:#0f3a2e;color:var(--ac);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.kpi .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}.kpi .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.kpi .u{font-size:12px;color:var(--mut);font-weight:600}
+.kpi.ok{border-color:#1f6f52}.kpi.warn{border-color:#8a6d12}.kpi.bad{border-color:#8a2b33;background:rgba(70,20,25,.6)}
+.chartbox{position:relative}
+canvas{width:100%;display:block;border-radius:12px;background:#0d1722;border:1px solid var(--line)}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#cbd6e0;margin:6px 2px}
+.leg i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:10px}
+.exp{font-size:14px;color:#d7e2ea}.exp p{margin:6px 0}.exp b{color:var(--gold)}
+.alert{border-radius:12px;padding:9px 11px;margin:6px 0;font-size:14px}
+.alert.bad{background:rgba(120,25,35,.55);border:1px solid #c0394a}.alert.warn{background:rgba(110,85,10,.45);border:1px solid #b8901a}.alert.ok{background:rgba(15,70,50,.5);border:1px solid #1f8f66}
+.ret{display:flex;gap:9px;align-items:flex-start;padding:8px 6px;border-bottom:1px dashed #22344a;font-size:13.5px}
+.ret .ck{font-size:18px;line-height:1.1}.ret.done{color:#bdf5dd}.ret .go{margin-left:auto;font-size:12px}
+.ret .rt{font-weight:700}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:#182a3c;color:var(--fg);border-radius:10px;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+.btn.go{background:linear-gradient(90deg,#16a37a,#0ea5a0);border:0;color:#fff;font-weight:700}
+.eq{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:#0d1722;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:#cfe3f3;overflow:auto}
+.foot{max-width:1240px;margin:0 auto;padding:4px 12px 40px;color:var(--mut);font-size:12.5px}
+.toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:50;background:#13402f;border:1px solid var(--ac);border-radius:12px;padding:9px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:92vw}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;grid-template-areas:'viz' 'ctl' 'rest'}.kpis{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}
+ #viz{position:sticky;top:49px;z-index:5;background:#0b1219;padding-bottom:6px;margin:0 -12px;padding:6px 12px}
+ #viz .kpis{gap:5px;margin-bottom:6px}#viz .kpi{padding:4px 7px}#viz .kpi .l{font-size:9.5px}#viz .kpi .v{font-size:15px}
+ #viz .leg{display:none}#viz .panel{padding:6px}}
+@media(max-width:480px){.kpi .v{font-size:17px}.top .hide,.top .hide2{display:none}}
+.top .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+</style>
+</head><body>
+<div class="top"><a class="ib" href="../index.html#procesos" title="Volver a PES Labs">←</a><div class="t">♨️ Curado<span class="hide2"> y cinética</span> <b class="hide">· Simulador</b></div><span class="sp"></span>
+ <button class="ib" onclick="reset()">↺<span class="hide"> Reiniciar</span></button><a class="ib" href="../index.html#leer-curado">📖<span class="hide"> Teoría</span></a></div>
+<div class="wrap">
+ <aside style="grid-area:ctl">
+  <div class="panel"><h3>🧪 Material (genérico)</h3>
+   <div class="ctl"><label>Velocidad del sistema de curado</label><div class="seg" data-k="mat"><button data-v="rapido">Rápido</button><button data-v="medio">Medio</button><button data-v="lento">Lento</button></div><small id="mtxt"></small></div>
+  </div>
+  <div class="panel" style="margin-top:12px"><h3>🔥 Proceso</h3>
+   <div class="ctl"><label>Temperatura del molde <b id="v_Tm"></b></label><input type="range" data-k="Tm" min="130" max="190" step="1"></div>
+   <div class="ctl"><label>Espesor de la pieza <b id="v_L"></b></label><input type="range" data-k="L" min="4" max="60" step="1"><small>Se calienta por ambas caras: el centro es lo último en calentarse</small></div>
+   <div class="ctl"><label>Tiempo en el molde <b id="v_tc"></b></label><input type="range" data-k="tc" min="2" max="120" step="1"></div>
+   <div class="ctl"><label>Después de desmoldar</label><div class="seg" data-k="post"><button data-v="1">Enfría al aire (sigue curando)</button><button data-v="0">Se enfría de golpe</button></div><small>El calor que queda adentro sigue curando el centro unos minutos</small></div>
+  </div>
+ </aside>
+ <section id="viz" style="grid-area:viz">
+  <div class="kpis">
+   <div class="kpi" id="k1"><div class="l">Curado del centro al desmoldar</div><div class="v"><span class="n">–</span> <span class="u">%</span></div></div>
+   <div class="kpi" id="k2"><div class="l">Curado final del centro</div><div class="v"><span class="n">–</span> <span class="u">%</span></div></div>
+   <div class="kpi" id="k3"><div class="l">Curado de la superficie</div><div class="v"><span class="n">–</span> <span class="u">%</span></div></div>
+   <div class="kpi" id="k4"><div class="l">Sobrecurado superficie</div><div class="v"><span class="n">–</span> <span class="u">× t90</span></div></div>
+   <div class="kpi" id="k5"><div class="l">Tiempo mínimo en molde</div><div class="v"><span class="n">–</span> <span class="u">min</span></div></div>
+   <div class="kpi" id="k6"><div class="l">Centro al desmoldar</div><div class="v"><span class="n">–</span> <span class="u">°C</span></div></div>
+  </div>
+  <div class="panel"><canvas id="cv"></canvas>
+   <div class="leg"><span><i style="background:#ff6b6b"></i>Superficie</span><span><i style="background:#ffca28"></i>A ¼ del espesor</span><span><i style="background:#60a5fa"></i>Centro</span><span>── temperatura · - - grado de curado</span><span><i style="background:rgba(255,255,255,.6)"></i>Desmoldeo</span></div></div>
+ </section>
+ <section style="grid-area:rest">
+  <div class="two" style="margin-top:0">
+   <div class="panel exp"><h3>🧠 ¿Qué está pasando?</h3><div id="exp"></div></div>
+   <div class="panel"><h3>🎯 Retos</h3><div id="retos"></div></div>
+  </div>
+  <div class="two">
+   <div class="panel"><h3>📏 Perfil a través del espesor al desmoldar</h3><canvas id="cv2"></canvas>
+    <div class="leg"><span><i style="background:#ff6b6b"></i>Temperatura (°C)</span><span><i style="background:#2ed692"></i>Grado de curado (%)</span></div></div>
+   <div class="panel"><h3>📐 Cómo se calcula</h3>
+    <div class="eq">Conducción 1D: ∂T/∂t = α·∂²T/∂x² (diferencias finitas)<br>Molde: T = T<sub>molde</sub> en ambas caras<br>Aire: −k·∂T/∂x = h·(T − T<sub>aire</sub>), h = 10 W/m²K<br>Curado: dα/dt = k(T)·(1 − α)<br>k(T) = k<sub>160</sub>·exp[−E<sub>a</sub>/R·(1/T − 1/433,15)]<br>t90 a 160 °C = ln(10)/k<sub>160</sub></div>
+    <div class="exp" id="detail" style="font-size:13px;margin-top:8px"></div></div>
+  </div>
+ </section>
+</div>
+
+<div class="foot">Simulador educativo con un elastómero genérico e ilustrativo (difusividad 1×10⁻⁷ m²/s, cinética de primer orden): no corresponde a ningún compuesto ni a ninguna empresa, y no reemplaza ensayos de reometría ni la validación del proceso · PES Labs · Ing. Ricardo Fonseca Pereira · Creado con ayuda de IA.</div>
+<script>
+// ===== Librería común de simuladores PES Labs =====
+const $=id=>document.getElementById(id);
+const fmt=(x,d)=>(isFinite(x)?x:0).toLocaleString('es-CR',{minimumFractionDigits:d,maximumFractionDigits:d});
+let S={},DONE=new Set(),KEY='',DEF={};
+function initState(key,def){KEY=key;DEF=def;S=Object.assign({},def);try{const s=JSON.parse(localStorage.getItem(key)||'null');if(s){Object.assign(S,s.S);DONE=new Set(s.done||[]);}}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({S,done:[...DONE]}));}catch(e){}}
+function bindAll(){
+ document.querySelectorAll('input[type=range][data-k]').forEach(el=>{const k=el.dataset.k;el.value=S[k];el.oninput=()=>{S[k]=+el.value;upd();};});
+ document.querySelectorAll('.seg[data-k]').forEach(sg=>{const k=sg.dataset.k;const bs=[...sg.querySelectorAll('button')];
+  bs.forEach(b=>{const v=isNaN(+b.dataset.v)?b.dataset.v:+b.dataset.v;b.classList.toggle('on',v===S[k]);b.onclick=()=>{S[k]=v;bs.forEach(x=>x.classList.toggle('on',x===b));upd();};});});
+}
+function reset(){S=Object.assign({},DEF);bindAll();upd();}
+function preset(o,msg){S=Object.assign({},DEF,o);bindAll();upd();if(msg)toast(msg);}
+function lbl(k,t){const e=$('v_'+k);if(e)e.textContent=t;}
+function setK(id,val,cls){const e=$(id);if(!e)return;e.querySelector('.n').textContent=val;e.className='kpi '+(cls||'');}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
+function setupCanvas(c,h){const r=window.devicePixelRatio||1;c.setAttribute('height',h);const w=c.clientWidth;c.width=w*r;c.height=h*r;c.style.height=h+'px';const x=c.getContext('2d');x.setTransform(r,0,0,r,0,0);x.clearRect(0,0,w,h);return {x,w,h};}
+const mobile=()=>window.innerWidth<980;
+// Ejes: o={h,xmin,xmax,ymin,ymax,xlab,ylab,xs,ys,y2:{min,max,lab,col,s},ml,mr,dx,dy}
+function plot(c,o){
+ const {x,w,h}=setupCanvas(c,o.h);const m={l:o.ml||50,r:o.y2?50:(o.mr||14),t:14,b:38};
+ const X=v=>m.l+(w-m.l-m.r)*(v-o.xmin)/(o.xmax-o.xmin),Y=v=>h-m.b-(h-m.t-m.b)*(v-o.ymin)/(o.ymax-o.ymin);
+ const Y2=o.y2?v=>h-m.b-(h-m.t-m.b)*(v-o.y2.min)/(o.y2.max-o.y2.min):null;
+ x.font='12px system-ui';x.strokeStyle='#1d2c3c';x.lineWidth=1;x.fillStyle='#8aa0b4';
+ const nice=(a,b,n)=>{const r=(b-a)/n,p=10**Math.floor(Math.log10(r)),f=r/p;return (f<1.5?1:f<3?2:f<7?5:10)*p;};
+ const xs=o.xs||nice(o.xmin,o.xmax,6),ys=o.ys||nice(o.ymin,o.ymax,5);
+ const dec=v=>Math.abs(v)<10&&v%1!==0?(Math.abs(v)<1?2:1):0;
+ for(let v=Math.ceil(o.xmin/xs)*xs;v<=o.xmax+1e-9;v+=xs){x.beginPath();x.moveTo(X(v),m.t);x.lineTo(X(v),h-m.b);x.stroke();const t=fmt(v,o.dx!=null?o.dx:dec(xs));x.fillText(t,X(v)-x.measureText(t).width/2,h-m.b+15);}
+ for(let v=Math.ceil(o.ymin/ys)*ys;v<=o.ymax+1e-9;v+=ys){x.beginPath();x.moveTo(m.l,Y(v));x.lineTo(w-m.r,Y(v));x.stroke();const t=fmt(v,o.dy!=null?o.dy:dec(ys));x.fillText(t,m.l-6-x.measureText(t).width,Y(v)+4);}
+ if(o.y2){const s2=o.y2.s||nice(o.y2.min,o.y2.max,5);x.fillStyle=o.y2.col||'#b48ae8';for(let v=Math.ceil(o.y2.min/s2)*s2;v<=o.y2.max+1e-9;v+=s2)x.fillText(fmt(v,dec(s2))+(o.y2.u||''),w-m.r+6,Y2(v)+4);}
+ x.fillStyle='#cbd6e0';x.fillText(o.xlab||'',(m.l+w-m.r)/2-x.measureText(o.xlab||'').width/2,h-4);
+ x.save();x.translate(13,(m.t+h-m.b)/2+x.measureText(o.ylab||'').width/2);x.rotate(-Math.PI/2);x.fillText(o.ylab||'',0,0);x.restore();
+ if(o.y2&&o.y2.lab){x.save();x.fillStyle=o.y2.col||'#b48ae8';x.translate(w-6,(m.t+h-m.b)/2-x.measureText(o.y2.lab).width/2);x.rotate(Math.PI/2);x.fillText(o.y2.lab,0,0);x.restore();}
+ return {x,w,h,m,X,Y,Y2,o};
+}
+function inBox(P,px,py){return px>=P.m.l-1&&px<=P.w-P.m.r+1&&py>=P.m.t-1&&py<=P.h-P.m.b+1;}
+function line(P,pts,col,wd,dash,y2){const x=P.x,Yf=y2?P.Y2:P.Y;x.strokeStyle=col;x.lineWidth=wd||2.5;x.setLineDash(dash||[]);x.beginPath();let st=false;
+ for(const [a,b] of pts){if(b==null||!isFinite(b)){st=false;continue;}const px=P.X(a),py=Yf(b);if(!inBox(P,px,py)){st=false;continue;}if(!st){x.moveTo(px,py);st=true;}else x.lineTo(px,py);}x.stroke();x.setLineDash([]);}
+function fn(P,f,col,wd,dash,n,y2){const pts=[];const N=n||200;for(let i=0;i<=N;i++){const a=P.o.xmin+(P.o.xmax-P.o.xmin)*i/N;pts.push([a,f(a)]);}line(P,pts,col,wd,dash,y2);}
+function dot(P,a,b,col,r,txt,y2){const x=P.x,px=P.X(a),py=(y2?P.Y2:P.Y)(b);x.fillStyle=col;x.beginPath();x.arc(px,py,r||6,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.stroke();
+ if(txt){x.font='bold 12px system-ui';x.fillStyle='#fff';const tw=x.measureText(txt).width;let lx=px+10;if(lx+tw>P.w-P.m.r)lx=px-tw-10;x.fillText(txt,lx,py-10);x.font='12px system-ui';}}
+function band(P,a,b,col){P.x.fillStyle=col;P.x.fillRect(P.X(a),P.m.t,P.X(b)-P.X(a),P.h-P.m.t-P.m.b);}
+function vline(P,a,col,txt){const x=P.x;x.strokeStyle=col;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(P.X(a),P.m.t);x.lineTo(P.X(a),P.h-P.m.b);x.stroke();x.setLineDash([]);if(txt){x.fillStyle=col;x.fillText(txt,P.X(a)+4,P.m.t+12);}}
+function hline(P,b,col,txt){const x=P.x;x.strokeStyle=col;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(P.m.l,P.Y(b));x.lineTo(P.w-P.m.r,P.Y(b));x.stroke();x.setLineDash([]);if(txt){x.fillStyle=col;x.fillText(txt,P.m.l+6,P.Y(b)-5);}}
+function text(P,a,b,t,col,bold){const x=P.x;x.font=(bold?'bold ':'')+'12px system-ui';x.fillStyle=col||'#fff';x.fillText(t,P.X(a),P.Y(b));x.font='12px system-ui';}
+// Retos: [{id,t,h,ok:()=>bool}]
+function renderRetos(RETOS,extra){let html='';
+ for(const r of RETOS){let ok=false;try{ok=r.ok();}catch(e){}if(ok&&!DONE.has(r.id)){DONE.add(r.id);toast('🎯 ¡Reto logrado! '+r.t);}
+  const d=DONE.has(r.id);html+=`<div class="ret ${d?'done':''}"><span class="ck">${d?'✅':'⬜'}</span><div><div class="rt">${r.t}</div><small style="color:var(--mut)">${r.h}</small></div></div>`;}
+ html+=`<div style="font-size:12.5px;color:var(--mut);margin-top:6px">${DONE.size} de ${RETOS.length} retos · tu avance se guarda en este navegador</div>`;
+ if(extra)html+=`<div class="btns">${extra}</div>`;$('retos').innerHTML=html;}
+function alertBox(cls,html){return `<div class="alert ${cls}">${html}</div>`;}
+let _rt;window.addEventListener('resize',()=>{clearTimeout(_rt);_rt=setTimeout(()=>upd(),120);});
+
+initState('pes_curado_v1',{mat:'medio',Tm:160,L:20,tc:15,post:1});
+const MAT={rapido:{k:0.6,ea:90,n:'t90 ≈ 3,8 min a 160 °C'},medio:{k:0.3,ea:90,n:'t90 ≈ 7,7 min a 160 °C'},lento:{k:0.15,ea:100,n:'t90 ≈ 15 min a 160 °C'}};
+const ALPHA=1e-7,KTH=0.25,RHOCP=KTH/ALPHA,HAIR=10,TAIR=25,TI=25,RG=8.314,TREF=433.15,POSTMIN=40;
+function simulate(s,tc,store){
+ const m=MAT[s.mat];const NN=Math.max(6,Math.min(24,Math.round(s.L/2)+1));const half=s.L/2000;const dx=half/(NN-1);const dt=Math.min(0.4*dx*dx/ALPHA,5);
+ let T=new Array(NN).fill(TI),a=new Array(NN).fill(0),eqs=0; // nodo 0 = superficie, NN-1 = centro
+ const kf=t=>m.k/60*Math.exp(-m.ea*1000/RG*(1/(t+273.15)-1/TREF)); // 1/s
+ const tEnd=tc*60+(s.post?POSTMIN*60:0);const out=[];let at={},t=0,next=0;const Fo=ALPHA*dt/(dx*dx);
+ const iq=Math.round((NN-1)/2);
+ while(t<=tEnd+1e-9){
+  if(store&&t>=next){out.push([t/60,T[0],T[iq],T[NN-1],a[0],a[iq],a[NN-1]]);next+=Math.max(dt,tEnd/300);}
+  if(Math.abs(t-tc*60)<dt/2||(t>=tc*60&&!at.done)){at={T:T.slice(),a:a.slice(),done:1};}
+  const inMold=t<tc*60;const Tn=T.slice();
+  for(let i=1;i<NN-1;i++)Tn[i]=T[i]+Fo*(T[i-1]-2*T[i]+T[i+1]);
+  Tn[NN-1]=T[NN-1]+2*Fo*(T[NN-2]-T[NN-1]); // simetría en el centro
+  if(inMold)Tn[0]=s.Tm;else if(s.post)Tn[0]=T[0]+2*Fo*(T[1]-T[0])-2*dt*HAIR/(RHOCP*dx)*(T[0]-TAIR);else{for(let i=0;i<NN;i++)Tn[i]=TAIR;}
+  if(t===0)Tn[0]=s.Tm;
+  for(let i=0;i<NN;i++){const k=kf(T[i]);a[i]=1-(1-a[i])*Math.exp(-k*dt);}
+  eqs+=Math.exp(-m.ea*1000/RG*(1/(T[0]+273.15)-1/TREF))*dt;
+  T=Tn;t+=dt;
+  if(!s.post&&t>tc*60)break;
+ }
+ if(!at.done)at={T:T.slice(),a:a.slice()};
+ return {out,at,fin:{a:a.slice()},NN,t90:Math.log(10)/m.k,eqSurf:eqs/60,half};
+}
+function minTime(s){ // tiempo mínimo en molde para que el centro termine ≥ 90 %
+ const cA=r=>r.fin.a[r.NN-1];if(cA(simulate(s,120))<0.9)return null;let lo=1,hi=120;for(let i=0;i<12;i++){const m=(lo+hi)/2;if(cA(simulate(s,m))>=0.9)hi=m;else lo=m;}return hi;}
+let R;
+function upd(){
+ lbl('Tm',S.Tm+' °C');lbl('L',S.L+' mm');lbl('tc',S.tc+' min');$('mtxt').textContent='Cinética de 1er orden · '+MAT[S.mat].n+' · Eₐ = '+MAT[S.mat].ea+' kJ/mol';
+ const sim=simulate(S,S.tc,true);const mt=minTime(S);const c=sim.NN-1;
+ const ac=sim.at.a[c],af=sim.fin.a[c],as=sim.fin.a[0],ov=sim.eqSurf/sim.t90;
+ R={sim,mt,ac,af,as,ov,Tc:sim.at.T[c]};
+ setK('k1',fmt(ac*100,0),ac>=0.9?'ok':'');setK('k2',fmt(af*100,0),af>=0.9?'ok':af>=0.8?'warn':'bad');setK('k3',fmt(as*100,0),'');
+ setK('k4',fmt(ov,1),ov>3?'bad':ov>2?'warn':'ok');setK('k5',mt?fmt(mt,1):'> 120');setK('k6',fmt(R.Tc,0));
+ draw();draw2();explain();
+ renderRetos(RETOS,`<button class="btn" onclick="preset({L:50,tc:30},'🧱 Pieza de 50 mm: el centro tarda muchísimo en calentarse.')">Escenario: pieza gruesa</button><button class="btn" onclick="preset({Tm:185,L:40,tc:40},'🔥 Molde muy caliente y mucho tiempo: la superficie se sobrecura.')">Escenario: sobrecurado</button><button class="btn" onclick="preset({L:8,tc:6,mat:'rapido'},'⚡ Pieza delgada y sistema rápido: ciclo corto.')">Escenario: ciclo rápido</button>`);
+ persist();
+}
+function draw(){
+ const o=R.sim.out,tmax=o[o.length-1][0];
+ const P=plot($('cv'),{h:mobile()?Math.min(250,Math.round(innerHeight*.3)):400,xmin:0,xmax:tmax,ymin:0,ymax:200,xlab:'Tiempo (min)',ylab:'Temperatura (°C)',ys:40,y2:{min:0,max:100,lab:'Curado (%)',col:'#cbd6e0',u:'%'}});
+ band(P,0,S.tc,'rgba(255,107,107,.06)');vline(P,S.tc,'rgba(255,255,255,.7)','desmoldeo');
+ const cols=['#ff6b6b','#ffca28','#60a5fa'];
+ for(let j=0;j<3;j++){line(P,o.map(r=>[r[0],r[1+j]]),cols[j],2.8);line(P,o.map(r=>[r[0],r[4+j]*100]),cols[j],2,[6,4],true);}
+ const yy=P.Y2(90);P.x.strokeStyle='rgba(46,214,146,.6)';P.x.setLineDash([2,4]);P.x.beginPath();P.x.moveTo(P.m.l,yy);P.x.lineTo(P.w-P.m.r,yy);P.x.stroke();P.x.setLineDash([]);P.x.fillStyle='#2ed692';P.x.fillText('90 % curado',P.w-P.m.r-80,yy-5);
+}
+function draw2(){
+ const s=R.sim,n=s.NN,h=S.L/2;const T=s.at.T,a=s.at.a;const pts=[],pa=[];
+ for(let i=0;i<n;i++){const x=-h+h*i/(n-1);pts.push([x,T[i]]);pa.push([x,a[i]*100]);}
+ for(let i=n-2;i>=0;i--){const x=h-h*i/(n-1);pts.push([x,T[i]]);pa.push([x,a[i]*100]);}
+ const P=plot($('cv2'),{h:220,xmin:-h,xmax:h,ymin:0,ymax:200,xlab:'Posición en el espesor (mm)',ylab:'°C',ys:50,y2:{min:0,max:100,lab:'Curado %',col:'#2ed692',u:'%'}});
+ line(P,pts,'#ff6b6b',2.8);line(P,pa,'#2ed692',2.8,null,true);vline(P,0,'rgba(255,255,255,.4)','centro');
+}
+function explain(){
+ const e=[];const lag=S.Tm-R.Tc;
+ e.push(`<p>Tras ${S.tc} min en el molde a ${S.Tm} °C, la superficie está a la temperatura del molde, pero el centro de la pieza de ${S.L} mm apenas llega a <b>${fmt(R.Tc,0)} °C</b>. Como el curado depende de la temperatura de forma exponencial (Arrhenius), el centro va muy atrás.</p>`);
+ if(R.af>=0.9&&R.ac<0.9&&S.post)e.push(alertBox('ok',`♨️ <b>Post-curado:</b> al desmoldar el centro tenía ${fmt(R.ac*100,0)} %, pero con el calor que queda adentro termina en <b>${fmt(R.af*100,0)} %</b>. Muchas plantas aprovechan este efecto para acortar el ciclo.`));
+ if(R.af<0.9)e.push(alertBox('bad',`⚠️ El centro termina en <b>${fmt(R.af*100,0)} %</b>: queda <b>subcurado</b>. ${R.mt?`Necesitas al menos ${fmt(R.mt,1)} min en el molde.`:'Ni con 120 min alcanza: sube la temperatura o reduce el espesor.'}`));
+ if(R.ov>3)e.push(alertBox('bad',`🔥 La superficie recibió <b>${fmt(R.ov,1)} veces</b> el tiempo equivalente de t90: riesgo de <b>sobrecurado o reversión</b> (pérdida de propiedades). Es el dilema clásico de las piezas gruesas: el centro necesita tiempo y la superficie se pasa.`));
+ else if(R.ov>2)e.push(alertBox('warn',`La superficie va en ${fmt(R.ov,1)} × t90: todavía aceptable, pero cerca del límite.`));
+ if(R.mt&&R.af>=0.9&&S.tc>R.mt*1.3)e.push(`<p>⏱️ Podrías desmoldar en unos <b>${fmt(R.mt,1)} min</b> en vez de ${S.tc}: ${fmt((1-R.mt/S.tc)*100,0)} % menos de ciclo con la misma calidad en el centro.</p>`);
+ $('exp').innerHTML=e.join('');
+ $('detail').innerHTML=`Tiempo característico de conducción: L²/(4α) ≈ ${fmt((S.L/2000)**2/ALPHA/60,1)} min (crece con el cuadrado del espesor)<br>t90 del material a 160 °C: ${fmt(R.sim.t90,1)} min · tiempo equivalente recibido por la superficie: ${fmt(R.sim.eqSurf,1)} min`;
+}
+const RETOS=[
+ {id:'c1',t:'Cura una pieza de 40 mm sin sobrecurar la superficie',h:'Centro ≥ 90 % y superficie ≤ 3 × t90. Pista: temperatura moderada.',ok:()=>S.L>=40&&R.af>=0.9&&R.ov<=3},
+ {id:'c2',t:'Ciclo de 6 min o menos para una pieza de 10 mm',h:'Centro final ≥ 90 %. Material y temperatura son la clave.',ok:()=>S.L>=10&&S.tc<=6&&R.af>=0.9},
+ {id:'c3',t:'Aprovecha el post-curado',h:'Desmolda con el centro por debajo de 90 % y que termine por encima.',ok:()=>S.post===1&&R.ac<0.9&&R.af>=0.9},
+ {id:'c4',t:'Cura 60 mm con el material lento',h:'Centro ≥ 90 %. Va a tomar su tiempo…',ok:()=>S.L>=60&&S.mat==='lento'&&R.af>=0.9},
+ {id:'c5',t:'Ajusta el tiempo justo: a 1 min o menos del mínimo',h:'Ni subcurado ni tiempo de más: tiempo en molde ≤ mínimo + 1.',ok:()=>R.mt&&R.af>=0.9&&S.tc<=R.mt+1}];
+bindAll();upd();
+
+</script>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>
