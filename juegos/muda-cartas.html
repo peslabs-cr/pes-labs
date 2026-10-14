@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta property="og:title" content="¡Muda! · Juego de cartas de mejora continua">
+<meta property="og:description" content="Arma tu planta, lanza desperdicios a tus rivales y cúralos con la herramienta Lean o Six Sigma correcta. Gratis, de 2 a 4 jugadores.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¡Muda! · Juego de cartas de mejora continua</title>
+<meta name="description" content="Juego de cartas gratis de PES Labs: arma tu planta, lanza desperdicios a tus rivales y cúralos con la herramienta Lean o Six Sigma correcta.">
+<style>
+:root{--bg:#0b1219;--bg2:#101b25;--card:#162231;--line:#26384a;--fg:#eef3f7;--mut:#94a3b4;--ac:#2ed692;--red:#ff6b6b;--gold:#ffca28;
+ --b:#3b82f6;--p:#a855f7;--g:#22c55e;--y:#eab308;--m:#ec4899;--x:#ffca28}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(1200px 600px at 85% -10%,#0f3a2e 0%,transparent 60%),linear-gradient(180deg,#0a1118,#0c1620);color:var(--fg);
+ font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%;padding-bottom:env(safe-area-inset-bottom)}
+button{font:inherit;cursor:pointer}
+.hidden{display:none!important}
+/* ---------- barra ---------- */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(10,17,24,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.logo{font-weight:900;font-size:20px;letter-spacing:.5px}.logo b{color:var(--ac)}
+.top .sp{flex:1}.top .turn{font-size:13px;color:var(--mut)}
+.ib{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:6px 10px;font-size:14px}
+.ib:hover{border-color:var(--ac)}
+/* ---------- menú ---------- */
+#menu{max-width:760px;margin:0 auto;padding:22px 16px 60px}
+.hero{text-align:center;padding:10px 0 6px}
+.hero h1{font-size:54px;margin:0;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#2ed692,#16a0aa);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--mut);margin:6px 0 0}
+.fan{display:flex;justify-content:center;margin:18px 0 6px;height:150px}
+.fan .card{transform-origin:50% 120%;margin:0 -22px;pointer-events:none}
+.panel{background:rgba(22,34,49,.85);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.panel h3{margin:0 0 10px;font-size:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--mut);padding:8px 14px}
+.seg button.on{background:#0f3a2e;color:var(--ac);font-weight:700}
+.inp{background:#0d1620;border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:8px 10px;width:150px}
+.big{background:linear-gradient(90deg,#16a37a,#0ea5a0);border:0;color:#fff;font-weight:800;border-radius:14px;padding:12px 22px;font-size:17px;box-shadow:0 6px 20px rgba(46,214,146,.25)}
+.big.alt{background:var(--card);border:1px solid var(--line);box-shadow:none;color:var(--fg)}
+.lbl{color:var(--mut);font-size:13px;min-width:90px}
+/* ---------- cartas ---------- */
+.card{--c:#64748b;--c2:#334155;position:relative;width:132px;height:184px;border-radius:14px;padding:7px;background:linear-gradient(165deg,var(--c),var(--c2));color:#fff;
+ border:3px solid rgba(255,255,255,.9);box-shadow:0 6px 16px rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;text-align:center;user-select:none;flex:none;transition:transform .15s,box-shadow .15s;overflow:hidden}
+.card .ct{font-size:9px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;border-radius:999px;padding:2px 7px;background:#fff;color:var(--c2);align-self:center}
+.card.t-muda .ct{background:#dc2626;color:#fff}.card.t-herr .ct{background:#fff;color:#15803d}.card.t-esp .ct{background:#ffca28;color:#3b2a00}
+.card .ce{font-size:36px;line-height:1;margin:7px 0 4px;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.card.t-muda .ce{background:#1b0d10;box-shadow:0 0 0 3px #ef4444}
+.card.t-herr .ce{box-shadow:0 0 0 3px #22c55e}
+.card .cn{font-weight:900;font-size:13px;line-height:1.15;min-height:30px;display:flex;align-items:center;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.card .cx{font-size:10px;color:rgba(255,255,255,.92);line-height:1.25;margin-top:3px;overflow:hidden;flex:1;min-height:0;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.card.haspair{padding-bottom:36px}
+.card .cp{position:absolute;left:6px;right:6px;bottom:6px;font-size:9.5px;font-weight:700;border-radius:8px;padding:3px 4px;background:rgba(0,0,0,.45);color:#fff}
+.card.t-muda::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(0,0,0,.16) 0 8px,transparent 8px 16px);pointer-events:none}
+.card.t-muda>*{position:relative;z-index:1}
+.card.t-esp{--c:#334155;--c2:#0f172a;border-color:#ffca28}
+.c-b{--c:#3b82f6;--c2:#1e3a8a}.c-p{--c:#a855f7;--c2:#581c87}.c-g{--c:#22c55e;--c2:#14532d}.c-y{--c:#eab308;--c2:#854d0e}.c-m{--c:#ec4899;--c2:#831843}
+.card.c-m,.st.c-m{background:linear-gradient(135deg,#2563eb,#9333ea 35%,#16a34a 65%,#ca8a04)}
+.card .stripe{display:none}
+.back{width:34px;height:48px;border-radius:7px;border:2px solid #2b4257;background:repeating-linear-gradient(45deg,#13324a 0 6px,#0f2638 6px 12px);display:inline-flex;align-items:center;justify-content:center;font-size:15px}
+/* ---------- mesa ---------- */
+#game{max-width:1180px;margin:0 auto;padding:10px 10px 0}
+.riv{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.pl{background:rgba(22,34,49,.72);border:1px solid var(--line);border-radius:16px;padding:8px 10px;position:relative}
+.pl.turnnow{border-color:var(--ac);box-shadow:0 0 0 2px rgba(46,214,146,.25)}
+.pl.tgt{outline:3px dashed var(--gold);outline-offset:2px;cursor:pointer}
+.ph{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ph .av{font-size:22px}.ph .nm{font-weight:800}.ph .sp{flex:1}
+.prog{display:flex;gap:3px}.prog i{width:14px;height:8px;border-radius:4px;background:#24384b}.prog i.on{background:var(--ac)}
+.hc{display:flex;gap:2px}.hc .back{width:18px;height:26px;font-size:0;border-width:1px;border-radius:4px}
+.plant{display:flex;gap:7px;flex-wrap:wrap;min-height:84px;align-items:flex-start}
+.empty{color:var(--mut);font-size:12px;padding:20px 6px}
+.st{--c:#64748b;--c2:#334155;width:96px;border-radius:12px;background:linear-gradient(165deg,var(--c),var(--c2));border:3px solid rgba(255,255,255,.85);color:#fff;padding:6px 5px 5px;text-align:center;position:relative;transition:transform .15s}
+.st .se{font-size:24px;line-height:1;width:40px;height:40px;margin:0 auto;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center}.st .sn{font-size:11px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.5);line-height:1.1;margin-top:3px;min-height:24px}
+.st .sb{font-size:9.5px;font-weight:800;border-radius:8px;padding:2px 4px;margin-top:4px;display:inline-block}
+.sb.sana{background:#1c3b2f;color:#7ff0c0}.sb.afectada{background:#4a1d22;color:#ff9b9b}.sb.mejorada{background:#173a52;color:#93c5fd}.sb.estandarizada{background:#4a3b0e;color:#ffd75e}
+.st .chips{display:flex;gap:3px;justify-content:center;margin-top:4px;min-height:22px}
+.chip{font-size:14px;width:24px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.chip.m{background:#1b0d10;border:2px solid #ef4444}.chip.t{background:#fff;border:2px solid #22c55e}
+
+.st.sug,.card.sug{animation:sug 1s ease infinite}
+@keyframes sug{50%{box-shadow:0 0 0 4px #2ed692,0 0 22px rgba(46,214,146,.8)}}
+.st.tgt{cursor:pointer;box-shadow:0 0 0 3px var(--gold),0 0 18px rgba(255,202,40,.5);transform:translateY(-2px)}
+.st.pick{box-shadow:0 0 0 3px var(--ac),0 0 18px rgba(46,214,146,.6)}
+.st.fx{animation:pulse .9s ease 2}
+@keyframes pulse{50%{transform:scale(1.08);box-shadow:0 0 22px 6px rgba(255,202,40,.6)}}
+.mid{display:flex;gap:10px;align-items:center;margin:10px 0}
+.pile{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--mut);gap:2px}
+.news{flex:1;background:rgba(13,22,32,.85);border:1px solid var(--line);border-radius:14px;padding:9px 12px;min-height:52px;font-size:14px}
+.news.precise{border-color:var(--ac);background:rgba(15,58,46,.85)}.news.collapse,.news.muda{border-color:#7f2b33}.news.andon{border-color:var(--red);background:rgba(70,20,25,.85)}
+.news.std{border-color:var(--gold)}.news.win{border-color:var(--gold);background:rgba(74,59,14,.8)}
+.news small{display:block;color:var(--mut);margin-top:2px}
+.me{background:rgba(22,34,49,.85);border:1px solid var(--line);border-radius:18px;padding:10px 12px 12px}
+.me .plant .st{width:112px}.me .plant .st .se{font-size:30px;width:50px;height:50px}
+.handwrap{display:flex;gap:12px;align-items:flex-end;margin-top:10px;flex-wrap:wrap}
+.hand{display:flex;gap:10px}
+.hand .card{cursor:pointer}
+.hand .card:hover{transform:translateY(-6px)}
+.hand .card.sel{transform:translateY(-14px);box-shadow:0 0 0 3px var(--gold),0 14px 26px rgba(0,0,0,.5)}
+.hand .card.dsel{transform:translateY(-8px);box-shadow:0 0 0 3px var(--red)}
+.hand .card.dim{opacity:.55}
+.acts{display:flex;flex-direction:column;gap:8px;flex:1;min-width:220px}
+.hint{font-size:13.5px;color:#d7e2ea;background:rgba(13,22,32,.85);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+.hint b{color:var(--gold)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:12px;padding:9px 14px;font-weight:700}
+.btn.go{background:linear-gradient(90deg,#16a37a,#0ea5a0);border:0;color:#fff}
+.btn.warn{border-color:#7f2b33;color:#ffb4b4}
+.btn:disabled{opacity:.45;cursor:default}
+.logbox{max-height:220px;overflow:auto;font-size:12.5px;color:#c8d4de;margin-top:10px;border-top:1px solid var(--line);padding-top:6px}
+.logbox div{padding:3px 0;border-bottom:1px dashed #1e2e3d}
+/* ---------- modales ---------- */
+.ov{position:fixed;inset:0;background:rgba(3,7,11,.72);z-index:50;display:flex;align-items:center;justify-content:center;padding:14px}
+.mod{background:#111c27;border:1px solid var(--line);border-radius:18px;max-width:860px;width:100%;max-height:88vh;overflow:auto;padding:18px 18px 16px;position:relative}
+.mod h2{margin:0 0 6px}.mod .x{position:absolute;right:10px;top:10px}
+.mod table{border-collapse:collapse;width:100%;font-size:13.5px}.mod td,.mod th{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:top}
+.grid{display:flex;flex-wrap:wrap;gap:10px}
+.tabs{display:flex;gap:6px;margin:8px 0 12px;flex-wrap:wrap}
+.tabs button{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:999px;padding:6px 12px}
+.tabs button.on{border-color:var(--ac);color:var(--ac)}
+.rules li{margin:5px 0}
+.curtain{position:fixed;inset:0;z-index:60;background:linear-gradient(160deg,#0b2a22,#0b1219);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
+.curtain .av{font-size:64px}
+.toastx{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:70;background:#13402f;border:1px solid var(--ac);border-radius:12px;padding:9px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:92vw}
+.end h2{font-size:28px}.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;margin-top:8px}
+.pairs div{background:#0d1620;border:1px solid var(--line);border-radius:10px;padding:6px 9px;font-size:13px}
+.pairs div.ok{border-color:var(--ac);background:#0f2f25}
+.coach{background:linear-gradient(135deg,#0f3a2e,#12304a);border:2px solid var(--ac);border-radius:14px;padding:10px 12px;font-size:14px}
+.coach b{color:var(--gold)}.coach .st8{font-size:11px;color:var(--ac);font-weight:800;letter-spacing:.5px}
+.card.flying{box-shadow:0 12px 30px rgba(0,0,0,.6)}
+.st.shake{animation:shake .45s ease}
+@keyframes shake{20%{transform:translateX(-6px) rotate(-3deg)}40%{transform:translateX(6px) rotate(3deg)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+/* colores al final para que ganen */
+.st.c-b,.card.c-b{--c:#3b82f6;--c2:#1e3a8a}.st.c-p,.card.c-p{--c:#a855f7;--c2:#581c87}.st.c-g,.card.c-g{--c:#22c55e;--c2:#14532d}.st.c-y,.card.c-y{--c:#eab308;--c2:#854d0e}
+.card.haspair .cx{display:none}
+.card .cx{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical}
+/* ---------- celular ---------- */
+@media(max-width:700px){
+ .hide-sm{display:none}
+ .riv{grid-template-columns:1fr}
+ .st{width:66px;padding:4px 3px}.st .se{font-size:18px;width:30px;height:30px}.st .sn{font-size:9.5px;min-height:20px}.st .sb{font-size:8.5px;padding:1px 3px}
+ .chip{width:19px;height:18px;font-size:11px}
+ .me .plant .st{width:74px}.me .plant .st .se{font-size:22px;width:36px;height:36px}
+ .hand{gap:6px;width:100%;justify-content:center}
+ .hand .card{width:31%;max-width:118px;height:156px}
+ .card .ce{font-size:26px;width:46px;height:46px}.card .cn{font-size:11.5px}.card .cx{display:none}
+ .acts{min-width:0;order:-1;width:100%}
+ .news small{display:none}.news{font-size:13px;min-height:0}.mid{margin:6px 0}
+ .hero h1{font-size:44px}
+ .top .turn{display:none}
+}
+</style>
+</head><body>
+<div class="top">
+ <a class="ib" href="../index.html" title="Volver a PES Labs">←</a>
+ <div class="logo">¡<b>Muda</b>!</div>
+ <span class="turn" id="turnlbl"></span><span class="sp"></span>
+ <button class="ib" onclick="showHelp()">❓<span class="hide-sm"> Cómo jugar</span></button>
+ <button class="ib" onclick="showManual()">📖<span class="hide-sm"> Cartas</span></button>
+ <button class="ib" id="bsnd" onclick="toggleSnd()" title="Sonido">🔊</button>
+ <button class="ib" id="bmenu" onclick="toMenu()">☰</button>
+</div>
+
+<div id="menu">
+ <div class="hero"><h1>¡Muda!</h1><p>El juego de cartas de mejora continua · PES Labs</p></div>
+ <div class="fan" id="fan"></div>
+ <div class="panel">
+  <h3>🏭 Arma tu planta antes que tus rivales</h3>
+  <div style="color:#c8d4de;font-size:14px">Necesitas 4 estaciones sanas: 🔵 Máquinas, 🟣 Método, 🟢 Calidad y 🟡 Flujo. Lanza desperdicios a las plantas rivales y cura las tuyas con la herramienta correcta. Si usas la <b style="color:var(--ac)">herramienta precisa</b>, la mejora queda instalada.</div>
+ </div>
+ <div class="panel">
+  <h3>Nueva partida</h3>
+  <div class="row"><span class="lbl">Modo</span><div class="seg" id="smode"><button data-v="ia" class="on">🤖 Contra la IA</button><button data-v="hs">👥 Mismo dispositivo</button></div></div>
+  <div class="row" id="riaRow"><span class="lbl">Rivales</span><div class="seg" id="sriv"><button data-v="1" class="on">1</button><button data-v="2">2</button><button data-v="3">3</button></div>
+   <span class="lbl" style="min-width:auto;margin-left:6px">Dificultad</span><div class="seg" id="sdiff"><button data-v="facil" class="on">Fácil</button><button data-v="normal">Normal</button><button data-v="dificil">Difícil</button></div></div>
+  <div class="row" id="rhsRow" style="display:none"><span class="lbl">Jugadores</span><div class="seg" id="shs"><button data-v="2" class="on">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
+  <div class="row" id="names"></div>
+  <div class="row" style="margin-top:14px"><button class="big" onclick="startTutorial()">🎓 Partida guiada (2 min)</button><button class="big" onclick="start()">▶ Jugar</button><button class="big alt hidden" id="bcont" onclick="contGame()">↺ Continuar partida</button>
+   <button class="big alt" onclick="showHelp()">❓ Cómo jugar</button></div>
+ </div>
+ <div class="panel" style="font-size:13px;color:var(--mut)">Cada carta enseña un concepto real de Lean y Six Sigma. Toca 📖 Cartas para ver los 13 pares herramienta–desperdicio. Tu partida se guarda sola en este navegador.</div>
+</div>
+
+<div id="game" class="hidden">
+ <div class="riv" id="rivals"></div>
+ <div class="mid">
+  <div class="pile"><span class="back" style="width:40px;height:56px">🂠</span><span id="deckn"></span></div>
+  <div class="news" id="news"></div>
+  <div class="pile"><button class="ib" onclick="toggleLog()" title="Historial">📜</button><span>historial</span></div>
+ </div>
+ <div class="logbox hidden" id="logbox"></div>
+ <div class="me" id="mebox"></div>
+</div>
+<div id="ov"></div>
+
+<script>
+// ===== ENGINE START =====
+// ¡Muda! · motor del juego (sin DOM)
+const COLS={b:{n:'Máquinas',a:'Mecanizado y máquinas',hex:'#3b82f6',e:'🔵'},p:{n:'Método',a:'Ensamble y personas',hex:'#a855f7',e:'🟣'},
+ g:{n:'Calidad',a:'Pruebas y calidad',hex:'#22c55e',e:'🟢'},y:{n:'Flujo',a:'Logística y materiales',hex:'#eab308',e:'🟡'},m:{n:'Comodín',a:'Sirve para cualquier color',hex:'#ec4899',e:'🌈'}};
+const CK=['b','p','g','y'];
+const CARDS={};
+function def(id,o){CARDS[id]=Object.assign({id},o);}
+// ---- ESTACIONES ----
+[['b','cnc','Centro CNC','🏭'],['b','torno','Torno','🛠️'],['b','prensa','Prensa','🔨'],['b','fresa','Fresadora','⚙️'],['b','inyec','Inyectora','🗜️'],
+ ['p','ens','Banco de ensamble','🔩'],['p','sold','Soldadura','🔥'],['p','atorn','Atornillado','🪛'],['p','subens','Subensamble','🧑‍🔧'],['p','lineaens','Línea de ensamble','🧑‍🏭'],
+ ['g','lab','Laboratorio','🧪'],['g','pruebas','Banco de pruebas','🧰'],['g','metro','Metrología','📏'],['g','insp','Inspección final','🔍'],['g','elec','Prueba eléctrica','⚡'],
+ ['y','alm','Almacén','🏬'],['y','emp','Empaque','📦'],['y','emb','Embarque','🚛'],['y','super','Supermercado de materiales','🛒'],['y','monta','Montacargas','🚜'],
+ ['b','laser','Cortadora láser','🪚'],['p','pint','Pintura','🎨'],['g','dimen','Control dimensional','📐'],['y','recibo','Recibo de materiales','📥']
+].forEach(([c,id,n,e])=>def(id,{t:'est',col:c,n,e,txt:`Estación de ${COLS[c].n.toLowerCase()}. Cuenta para tu planta de 4 colores.`,planta:`Parte del área de ${COLS[c].a.toLowerCase()}.`}));
+def('flex',{t:'est',col:'m',n:'Celda flexible',e:'🌈',txt:'Estación comodín: cuenta como cualquier color que te falte. Cualquier desperdicio y cualquier herramienta le sirven.',planta:'Una celda con gente polivalente y equipo versátil se adapta a lo que haga falta.'});
+// ---- DESPERDICIOS ----
+def('averia',{t:'muda',col:'b',n:'Avería',e:'⚠️',pair:'tpm',planta:'Una falla inesperada para la máquina y a todos los que dependen de ella.'});
+def('microparos',{t:'muda',col:'b',n:'Microparos',e:'⏸️',pair:'oee',planta:'Paros de segundos que nadie anota, pero que sumados se comen horas del turno.'});
+def('cambio',{t:'muda',col:'b',n:'Cambio de formato largo',e:'🔀',pair:'smed',planta:'La máquina parada horas porque cambiar de modelo toma demasiado.'});
+def('movimientos',{t:'muda',col:'p',n:'Movimientos',e:'🚶',pair:'s5',planta:'Buscar herramientas, agacharse, caminar de más. Cansa y no agrega valor.'});
+def('transporte',{t:'muda',col:'p',n:'Transporte',e:'🚚',pair:'celda',planta:'Llevar material de un lado a otro sin agregarle valor.'});
+def('esperas',{t:'muda',col:'p',n:'Esperas',e:'⏳',pair:'balanceo',planta:'Gente parada esperando a que el puesto anterior termine.'});
+def('defectos',{t:'muda',col:'g',n:'Defectos',e:'❌',pair:'pokayoke',planta:'Piezas malas: se tiran o se reprocesan. Pagaste por hacerlas dos veces.'});
+def('variacion',{t:'muda',col:'g',n:'Variación',e:'📈',pair:'spc',planta:'Un proceso que no se comporta igual dos veces. El enemigo de Six Sigma.'});
+def('sobreproceso',{t:'muda',col:'g',n:'Sobreproceso',e:'🔁',pair:'ctq',planta:'Hacer más de lo que el cliente valora: pulir lo que nadie ve, inspeccionar tres veces.'});
+def('sobreprod',{t:'muda',col:'y',n:'Sobreproducción',e:'🏔️',pair:'kanban',planta:'Producir más de lo que el cliente pidió. El peor desperdicio: esconde a todos los demás.'});
+def('inventario',{t:'muda',col:'y',n:'Inventario',e:'🗃️',pair:'flujo',planta:'Material acumulado: ocupa espacio, se daña y esconde los problemas.'});
+def('mura',{t:'muda',col:'y',n:'Mura: picos de demanda',e:'🎢',pair:'heijunka',planta:'Producción desigual: un día todo, al otro nada. Mura es la irregularidad.'});
+def('talento',{t:'muda',col:'m',n:'Talento no usado',e:'🙈',pair:'kaizen',planta:'No escuchar a quien conoce el proceso mejor que nadie. Pasa en cualquier área.'});
+// ---- HERRAMIENTAS ----
+def('tpm',{t:'herr',col:'b',n:'TPM',e:'🔧',pair:'averia',planta:'Mantenimiento productivo total: el operador cuida su máquina todos los días.'});
+def('oee',{t:'herr',col:'b',n:'Análisis OEE',e:'📊',pair:'microparos',planta:'Medir disponibilidad, rendimiento y calidad saca a la luz las pérdidas escondidas.'});
+def('smed',{t:'herr',col:'b',n:'SMED',e:'⏱️',pair:'cambio',planta:'Cambios de formato en minutos: preparas todo con la máquina andando.'});
+def('s5',{t:'herr',col:'p',n:'5S',e:'🧹',pair:'movimientos',planta:'Cada cosa en su lugar: se acaba la búsqueda y el caminar de más.'});
+def('celda',{t:'herr',col:'p',n:'Celda en U',e:'🔄',pair:'transporte',planta:'Juntar los procesos en una celda elimina el transporte entre ellos.'});
+def('balanceo',{t:'herr',col:'p',n:'Balanceo de línea',e:'⚖️',pair:'esperas',planta:'Repartir el trabajo para que nadie espere: cada puesto al ritmo del takt.'});
+def('pokayoke',{t:'herr',col:'g',n:'Poka-yoke',e:'🧩',pair:'defectos',planta:'Un dispositivo que hace imposible equivocarse.'});
+def('spc',{t:'herr',col:'g',n:'Carta de control',e:'📉',pair:'variacion',planta:'Detecta cuándo el proceso se sale de lo normal, antes de producir piezas malas.'});
+def('ctq',{t:'herr',col:'g',n:'Voz del cliente (CTQ)',e:'🗣️',pair:'sobreproceso',planta:'Saber qué es crítico para el cliente evita gastar en lo que no valora.'});
+def('kanban',{t:'herr',col:'y',n:'Kanban',e:'🃏',pair:'sobreprod',planta:'Sistema jalar: solo se produce lo que el siguiente proceso consumió.'});
+def('flujo',{t:'herr',col:'y',n:'Flujo de una pieza',e:'➡️',pair:'inventario',planta:'Una pieza a la vez, sin montañas entre procesos: el inventario desaparece.'});
+def('heijunka',{t:'herr',col:'y',n:'Heijunka',e:'🎚️',pair:'mura',planta:'Nivelar la producción: un poco de cada modelo cada día.'});
+def('kaizen',{t:'herr',col:'m',n:'Kaizen',e:'💡',pair:'talento',planta:'Mejora continua con las ideas de todos. Funciona en cualquier área.'});
+for(const id in CARDS){const C=CARDS[id];
+ if(C.t==='muda')C.txt=C.col==='m'?'Comodín: va en una estación rival de cualquier color.':`Va en una estación ${COLS[C.col].e} ${COLS[C.col].n} del rival. Con 2, colapsa.`;
+ if(C.t==='herr')C.txt=C.col==='m'?'Comodín: cura o protege tu estación de cualquier color.':`Cura o protege tu estación ${COLS[C.col].e} ${COLS[C.col].n}. Con 2 queda 🔒.`;}
+// ---- ESPECIALES ----
+def('rotacion',{t:'esp',col:'x',n:'Rotación de personal',e:'👥',txt:'Intercambia una de tus estaciones por una de un rival (con todo lo que tengan encima). No sirve con estaciones Estandarizadas.',planta:'Mover gente entre áreas reparte conocimiento… y a veces también los problemas.'});
+def('bench',{t:'esp',col:'x',n:'Benchmarking',e:'🕵️',txt:'Te llevas a tu planta una estación de un rival, de un color que no tengas. No sirve con estaciones Estandarizadas.',planta:'Aprender de los mejores y adoptar lo que funciona.'});
+def('pasar',{t:'esp',col:'x',n:'Pasar el problema',e:'🥔',txt:'Pasa tus desperdicios a estaciones libres del mismo color de tus rivales.',planta:'En Lean está prohibido pasarle un defecto al siguiente proceso… aquí puedes hacerlo una vez.'});
+def('auditoria',{t:'esp',col:'x',n:'Auditoría sorpresa',e:'📋',txt:'Todos tus rivales descartan su mano y pierden su próximo turno.',planta:'Llega el cliente sin avisar y la planta entera se detiene para atenderlo.'});
+def('gerencia',{t:'esp',col:'x',n:'Cambio de gerencia',e:'🎩',txt:'Intercambia toda tu planta con la de un rival.',planta:'Nueva gerencia, nuevas prioridades: todo se reorganiza de un día para otro.'});
+def('dmaic',{t:'esp',col:'x',n:'Proyecto DMAIC',e:'🔬',txt:'Elimina todos los desperdicios de una de tus estaciones (de cualquier color) y la deja Mejorada.',planta:'Definir, Medir, Analizar, Mejorar y Controlar: ataca el problema de raíz.'});
+def('gemba',{t:'esp',col:'x',n:'Caminata Gemba',e:'👣',txt:'Mira la mano de un rival y descártale la carta que elijas.',planta:'Ir a ver dónde pasan las cosas. Los problemas no se resuelven desde la oficina.'});
+def('andon',{t:'esp',col:'x',n:'Andon',e:'🚨',react:1,txt:'Reacción: cancela un desperdicio que te jueguen, aunque no sea tu turno.',planta:'Cualquiera puede parar la línea y pedir ayuda: el problema no avanza.'});
+const DECK={cnc:1,torno:1,prensa:1,fresa:1,inyec:1,ens:1,sold:1,atorn:1,subens:1,lineaens:1,lab:1,pruebas:1,metro:1,insp:1,elec:1,alm:1,emp:1,emb:1,super:1,monta:1,laser:1,pint:1,dimen:1,recibo:1,flex:1,
+ averia:2,microparos:1,cambio:1,movimientos:2,transporte:1,esperas:1,defectos:2,variacion:1,sobreproceso:1,sobreprod:2,inventario:1,mura:1,talento:1,
+ tpm:2,oee:1,smed:1,s5:2,celda:1,balanceo:1,pokayoke:2,spc:1,ctq:1,kanban:2,flujo:1,heijunka:1,kaizen:4,
+ rotacion:1,bench:2,pasar:1,auditoria:1,gerencia:1,dmaic:1,gemba:1,andon:2};
+const PAIRS=Object.values(CARDS).filter(c=>c.t==='herr').map(c=>[c.id,c.pair]);
+let RNG=Math.random;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function newGame(opt){
+ const deck=[];for(const [id,n] of Object.entries(DECK))for(let i=0;i<n;i++)deck.push(id);shuffle(deck);
+ const g={uid:1,deck,disc:[],cur:0,turn:1,over:false,winner:null,log:[],diff:opt.diff||'normal',hotseat:!!opt.hotseat,
+  p:opt.players.map((pl,i)=>({name:pl.name,ai:!!pl.ai,av:pl.av||['🧑‍🔧','🤖','🦾','👷'][i],hand:[],plant:[],skip:false,
+   st:{mudaIn:0,mudaOut:0,cured:0,precise:{},collapsed:0,lost:0,std:0}}))};
+ for(let r=0;r<3;r++)for(const p of g.p)p.hand.push(drawCard(g));
+ // todos empiezan con al menos una estación en la mano
+ for(const p of g.p)if(!p.hand.some(c=>CARDS[c].t==='est')){const k=g.deck.findIndex(c=>CARDS[c].t==='est');if(k>=0){const st=g.deck.splice(k,1)[0];const out=p.hand.shift();p.hand.push(st);g.deck.splice(Math.floor(RNG()*g.deck.length),0,out);}}
+ return g;
+}
+function drawCard(g){if(!g.deck.length){g.deck=shuffle(g.disc);g.disc=[];}return g.deck.pop();}
+function refill(g,p){while(p.hand.length<3){const c=drawCard(g);if(!c)break;p.hand.push(c);}}
+function L(g,txt,kind){g.log.push({t:g.turn,txt,kind:kind||''});if(g.log.length>150)g.log.shift();}
+const colOk=(a,b)=>a==='m'||b==='m'||a===b;
+function state(s){if(s.mudas.length)return 'afectada';if(s.tools.length>=2)return 'estandarizada';if(s.tools.length)return 'mejorada';return 'sana';}
+function healthy(p){return p.plant.filter(s=>!s.mudas.length).length;}
+function hasCol(p,col,exceptUid){return p.plant.some(s=>s.uid!==exceptUid&&s.col===col);}
+function isWin(p){return healthy(p)>=4;}
+// ---- objetivos válidos ----
+// destino: {pi, uid} estación · {pi} jugador · {} sin objetivo · rotacion: {uid, pi, uid2}
+function targets(g,pi,id){
+ const p=g.p[pi],C=CARDS[id],out=[];
+ if(C.t==='est'){if(!hasCol(p,C.col))out.push({});return out;}
+ if(C.t==='herr'){for(const s of p.plant)if(colOk(C.col,s.col)&&s.tools.length<2&&!(s.tools.length&&s.mudas.length))out.push({pi,uid:s.uid});return out;}
+ if(C.t==='muda'){g.p.forEach((q,qi)=>{if(qi===pi)return;for(const s of q.plant)if(colOk(C.col,s.col)&&s.tools.length<2)out.push({pi:qi,uid:s.uid});});return out;}
+ switch(id){
+  case 'dmaic':for(const s of p.plant)if(s.mudas.length||s.tools.length<1)out.push({pi,uid:s.uid});break;
+  case 'bench':g.p.forEach((q,qi)=>{if(qi===pi)return;for(const s of q.plant)if(s.tools.length<2&&!hasCol(p,s.col))out.push({pi:qi,uid:s.uid});});break;
+  case 'rotacion':for(const a of p.plant){if(a.tools.length>=2)continue;g.p.forEach((q,qi)=>{if(qi===pi)return;for(const b of q.plant){if(b.tools.length>=2)continue;
+     if(a.col!==b.col&&(hasCol(p,b.col,a.uid)||hasCol(q,a.col,b.uid)))continue;out.push({uid:a.uid,pi:qi,uid2:b.uid});}});}break;
+  case 'pasar':if(passMoves(g,pi).length)out.push({});break;
+  case 'auditoria':out.push({});break;
+  case 'gerencia':g.p.forEach((q,qi)=>{if(qi!==pi)out.push({pi:qi});});break;
+  case 'gemba':g.p.forEach((q,qi)=>{if(qi!==pi&&q.hand.length)out.push({pi:qi});});break;
+  case 'andon':break;
+ }
+ return out;
+}
+function passMoves(g,pi){
+ const p=g.p[pi],moves=[],used=new Set();
+ for(const s of p.plant)for(const m of s.mudas){
+  let done=false;
+  g.p.forEach((q,qi)=>{if(done||qi===pi)return;for(const t of q.plant){if(used.has(t.uid))continue;
+   if(!t.mudas.length&&!t.tools.length&&colOk(CARDS[m].col,t.col)){moves.push({from:s.uid,m,qi,to:t.uid});used.add(t.uid);done=true;return;}}});
+ }
+ return moves;
+}
+function findSt(g,uid){for(let i=0;i<g.p.length;i++){const s=g.p[i].plant.find(x=>x.uid===uid);if(s)return [g.p[i],s,i];}return [null,null,-1];}
+function canReact(g,qi){return g.p[qi].hand.includes('andon');}
+// Juega la carta hidx con destino tgt. react(qi) -> true si el rival usa Andon (se resuelve antes).
+function play(g,pi,hidx,tgt,react){
+ const p=g.p[pi],id=p.hand[hidx],C=CARDS[id];
+ const strip=o=>{const c=Object.assign({},o);delete c.card;return JSON.stringify(c);};
+ if(!targets(g,pi,id).some(t=>JSON.stringify(t)===strip(tgt)))return {ok:false};
+ p.hand.splice(hidx,1);const R={ok:true,id,msgs:[]};const M=(t,k)=>{R.msgs.push({t,k});L(g,t,k);};
+ if(C.t==='est'){p.plant.push({uid:g.uid++,id,col:C.col,tools:[],mudas:[]});M(`${p.name} instala ${C.e} ${C.n} (${COLS[C.col].n}).`,'est');}
+ else if(C.t==='herr'){
+  const [,s]=findSt(g,tgt.uid);
+  if(s.mudas.length){const m=s.mudas[0];
+   if(C.pair===m){s.mudas=[];s.tools.push(id);g.disc.push(m);p.st.cured++;p.st.precise[id]=(p.st.precise[id]||0)+1;
+    M(`🎯 ¡Herramienta precisa! ${C.e} ${C.n} elimina ${CARDS[m].e} ${CARDS[m].n} y la mejora queda instalada en ${CARDS[s.id].n}.`,'precise');R.precise=[id,m];}
+   else{s.mudas=[];g.disc.push(m,id);p.st.cured++;
+    M(`${p.name} cura ${CARDS[s.id].n} con ${C.e} ${C.n}: adiós ${CARDS[m].e} ${CARDS[m].n}. (La herramienta precisa era ${CARDS[CARDS[m].pair].e} ${CARDS[CARDS[m].pair].n}.)`,'cure');}
+  }else{s.tools.push(id);
+   if(s.tools.length>=2){p.st.std++;M(`🔒 ${p.name} estandariza ${CARDS[s.id].n}: la mejora se sostiene y ya no se puede dañar.`,'std');}
+   else M(`${p.name} mejora ${CARDS[s.id].n} con ${C.e} ${C.n}.`,'tool');}
+ }
+ else if(C.t==='muda'){
+  const [q,s,qi]=findSt(g,tgt.uid);p.st.mudaOut++;
+  if(react&&canReact(g,qi)&&react(qi,id,s)){q.hand.splice(q.hand.indexOf('andon'),1);g.disc.push('andon',id);refill(g,q);
+   M(`🚨 ¡Andon! ${q.name} para la línea y frena ${C.e} ${C.n} antes de que afecte ${CARDS[s.id].n}.`,'andon');R.andon=qi;}
+  else{q.st.mudaIn++;
+   if(s.tools.length){const t=s.tools.pop();g.disc.push(t,id);M(`${C.e} ${C.n} deshace la mejora ${CARDS[t].e} ${CARDS[t].n} en ${CARDS[s.id].n} de ${q.name}.`,'muda');}
+   else if(s.mudas.length){g.disc.push(s.id,...s.mudas,id,...s.tools);q.plant=q.plant.filter(x=>x!==s);q.st.collapsed++;
+    M(`💥 ${CARDS[s.id].n} de ${q.name} colapsa con dos desperdicios.`,'collapse');R.collapse=1;}
+   else{s.mudas.push(id);M(`${p.name} mete ${C.e} ${C.n} en ${CARDS[s.id].n} de ${q.name}. Se corrige con ${CARDS[C.pair].e} ${CARDS[C.pair].n}.`,'muda');}
+  }
+ }
+ else{ // especiales
+  g.disc.push(id);
+  if(id==='dmaic'){const [,s]=findSt(g,tgt.uid);g.disc.push(...s.mudas);const n=s.mudas.length;s.mudas=[];if(s.tools.length<2)s.tools.push('dmaic');
+   if(s.tools.length>=2)p.st.std++;
+   M(`🔬 Proyecto DMAIC en ${CARDS[s.id].n}: ${n?'elimina la causa raíz y ':''}la estación queda ${state(s)}.`,'tool');}
+  if(id==='bench'){const [q,s]=findSt(g,tgt.uid);q.plant=q.plant.filter(x=>x!==s);p.plant.push(s);q.st.lost++;M(`🕵️ Benchmarking: ${p.name} se lleva ${CARDS[s.id].n} de ${q.name}.`,'esp');}
+  if(id==='rotacion'){const a=p.plant.find(x=>x.uid===tgt.uid),q=g.p[tgt.pi],b=q.plant.find(x=>x.uid===tgt.uid2);
+   p.plant[p.plant.indexOf(a)]=b;q.plant[q.plant.indexOf(b)]=a;M(`👥 Rotación de personal: ${p.name} cambia ${CARDS[a.id].n} por ${CARDS[b.id].n} de ${q.name}.`,'esp');}
+  if(id==='pasar'){const mv=passMoves(g,pi);for(const m of mv){const [,s]=findSt(g,m.from),[q,t]=findSt(g,m.to);s.mudas.splice(s.mudas.indexOf(m.m),1);t.mudas.push(m.m);q.st.mudaIn++;}
+   M(`🥔 ${p.name} pasa ${mv.length} desperdicio(s) a sus rivales. (En una planta real, nunca pases el problema al siguiente proceso).`,'esp');}
+  if(id==='auditoria'){g.p.forEach((q,qi)=>{if(qi===pi)return;g.disc.push(...q.hand);q.hand=[];q.skip=true;});M(`📋 ¡Auditoría sorpresa! Los rivales de ${p.name} descartan su mano y pierden su próximo turno.`,'esp');}
+  if(id==='gerencia'){const q=g.p[tgt.pi];[p.plant,q.plant]=[q.plant,p.plant];M(`🎩 Cambio de gerencia: ${p.name} y ${q.name} intercambian sus plantas completas.`,'esp');}
+  if(id==='gemba'){const q=g.p[tgt.pi];const k=tgt.card!=null?tgt.card:aiGembaPick(g,pi,tgt.pi);const c=q.hand.splice(k,1)[0];g.disc.push(c);refill(g,q);
+   M(`👣 Caminata Gemba: ${p.name} revisa la mano de ${q.name} y le descarta ${CARDS[c].e} ${CARDS[c].n}.`,'esp');}
+ }
+ refill(g,p);checkWin(g,pi);return R;
+}
+function discard(g,pi,idxs){const p=g.p[pi];idxs.slice().sort((a,b)=>b-a).forEach(i=>g.disc.push(p.hand.splice(i,1)[0]));refill(g,p);L(g,`${p.name} descarta ${idxs.length} carta(s).`,'disc');}
+function checkWin(g,pi){const order=[pi,...g.p.map((_,i)=>i).filter(i=>i!==pi)];for(const i of order)if(isWin(g.p[i])){g.over=true;g.winner=i;L(g,`🏆 ${g.p[i].name} tiene 4 estaciones sanas: ¡planta lista para el cliente!`,'win');return true;}return false;}
+function hasPlay(g,pi){return g.p[pi].hand.some(c=>c!=='andon'&&targets(g,pi,c).length>0);}
+function nextTurn(g){g.cur=(g.cur+1)%g.p.length;if(g.cur===0)g.turn++;}
+// Inicio de turno: si perdió el turno por Auditoría, roba y pasa. Devuelve true si se saltó.
+function beginTurn(g){const p=g.p[g.cur];if(p.skip){p.skip=false;refill(g,p);L(g,`${p.name} pierde el turno atendiendo la auditoría.`,'skip');return true;}return false;}
+// ---- IA ----
+function progress(p){return healthy(p);}
+function aiGembaPick(g,pi,qi){const h=g.p[qi].hand;let b=0,bs=-1;h.forEach((c,i)=>{const C=CARDS[c];const s=c==='andon'?9:C.t==='herr'?6:C.t==='esp'?7:C.t==='muda'?5:4;if(s>bs){bs=s;b=i;}});return b;}
+function simCopy(o){return JSON.parse(JSON.stringify(o));}
+function evalPos(g,pi){
+ // valor = mi progreso − el mejor rival, con detalles
+ const me=g.p[pi];let v=progress(me)*30+me.plant.length*14;
+ for(const s of me.plant){v+=s.tools.length*5+(s.tools.length>=2?6:0)-s.mudas.length*10;}
+ let worst=0;g.p.forEach((q,qi)=>{if(qi===pi)return;let r=progress(q)*30+q.plant.length*14;for(const s of q.plant)r+=s.tools.length*5+(s.tools.length>=2?6:0)-s.mudas.length*10;r+=progress(q)>=3?25:0;worst=Math.max(worst,r);});
+ return v-worst*(g.p.length>2?0.85:1);
+}
+function aiMoves(g,pi){
+ const p=g.p[pi],moves=[];
+ p.hand.forEach((id,h)=>{if(id==='andon')return;for(const t of targets(g,pi,id)){
+  const t2=id==='gemba'?Object.assign({},t,{card:aiGembaPick(g,pi,t.pi)}):t;
+  const g2=simCopy(g);const save=RNG;RNG=()=>0.5;g2.deck=g2.deck.slice();play(g2,pi,h,t2,()=>false);RNG=save;
+  let s=g2.over&&g2.winner===pi?1e4:evalPos(g2,pi);
+  if(id==='auditoria')s+=g.p.some((q,qi)=>qi!==pi&&progress(q)>=3)?20:-5;
+  if(id==='gemba')s+=4;
+  moves.push({h,t:t2,s,id});}});
+ return moves;
+}
+function aiTurn(g,pi){
+ const base=evalPos(g,pi);const mv=aiMoves(g,pi);
+ const noise=g.diff==='facil'?20:g.diff==='dificil'?1:9;
+ mv.forEach(m=>m.s+=RNG()*noise);mv.sort((a,b)=>b.s-a.s);
+ if(mv.length&&mv[0].s>base+1)return {type:'play',h:mv[0].h,t:mv[0].t};
+ // descartar cartas inútiles
+ const p=g.p[pi];const bad=[];
+ p.hand.forEach((id,i)=>{if(id==='andon')return;if(!targets(g,pi,id).length)bad.push(i);});
+ if(!bad.length){if(mv.length)return {type:'play',h:mv[0].h,t:mv[0].t};const i=p.hand.findIndex(c=>c!=='andon');return {type:'disc',idx:[i<0?0:i]};}
+ return {type:'disc',idx:bad};
+}
+function aiReact(g,qi,mudaId,s){
+ const q=g.p[qi];if(g.diff==='facil'&&RNG()<0.4)return false;
+ if(s.mudas.length)return true; // evitar colapso
+ if(progress(q)>=3)return true;
+ if(s.tools.length)return RNG()<0.5;
+ return RNG()<0.7;
+}
+if(typeof module!=='undefined')module.exports={beginTurn,COLS,CK,DECK,PAIRS,newGame,targets,play,discard,nextTurn,aiTurn,aiReact,state,healthy,isWin,setRNG:f=>RNG=f};
+// ===== ENGINE END =====
+
+// ===================== INTERFAZ =====================
+const $=s=>document.querySelector(s);
+const SAVE='pes_muda_v1';
+let G=null,VIEW=0,SEL=null,ROT=null,DMODE=false,DSEL=new Set(),BUSY=false,FX=[],LASTN=0,SUG=null;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null;}}
+// ---------- menú ----------
+const OPT={mode:'ia',riv:1,diff:'facil',hs:2};
+function segInit(id,key,cb){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');OPT[key]=isNaN(+b.dataset.v)?b.dataset.v:+b.dataset.v;cb&&cb();});}
+segInit('smode','mode',menuUI);segInit('sriv','riv');segInit('sdiff','diff');segInit('shs','hs',menuUI);
+function menuUI(){$('#riaRow').style.display=OPT.mode==='ia'?'':'none';$('#rhsRow').style.display=OPT.mode==='hs'?'':'none';
+ const n=OPT.mode==='ia'?1:OPT.hs;const old=[...document.querySelectorAll('#names input')].map(i=>i.value);
+ $('#names').innerHTML='<span class="lbl">'+(n>1?'Nombres':'Tu nombre')+'</span>'+Array.from({length:n},(_,i)=>`<input class="inp" maxlength="14" value="${esc(old[i]||ls('pes_muda_name'+i)||(n>1?'Jugador '+(i+1):'Jugador'))}">`).join('');}
+menuUI();
+$('#fan').innerHTML=['defectos','pokayoke','cnc','kaizen','andon'].map((id,i)=>cardHTML(id).replace('class="card','style="transform:rotate('+((i-2)*9)+'deg) translateY('+Math.abs(i-2)*8+'px)" class="card')).join('');
+function start(){
+ const names=[...document.querySelectorAll('#names input')].map((x,i)=>{const v=x.value.trim()||('Jugador '+(i+1));ls('pes_muda_name'+i,v);return v;});
+ let players;
+ if(OPT.mode==='ia'){const rn=['Planta Norte','Planta Sur','Planta Este'];players=[{name:names[0],av:'🧑‍🔧'}].concat(Array.from({length:OPT.riv},(_,i)=>({name:rn[i],ai:true,av:['🤖','🦾','🏗️'][i]})));}
+ else players=names.map((n,i)=>({name:n,av:['🧑‍🔧','👷','👩‍🔬','🧑‍🏭'][i]}));
+ G=newGame({players,diff:OPT.diff,hotseat:OPT.mode==='hs'});G.cur=Math.floor(Math.random()*players.length);
+ if(OPT.mode==='ia')G.cur=0;
+ L(G,`Empieza ${G.p[G.cur].name}. Meta: 4 estaciones sanas de distinto color.`,'');
+ showGame();runTurns(true);
+}
+function contGame(){try{G=JSON.parse(ls(SAVE));}catch(e){G=null;}if(!G)return;showGame();runTurns(true);}
+function save(){if(!G)return;if(G.over)ls(SAVE,null);else ls(SAVE,JSON.stringify(G));}
+function toMenu(){if(G&&!G.over&&!confirm('¿Volver al menú? Tu partida queda guardada para continuar después.'))return;
+ $('#game').classList.add('hidden');$('#menu').classList.remove('hidden');$('#bcont').classList.toggle('hidden',!ls(SAVE));$('#turnlbl').textContent='';}
+function showGame(){$('#menu').classList.add('hidden');$('#game').classList.remove('hidden');LASTN=G.log.length;}
+$('#bcont').classList.toggle('hidden',!ls(SAVE));
+setTimeout(()=>{const b=$('#bsnd');if(b)b.textContent=MUTE?'🔇':'🔊';},0);
+// ---------- render ----------
+function colName(c){return COLS[c]?COLS[c].e+' '+COLS[c].n:'';}
+function cardHTML(id,extra){
+ const C=CARDS[id];const tn={est:'Estación',muda:'Desperdicio',herr:'Herramienta',esp:C.react?'Reacción':'Especial'}[C.t];
+ let pair='';
+ if(C.t==='muda')pair=`Se corrige con ${CARDS[C.pair].e} ${CARDS[C.pair].n}`;
+ if(C.t==='herr')pair=`Precisa contra ${CARDS[C.pair].e} ${CARDS[C.pair].n}`;
+ const txt=C.t==='est'?C.planta:C.txt;
+ return `<div class="card t-${C.t} c-${C.col} ${pair?'haspair':''} ${extra||''}"><div class="stripe"></div><div class="ct"><span>${tn}</span><span>${COLS[C.col]?COLS[C.col].e:'✨'}</span></div>
+ <div class="ce">${C.e}</div><div class="cn">${esc(C.n)}</div><div class="cx">${esc(C.t==='est'?COLS[C.col].a:txt)}</div>${pair?`<div class="cp">${pair}</div>`:''}</div>`;
+}
+function stHTML(s,pi,cls){
+ const C=CARDS[s.id],stt=state(s);
+ const lab={sana:'Sana',afectada:'Afectada',mejorada:'Mejorada',estandarizada:'🔒 Estándar'}[stt];
+ return `<div class="st c-${s.col} ${cls||''}" data-uid="${s.uid}" data-pi="${pi}" onclick="clickSt(${s.uid},${pi})" title="${esc(C.n)} · ${COLS[s.col].n}">
+ <div class="se">${C.e}</div><div class="sn">${esc(C.n)}</div>
+ <div class="chips">${s.mudas.map(m=>`<span class="chip m" title="${esc(CARDS[m].n)}">${CARDS[m].e}</span>`).join('')}${s.tools.map(t=>`<span class="chip t" title="${esc(CARDS[t].n)}">${CARDS[t].e}</span>`).join('')}</div>
+ <span class="sb ${stt}">${lab}</span></div>`;
+}
+function progHTML(p){const h=healthy(p);return `<span class="prog" title="${h} de 4 estaciones sanas">${[0,1,2,3].map(i=>`<i class="${i<h?'on':''}"></i>`).join('')}</span>`;}
+function curTargets(){if(SEL==null||!G)return [];return targets(G,VIEW,G.p[VIEW].hand[SEL]);}
+function render(){
+ if(!G)return;
+ const viewer=VIEW,me=G.p[viewer],tg=curTargets(),C=SEL!=null?CARDS[me.hand[SEL]]:null;
+ const isMyTurn=G.cur===viewer&&!G.p[viewer].ai&&!G.over&&!BUSY;
+ $('#turnlbl').textContent=`Ronda ${G.turn} · `+(G.cur===viewer&&!G.p[viewer].ai?'tu turno':`turno de ${G.p[G.cur].name}`);
+ // rivales
+ let rh='';
+ G.p.forEach((q,qi)=>{if(qi===viewer)return;
+  const ptg=tg.some(t=>t.pi===qi&&t.uid==null&&t.uid2==null)&&SEL!=null;
+  rh+=`<div class="pl ${G.cur===qi?'turnnow':''} ${ptg?'tgt':''}" data-pi="${qi}" ${ptg?`onclick="clickPlayer(${qi})"`:''}><div class="ph"><span class="av">${q.av}</span><span class="nm">${esc(q.name)}</span>${q.skip?'<span style="font-size:11px;color:var(--gold)">📋 en auditoría</span>':''}<span class="sp"></span>${progHTML(q)}
+   <span class="hc">${q.hand.map(()=>'<span class="back"></span>').join('')}</span></div>
+   <div class="plant">${q.plant.length?q.plant.map(s=>stHTML(s,qi,stCls(s,qi,tg))).join(''):'<div class="empty">Sin estaciones todavía</div>'}</div></div>`;});
+ $('#rivals').innerHTML=rh;
+ $('#deckn').textContent=G.deck.length+' cartas';
+ // noticia
+ const last=G.log[G.log.length-1]||{txt:'',kind:''};
+ const prev=G.log.slice(-3,-1).reverse().map(l=>esc(l.txt)).join('<br>');
+ $('#news').className='news '+(last.kind||'');$('#news').innerHTML=esc(last.txt)+(prev?`<small>${prev}</small>`:'');
+ if(!$('#logbox').classList.contains('hidden'))$('#logbox').innerHTML=G.log.slice().reverse().map(l=>`<div>${esc(l.txt)}</div>`).join('');
+ // yo
+ let hint='';
+ if(G.over)hint=G.winner===viewer?'🏆 ¡Ganaste!':'Partida terminada.';
+ else if(!isMyTurn)hint=G.p[G.cur].ai?`${G.p[G.cur].av} ${esc(G.p[G.cur].name)} está pensando…`:`Turno de ${esc(G.p[G.cur].name)}.`;
+ else if(TUTON())hint=coachHTML();
+ else if(DMODE)hint='Toca las cartas que quieres <b>descartar</b> (1 a 3) y confirma. Descartar gasta tu turno.';
+ else if(SEL==null&&!hasPlay(G,viewer))hint='No tienes cartas que puedas jugar ahora. <b>Cambia tu mano</b>: descartar también es una jugada válida.';
+ else if(SEL==null)hint='Tu turno: <b>toca una carta</b> para jugarla, o descarta las que no te sirvan. Haces <b>una sola acción</b> por turno. ¿Dudas? Toca 💡 Sugerencia.';
+ else hint=selHint(C,tg);
+ if(TUTON()&&SEL!=null&&isMyTurn)hint=coachHTML();
+ const pr=me.hand.map((id,i)=>{const playable=targets(G,viewer,id).length>0;
+  let cls=(SEL===i?'sel ':'')+(DSEL.has(i)?'dsel ':'')+(!playable&&isMyTurn&&!DMODE&&id!=='andon'?'dim':'');
+  return cardHTML(id,cls).replace('class="card','onclick="clickCard('+i+')" class="card');}).join('');
+ const needPlayBtn=SEL!=null&&C&&tg.length===1&&tg[0].uid==null&&tg[0].pi==null&&tg[0].uid2==null;
+ $('#mebox').innerHTML=`<div class="ph"><span class="av">${me.av}</span><span class="nm">${esc(me.name)} · tu planta</span><span class="sp"></span>${progHTML(me)}</div>
+ <div class="plant">${me.plant.length?me.plant.map(s=>stHTML(s,viewer,stCls(s,viewer,tg))).join(''):'<div class="empty">Juega estaciones de distintos colores para armar tu planta.</div>'}</div>
+ <div class="handwrap"><div class="hand">${pr}</div><div class="acts"><div class="hint">${hint}</div><div class="btns">
+ ${needPlayBtn&&isMyTurn?`<button class="btn go" onclick="doPlay({})">▶ Jugar ${esc(C.n)}</button>`:''}
+ ${isMyTurn&&!DMODE&&SEL==null&&!TUTON()?`<button class="btn" onclick="suggest()">💡 Sugerencia</button>`:''}
+ ${isMyTurn&&!DMODE&&!TUTON()?`<button class="btn warn" onclick="startDiscard()">🗑️ Descartar…</button>`:''}
+ ${isMyTurn&&!DMODE&&!hasPlay(G,viewer)?`<button class="btn go" onclick="changeHand()">🔄 Cambiar toda la mano</button>`:''}
+ ${isMyTurn&&DMODE?`<button class="btn warn" ${DSEL.size?'':'disabled'} onclick="confirmDiscard()">Descartar ${DSEL.size||''}</button>`:''}
+ ${(SEL!=null||DMODE||ROT)&&isMyTurn?`<button class="btn" onclick="cancelSel()">Cancelar</button>`:''}
+ ${G.over?`<button class="btn go" onclick="showEnd()">Ver resultado</button>`:''}
+ </div></div></div>`;
+ FX=[];
+}
+function stCls(s,pi,tg){
+ let c='';
+ if(SEL!=null){const id=G.p[VIEW].hand[SEL];
+  if(id==='rotacion'){if(ROT==null&&tg.some(t=>t.uid===s.uid))c+=' tgt';if(ROT!=null&&tg.some(t=>t.uid===ROT&&t.uid2===s.uid))c+=' tgt';if(ROT===s.uid)c+=' pick';}
+  else if(tg.some(t=>t.uid===s.uid))c+=' tgt';}
+ if(SUG&&(SUG.uid2?SUG.uid2:SUG.uid)===s.uid)c+=' sug';
+ if(FX.includes(s.uid))c+=' fx';return c;
+}
+function selHint(C,tg){
+ const base=`<b>${C.e} ${esc(C.n)}</b>: ${esc(C.txt)}<br><span style="color:var(--mut)">🏭 ${esc(C.planta)}</span><br>`;
+ if(!tg.length)return base+'<span style="color:#ffb4b4">Ahora no tiene dónde jugarse.</span>'+(C.react?' Guárdala: se usa sola cuando te ataquen.':'');
+ if(C.t==='est')return base+'Toca <b>▶ Jugar</b> para instalarla.';
+ if(C.t==='herr')return base+'Toca una de <b>tus estaciones</b> marcadas.';
+ if(C.t==='muda')return base+'Toca una estación <b>rival</b> marcada.';
+ if(CARDS[C.id]&&C.id==='rotacion')return base+(ROT==null?'1) Toca <b>tu estación</b> a intercambiar.':'2) Ahora toca la estación <b>rival</b>.');
+ if(['gerencia','gemba'].includes(C.id))return base+'Toca el <b>panel del rival</b>.';
+ if(['bench'].includes(C.id))return base+'Toca la estación <b>rival</b> que quieres llevarte.';
+ if(C.id==='dmaic')return base+'Toca una de <b>tus estaciones</b>.';
+ return base+'Toca <b>▶ Jugar</b>.';
+}
+// ---------- interacción ----------
+function myTurn(){return G&&!G.over&&!BUSY&&G.cur===VIEW&&!G.p[VIEW].ai;}
+function clickCard(i){if(!myTurn())return;SUG=null;
+ if(DMODE){DSEL.has(i)?DSEL.delete(i):DSEL.add(i);render();return;}
+ SEL=SEL===i?null:i;ROT=null;render();}
+function cancelSel(){SEL=null;ROT=null;SUG=null;DMODE=false;DSEL.clear();render();}
+function changeHand(){if(!myTurn())return;snd('disc');discard(G,VIEW,G.p[VIEW].hand.map((_,i)=>i));SEL=null;afterAction();}
+function suggest(){if(!myTurn())return;const d=G.diff;G.diff='dificil';const a=aiTurn(G,VIEW);G.diff=d;
+ if(a.type==='play'){SEL=a.h;ROT=a.t.uid2?a.t.uid:null;SUG=a.t;toast('💡 Te sugiero esta carta: mira el objetivo que parpadea.');}
+ else{DMODE=true;DSEL=new Set(a.idx);toast('💡 Mejor descarta estas cartas: ahora no te sirven.');}render();}
+function startDiscard(){SEL=null;ROT=null;DMODE=true;DSEL.clear();render();}
+function confirmDiscard(){if(!DSEL.size)return;snd('disc');discard(G,VIEW,[...DSEL]);DMODE=false;DSEL.clear();afterAction();}
+function clickSt(uid,pi){if(!myTurn()||SEL==null)return;const id=G.p[VIEW].hand[SEL],tg=curTargets();
+ if(id==='rotacion'){if(ROT==null){if(tg.some(t=>t.uid===uid)){ROT=uid;render();}return;}
+  const t=tg.find(t=>t.uid===ROT&&t.uid2===uid);if(t)doPlay(t);else if(tg.some(t=>t.uid===uid)){ROT=uid;render();}return;}
+ const t=tg.find(t=>t.uid===uid);if(t)doPlay(t);}
+function clickPlayer(qi){if(!myTurn()||SEL==null)return;const id=G.p[VIEW].hand[SEL];const t=curTargets().find(t=>t.pi===qi&&t.uid==null);if(!t)return;
+ if(id==='gemba'){gembaPick(qi);return;}doPlay(t);}
+async function doPlay(t){
+ const id=G.p[VIEW].hand[SEL];
+ if(TUTON()){const st=TUT[G.tut];if(id!==st.card||!tutTgtOk(st,t)){toast('🎓 En la guía, sigue el paso indicado 😉');return;}}
+ const r=await playWithReact(VIEW,SEL,t);
+ SEL=null;ROT=null;SUG=null;if(!r.ok){render();return;}
+ afterAction(r);
+}
+async function playWithReact(pi,h,t){
+ const id=G.p[pi].hand[h];let ans=null;
+ if(CARDS[id].t==='muda'&&t.uid){const tp=G.p[t.pi];
+  if(tp.hand.includes('andon')){const s=tp.plant.find(x=>x.uid===t.uid);
+   if(tp.ai)ans=aiReact(G,t.pi,id,s);else ans=await askAndon(t.pi,id,s);}}
+ await fly(id,fromEl(pi,h),toEl(t,pi));
+ const shakeUid=t.uid&&CARDS[id].t==='muda'?t.uid:null;
+ const r=play(G,pi,h,t,()=>!!ans);
+ if(r.ok){FX=[t.uid,t.uid2].filter(Boolean);sndFor(r);}
+ return r;
+}
+function gembaPick(qi){const q=G.p[qi];
+ modal(`<h2>👣 Caminata Gemba</h2><p>La mano de ${esc(q.name)}. Elige la carta que quieres que descarte:</p><div class="grid">${q.hand.map((c,i)=>cardHTML(c).replace('class="card','onclick="gembaDo('+qi+','+i+')" style="cursor:pointer" class="card')).join('')}</div>`);}
+function gembaDo(qi,i){closeModal();doPlay({pi:qi,card:i});}
+function afterAction(r){
+ if(TUTON()&&r&&r.ok){G.tut++;if(G.tut>=TUT.length){G.tut=null;setTimeout(()=>modal(`<h2>🎓 ¡Ya sabes jugar!</h2><p>Aprendiste lo esencial:</p><ul class="rules"><li>🏭 Las <b>estaciones</b> arman tu planta (4 colores distintos).</li><li>❌ Los <b>desperdicios</b> van en estaciones rivales del mismo color. Con 2, colapsan.</li><li>🔧 Las <b>herramientas</b> curan y protegen. La <b>precisa</b> deja la mejora instalada.</li><li>🔒 Con 2 herramientas la estación queda <b>Estandarizada</b>.</li></ul><p>La partida sigue: ahora juegas libre contra Planta Norte. Si te trabas, usa 💡 Sugerencia.</p><div class="btns"><button class="btn go" onclick="closeModal()">¡A jugar!</button></div>`),700);}}
+ if(r&&r.precise)toast(`🎯 ¡Herramienta precisa! ${CARDS[r.precise[0]].n} ↔ ${CARDS[r.precise[1]].n}`);
+ save();render();
+ if(G.over){setTimeout(showEnd,900);return;}
+ nextTurn(G);runTurns(false);
+}
+async function runTurns(first){
+ while(G&&!G.over){
+  const p=G.p[G.cur];
+  if(!first||G.p[G.cur].skip){if(beginTurn(G)){render();await sleep(1100);nextTurn(G);first=false;continue;}}
+  first=false;
+  if(p.ai){BUSY=true;render();await sleep(900);
+   let a=G.tutAI!=null&&G.tutAI<TUT_AI.length?tutAIMove():aiTurn(G,G.cur);let r=null;
+   if(a.type==='play'){r=await playWithReact(G.cur,a.h,a.t);if(!r.ok)discard(G,G.cur,[0]);}else{snd('disc');discard(G,G.cur,a.idx);}
+   if(r&&r.ok&&r.andon===VIEW)toast('🚨 ¡Andon! Frenaste el desperdicio.');
+   save();render();await sleep(1300);BUSY=false;
+   if(G.over){render();setTimeout(showEnd,700);return;}
+   nextTurn(G);continue;}
+  // humano
+  if(G.hotseat&&VIEW!==G.cur){VIEW=G.cur;SEL=null;BUSY=true;render();await curtain(G.p[G.cur]);BUSY=false;}
+  VIEW=G.hotseat?G.cur:0;BUSY=false;save();render();return;
+ }
+}
+function curtain(p){return new Promise(res=>{const d=document.createElement('div');d.className='curtain';
+ d.innerHTML=`<div class="av">${p.av}</div><h2>Turno de ${esc(p.name)}</h2><p style="color:var(--mut)">Pasa el dispositivo. Los demás no miren las cartas 👀</p><button class="big">Ver mis cartas</button>`;
+ d.querySelector('button').onclick=()=>{d.remove();res();};document.body.appendChild(d);});}
+function askAndon(qi,id,s){return new Promise(res=>{const q=G.p[qi];
+ modal(`<h2>🚨 ¿Usar Andon?</h2><p>${esc(G.p[G.cur].name)} quiere meter <b>${CARDS[id].e} ${esc(CARDS[id].n)}</b> en <b>${esc(CARDS[s.id].n)}</b> de ${esc(q.name)}${s.mudas.length?' — <b style="color:var(--red)">¡colapsaría!</b>':''}.</p>
+ <p>Con Andon paras la línea y cancelas el desperdicio.</p><div class="btns"><button class="btn go" id="ay">🚨 Usar Andon</button><button class="btn" id="an">Dejar pasar</button></div>`,true);
+ $('#ay').onclick=()=>{closeModal();res(true);};$('#an').onclick=()=>{closeModal();res(false);};});}
+// ---------- sonido ----------
+let AC=null,MUTE=ls('pes_muda_mute')==='1';
+function toggleSnd(){MUTE=!MUTE;ls('pes_muda_mute',MUTE?'1':'0');$('#bsnd').textContent=MUTE?'🔇':'🔊';if(!MUTE)snd('card');}
+function snd(kind){if(MUTE)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();const t0=AC.currentTime;
+ const tone=(f,d,type,v,dl,slide)=>{dl=dl||0;const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t0+dl);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t0+dl+d);
+  g.gain.setValueAtTime(0.0001,t0+dl);g.gain.linearRampToValueAtTime(v||.12,t0+dl+.012);g.gain.exponentialRampToValueAtTime(.0001,t0+dl+d);o.connect(g).connect(AC.destination);o.start(t0+dl);o.stop(t0+dl+d+.05);};
+ const S={card:()=>tone(520,.1,'triangle',.1),est:()=>{tone(392,.12,'triangle',.13);tone(523,.18,'triangle',.13,.09);},
+  muda:()=>tone(240,.3,'sawtooth',.07,0,110),tool:()=>{tone(660,.1,'sine',.13);tone(880,.18,'sine',.11,.08);},
+  precise:()=>[660,880,1175,1568].forEach((f,i)=>tone(f,.2,'sine',.12,i*.07)),std:()=>{tone(523,.3,'square',.05);tone(784,.35,'square',.05,.06);tone(1047,.4,'sine',.08,.12);},
+  collapse:()=>{tone(170,.55,'sawtooth',.13,0,40);tone(95,.6,'square',.07,.05,30);},andon:()=>[0,.18,.36].forEach((d,i)=>tone(i%2?660:880,.15,'square',.07,d)),
+  esp:()=>tone(330,.35,'triangle',.11,0,700),disc:()=>tone(300,.12,'triangle',.07,0,180),
+  win:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.3,'triangle',.13,i*.12)),lose:()=>[392,330,262].forEach((f,i)=>tone(f,.35,'triangle',.1,i*.2))};
+ S[kind]&&S[kind]();}catch(e){}}
+function sndFor(r){if(r.andon!=null)return snd('andon');if(r.collapse)return snd('collapse');if(r.precise)return snd('precise');
+ const k=(r.msgs[r.msgs.length-1]||{}).k;snd({cure:'tool',tool:'tool',std:'std',muda:'muda',est:'est',esp:'esp'}[k]||'card');}
+// ---------- animación de cartas ----------
+const REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fromEl(pi,h){if(pi===VIEW&&!G.p[pi].ai)return document.querySelectorAll('#mebox .hand .card')[h];return document.querySelector(`.pl[data-pi="${pi}"] .hc`)||document.querySelector(`.pl[data-pi="${pi}"]`);}
+function toEl(t,pi){if(t&&t.uid2)return document.querySelector(`.st[data-uid="${t.uid2}"]`);if(t&&t.uid)return document.querySelector(`.st[data-uid="${t.uid}"]`);
+ if(t&&t.pi!=null)return document.querySelector(`.pl[data-pi="${t.pi}"]`);return pi===VIEW?document.querySelector('#mebox .plant'):document.querySelector(`.pl[data-pi="${pi}"] .plant`);}
+async function fly(id,a,b){if(REDUCE||!a||!b)return;const A=a.getBoundingClientRect(),B=b.getBoundingClientRect();if(!A.width||!B.width)return;
+ const w=110,h=154,d=document.createElement('div');d.innerHTML=cardHTML(id);const c=d.firstElementChild;c.classList.add('flying');
+ Object.assign(c.style,{position:'fixed',left:(A.left+A.width/2-w/2)+'px',top:(A.top+A.height/2-h/2)+'px',width:w+'px',height:h+'px',zIndex:80,margin:0,pointerEvents:'none',transition:'transform .5s cubic-bezier(.3,.7,.3,1),opacity .25s'});
+ document.body.appendChild(c);snd('card');await sleep(30);
+ c.style.transform=`translate(${B.left+B.width/2-(A.left+A.width/2)}px,${B.top+B.height/2-(A.top+A.height/2)}px) scale(.5) rotate(10deg)`;
+ await sleep(500);b.classList&&b.classList.contains('st')&&b.classList.add('shake');c.style.opacity='0';await sleep(200);c.remove();}
+// ---------- partida guiada ----------
+const TUT=[
+ {card:'cnc',t:'none',msg:'Tu meta: tener <b>4 estaciones sanas de colores distintos</b> (🔵 🟣 🟢 🟡). Empieza instalando tu primera estación: toca <b>🏭 Centro CNC</b> y luego <b>▶ Jugar</b>.'},
+ {card:'defectos',t:'rival:lab',msg:'Planta Norte instaló un <b>Laboratorio 🟢</b>. ¡Atácalo! Toca <b>❌ Defectos</b> y luego su estación verde. Un desperdicio solo va en una estación de <b>su mismo color</b>.'},
+ {card:'tpm',t:'own:cnc',msg:'¡Te metieron una <b>⚠️ Avería</b>! Una estación afectada <b>no cuenta</b> para ganar. Cúrala con <b>🔧 TPM</b>: es la herramienta <b>precisa</b> contra la avería, así que además de curar, la mejora queda instalada.'},
+ {card:'ens',t:'none',msg:'Tu CNC quedó <b>Mejorada</b>: el próximo desperdicio solo le quitará la herramienta. Ahora sigue armando tu planta: instala <b>🔩 Banco de ensamble</b> 🟣.'}];
+const TUT_AI=[['lab',null],['averia','cnc'],['alm',null]];
+function TUTON(){return G&&G.tut!=null&&G.tut<TUT.length&&G.cur===VIEW;}
+function coachHTML(){return `<div class="coach"><div class="st8">🎓 PARTIDA GUIADA · PASO ${G.tut+1} DE ${TUT.length}</div>${TUT[G.tut].msg}</div>`;}
+function tutTgtOk(st,t){if(st.t==='none')return t.uid==null;const [side,id]=st.t.split(':');const pi=side==='own'?VIEW:1;const s=G.p[pi].plant.find(x=>x.id===id);return s&&t.uid===s.uid;}
+function tutAIMove(){const [id,tg]=TUT_AI[G.tutAI++];const h=G.p[G.cur].hand.indexOf(id);if(!tg)return {type:'play',h,t:{}};const s=G.p[0].plant.find(x=>x.id===tg);return {type:'play',h,t:{pi:0,uid:s.uid}};}
+function startTutorial(){
+ const nm=(ls('pes_muda_name0')&&ls('pes_muda_name0')!=='Tú')?ls('pes_muda_name0'):'Jugador';
+ G=newGame({players:[{name:nm,av:'🧑‍🔧'},{name:'Planta Norte',ai:true,av:'🤖'}],diff:'facil'});
+ const take=id=>{const k=G.deck.indexOf(id);if(k>=0)G.deck.splice(k,1);else{for(const p of G.p){const j=p.hand.indexOf(id);if(j>=0)p.hand.splice(j,1);}}return id;};
+ for(const p of G.p){G.deck.push(...p.hand);p.hand=[];}
+ G.p[0].hand=['cnc','defectos','tpm'].map(take);G.p[1].hand=['lab','averia','alm'].map(take);
+ const draws=['ens','emp','pokayoke','metro','emb','kaizen','insp'].map(take);
+ G.deck.push(...draws.reverse());G.tut=0;G.tutAI=0;G.cur=0;VIEW=0;
+ L(G,'🎓 Partida guiada: sigue los pasos del recuadro verde.','');showGame();runTurns(true);}
+function toast(t){const d=document.createElement('div');d.className='toastx';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600);}
+function toggleLog(){$('#logbox').classList.toggle('hidden');render();}
+// ---------- modales ----------
+function modal(html,nox){$('#ov').innerHTML=`<div class="ov" onclick="if(event.target===this&&!${!!nox})closeModal()"><div class="mod">${nox?'':'<button class="ib x" onclick="closeModal()">✕</button>'}${html}</div></div>`;}
+function closeModal(){$('#ov').innerHTML='';}
+function showHelp(){modal(`<h2>❓ Cómo jugar</h2><ol class="rules">
+<li><b>Meta:</b> el primero con <b>4 estaciones sanas</b> de colores distintos gana: 🔵 Máquinas, 🟣 Método, 🟢 Calidad y 🟡 Flujo. La 🌈 Celda flexible cuenta como cualquier color.</li>
+<li><b>Tu turno:</b> haz <b>una acción</b>: jugar 1 carta <i>o</i> descartar de 1 a 3. Después robas hasta tener 3.</li>
+<li><b>Estación:</b> la instalas en tu planta. No puedes repetir color.</li>
+<li><b>Desperdicio</b> (rojo): va en una estación <b>rival</b> del mismo color. Con 1 queda <i>Afectada</i> (no cuenta para ganar); con 2 <b>colapsa</b> y se pierde.</li>
+<li><b>Herramienta</b> (verde): va en <b>tu</b> estación del mismo color. Si está afectada la cura; si está sana la <i>Mejora</i> (absorbe el próximo desperdicio); con 2 queda <b>🔒 Estandarizada</b> y nadie puede dañarla.</li>
+<li>🎯 <b>Herramienta precisa:</b> si curas con la herramienta exacta (Poka-yoke contra Defectos, TPM contra Avería…), además de curar, la mejora queda instalada.</li>
+<li><b>Comodines:</b> 🙈 Talento no usado sirve contra cualquier color y 💡 Kaizen cura cualquier color.</li>
+<li><b>Especiales:</b> Rotación de personal, Benchmarking, Pasar el problema, Auditoría sorpresa, Cambio de gerencia, Proyecto DMAIC y Caminata Gemba. 🚨 <b>Andon</b> se usa sola cuando te atacan, aunque no sea tu turno.</li></ol>
+<p style="color:var(--mut)">Consejo: no pierdas el turno con cartas que no te sirven, descártalas. Y fíjate qué rival está a punto de ganar.</p>`);}
+function showManual(tab){tab=tab||'pares';
+ const T={pares:'🎯 Pares precisos',todas:'🃏 Todas las cartas',col:'🎨 Colores'};
+ let body='';
+ if(tab==='pares')body=`<p style="color:var(--mut)">Cualquier herramienta del mismo color cura, pero la <b style="color:var(--ac)">precisa</b> deja además la mejora instalada. Apréndete estos 13 pares:</p><table><tr><th>Desperdicio</th><th>Herramienta precisa</th><th>Por qué</th></tr>${
+  PAIRS.map(([t,m])=>`<tr><td>${CARDS[m].e} ${esc(CARDS[m].n)}<br><small style="color:var(--mut)">${colName(CARDS[m].col)}</small></td><td>${CARDS[t].e} <b>${esc(CARDS[t].n)}</b></td><td style="color:#c8d4de">${esc(CARDS[t].planta)}</td></tr>`).join('')}</table>`;
+ if(tab==='todas'){const grp={est:'Estaciones',muda:'Desperdicios',herr:'Herramientas',esp:'Especiales'};
+  body=Object.entries(grp).map(([t,n])=>`<h3>${n}</h3><div class="grid">${Object.keys(CARDS).filter(id=>CARDS[id].t===t&&(t!=='est'||['cnc','ens','lab','emp','flex'].includes(id))).map(id=>cardHTML(id)).join('')}</div>`).join('')+'<p style="color:var(--mut);font-size:12px">Las estaciones tienen 5 variantes por color (por ejemplo Torno, Prensa o Fresadora en Máquinas). El mazo tiene 70 cartas.</p>';}
+ if(tab==='col')body=`<table>${['b','p','g','y','m'].map(c=>`<tr><td style="font-size:20px">${COLS[c].e}</td><td><b>${COLS[c].n}</b><br><small style="color:var(--mut)">${COLS[c].a}</small></td><td>${Object.values(CARDS).filter(x=>x.col===c&&x.t==='muda').map(x=>x.e+' '+esc(x.n)).join(' · ')}</td><td>${Object.values(CARDS).filter(x=>x.col===c&&x.t==='herr').map(x=>x.e+' '+esc(x.n)).join(' · ')}</td></tr>`).join('')}</table>`;
+ modal(`<h2>📖 Manual de cartas</h2><div class="tabs">${Object.entries(T).map(([k,v])=>`<button class="${k===tab?'on':''}" onclick="showManual('${k}')">${v}</button>`).join('')}</div>${body}`);}
+function showEnd(){
+ if(!G)return;snd(G.hotseat||G.winner===0?'win':'lose');const w=G.winner,human=G.p.map((p,i)=>i).filter(i=>!G.p[i].ai);const me=G.hotseat?G.p[w]:G.p[0];
+ const used=new Set();G.p.forEach(p=>{if(!p.ai)Object.keys(p.st.precise).forEach(k=>used.add(k));});
+ const st=me.st;
+ const title=!G.hotseat?(w===0?'🏆 ¡Ganaste!':`${G.p[w].av} Ganó ${esc(G.p[w].name)}`):`🏆 Ganó ${esc(G.p[w].name)}`;
+ modal(`<div class="end"><h2>${title}</h2><p style="color:var(--mut)">${w===0||G.hotseat?'Tu planta quedó lista para el cliente con 4 estaciones sanas.':'Esta vez la otra planta llegó primero. ¡Revancha!'}</p>
+ <table><tr><td>Desperdicios que recibiste</td><td><b>${st.mudaIn}</b></td></tr><tr><td>Estaciones curadas</td><td><b>${st.cured}</b></td></tr><tr><td>Estaciones estandarizadas 🔒</td><td><b>${st.std}</b></td></tr><tr><td>Estaciones que colapsaron</td><td><b>${st.collapsed}</b></td></tr></table>
+ <h3 style="margin-top:14px">🎯 Pares precisos ${G.hotseat?'usados en la partida':'que usaste'}: ${used.size} de ${PAIRS.length}</h3>
+ <div class="pairs">${PAIRS.map(([t,m])=>`<div class="${used.has(t)?'ok':''}">${used.has(t)?'✅':'⬜'} ${CARDS[t].e} ${esc(CARDS[t].n)} ↔ ${CARDS[m].e} ${esc(CARDS[m].n)}</div>`).join('')}</div>
+ <div class="btns" style="margin-top:14px"><button class="btn go" onclick="closeModal();start()">↺ Revancha</button><button class="btn" onclick="closeModal();G=null;ls(SAVE,null);toMenu()">Menú</button><button class="btn" onclick="showManual()">📖 Repasar los pares</button></div></div>`);
+ ls(SAVE,null);}
+window.addEventListener('pagehide',save);
+</script>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>
