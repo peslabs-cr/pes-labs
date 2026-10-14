@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bomba y curva del sistema · Simulador PES Labs</title>
+<meta name="description" content="Simulador gratuito de bombas centrífugas: curva de la bomba, curva del sistema, punto de operación, eficiencia, potencia y cavitación (NPSH). Válvula contra variador de frecuencia.">
+<meta property="og:title" content="Simulador: bomba y curva del sistema">
+<meta property="og:description" content="Mueve la válvula, la velocidad, la tubería y la temperatura y mira el punto de operación, la eficiencia y la cavitación en tiempo real.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
+<style>
+:root{--bg:#0b1219;--card:#142030;--line:#26384a;--fg:#eef3f7;--mut:#94a3b4;--ac:#2ed692;--blue:#60a5fa;--red:#ff6b6b;--gold:#ffca28;--pur:#c084fc}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(1000px 500px at 90% -10%,#0f3a2e 0%,transparent 60%),linear-gradient(180deg,#0a1118,#0c1620);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+a{color:var(--blue)}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,17,24,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top .t{font-weight:900;font-size:17px}.top .t b{color:var(--ac)}.top .sp{flex:1}
+.ib{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:12px;display:grid;grid-template-columns:340px 1fr;gap:12px;grid-template-areas:'ctl viz' 'ctl rest';align-items:start}
+.panel{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.panel h3{margin:2px 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+.ctl{margin:9px 0}
+.ctl label{display:flex;justify-content:space-between;font-size:13px;color:#cbd6e0}
+.ctl label b{color:var(--fg);font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:100%;accent-color:var(--ac)}
+.ctl small{color:var(--mut);font-size:11.5px;display:block;margin-top:1px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:4px}
+.seg button{flex:1;background:transparent;border:0;color:var(--mut);padding:6px 4px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:#0f3a2e;color:var(--ac);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:rgba(20,32,48,.86);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.kpi .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}.kpi .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.kpi .u{font-size:12px;color:var(--mut);font-weight:600}
+.kpi.ok{border-color:#1f6f52}.kpi.warn{border-color:#8a6d12}.kpi.bad{border-color:#8a2b33;background:rgba(70,20,25,.6)}
+.chartbox{position:relative}
+canvas{width:100%;display:block;border-radius:12px;background:#0d1722;border:1px solid var(--line)}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#cbd6e0;margin:6px 2px}
+.leg i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:10px}
+.exp{font-size:14px;color:#d7e2ea}.exp p{margin:6px 0}.exp b{color:var(--gold)}
+.alert{border-radius:12px;padding:9px 11px;margin:6px 0;font-size:14px}
+.alert.bad{background:rgba(120,25,35,.55);border:1px solid #c0394a}.alert.warn{background:rgba(110,85,10,.45);border:1px solid #b8901a}.alert.ok{background:rgba(15,70,50,.5);border:1px solid #1f8f66}
+.ret{display:flex;gap:9px;align-items:flex-start;padding:8px 6px;border-bottom:1px dashed #22344a;font-size:13.5px}
+.ret .ck{font-size:18px;line-height:1.1}.ret.done{color:#bdf5dd}.ret .go{margin-left:auto;font-size:12px}
+.ret .rt{font-weight:700}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:#182a3c;color:var(--fg);border-radius:10px;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+.btn.go{background:linear-gradient(90deg,#16a37a,#0ea5a0);border:0;color:#fff;font-weight:700}
+.eq{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:#0d1722;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:#cfe3f3;overflow:auto}
+.foot{max-width:1240px;margin:0 auto;padding:4px 12px 40px;color:var(--mut);font-size:12.5px}
+.toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:50;background:#13402f;border:1px solid var(--ac);border-radius:12px;padding:9px 14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:92vw}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;grid-template-areas:'viz' 'ctl' 'rest'}.kpis{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}
+ #viz{position:sticky;top:49px;z-index:5;background:#0b1219;padding-bottom:6px;margin:0 -12px;padding:6px 12px}
+ #viz .kpis{gap:5px;margin-bottom:6px}#viz .kpi{padding:4px 7px}#viz .kpi .l{font-size:9.5px}#viz .kpi .v{font-size:15px}
+ #viz .leg{display:none}#viz .panel{padding:6px}}
+@media(max-width:480px){.kpi .v{font-size:17px}.top .hide,.top .hide2{display:none}}
+.top .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head><body>
+<div class="top"><a class="ib" href="../index.html" title="Volver a PES Labs">←</a><div class="t">💧 Bomba<span class="hide2"> y curva del sistema</span> <b class="hide">· Simulador</b></div><span class="sp"></span>
+ <button class="ib" onclick="reset()">↺<span class="hide"> Reiniciar</span></button><a class="ib" href="../index.html#leer-bombas">📖<span class="hide"> Teoría</span></a></div>
+
+<div class="wrap">
+ <aside style="grid-area:ctl">
+  <div class="panel">
+   <h3>⚙️ Bomba</h3>
+   <div class="ctl"><label>Velocidad (variador) <b id="v_n"></b></label><input type="range" id="n" min="50" max="110" step="1"><small>Leyes de afinidad: Q ∝ N, H ∝ N², P ∝ N³</small></div>
+   <div class="ctl"><label>Diámetro del impulsor <b id="v_d"></b></label><input type="range" id="d" min="80" max="100" step="1"><small>Recortar el impulsor baja la curva de forma permanente</small></div>
+  </div>
+  <div class="panel" style="margin-top:12px">
+   <h3>🔧 Tubería de descarga</h3>
+   <div class="ctl"><label>Apertura de la válvula <b id="v_a"></b></label><input type="range" id="a" min="3" max="100" step="1"><small>Estrangular agrega pérdidas: la curva del sistema se empina</small></div>
+   <div class="ctl"><label>Altura estática (z₂ − z₁) <b id="v_hs"></b></label><input type="range" id="hs" min="0" max="35" step="0.5"><small>Hasta dónde hay que subir el líquido, aunque no fluya</small></div>
+   <div class="ctl"><label>Longitud de tubería <b id="v_L"></b></label><input type="range" id="L" min="10" max="600" step="10"></div>
+   <div class="ctl"><label>Diámetro interno</label><div class="seg" id="sD"><button data-v="0.0525">2"</button><button data-v="0.0779">3"</button><button data-v="0.1023">4"</button><button data-v="0.1541">6"</button></div><small>Cédula 40. Diámetro chico = velocidad alta = muchas pérdidas</small></div>
+   <div class="ctl"><label>Material</label><div class="seg" id="sR"><button data-v="0.000045">Acero nuevo</button><button data-v="0.00015">Acero oxidado</button><button data-v="0.0000015">Plástico</button></div></div>
+  </div>
+  <div class="panel" style="margin-top:12px">
+   <h3>🌡️ Fluido y succión</h3>
+   <div class="ctl"><label>Temperatura del agua <b id="v_T"></b></label><input type="range" id="T" min="5" max="95" step="1"><small>Más caliente = más presión de vapor = menos NPSH disponible</small></div>
+   <div class="ctl"><label>Nivel del tanque sobre la bomba <b id="v_zs"></b></label><input type="range" id="zs" min="-6" max="6" step="0.5"><small>Negativo = la bomba succiona desde abajo (succión negativa)</small></div>
+   <div class="ctl"><label>Altitud del sitio <b id="v_alt"></b></label><input type="range" id="alt" min="0" max="3000" step="50"><small>San José ≈ 1150 m: menos presión atmosférica que en la costa</small></div>
+  </div>
+ </aside>
+ <section id="viz" style="grid-area:viz">
+  <div class="kpis">
+   <div class="kpi" id="k_q"><div class="l">Caudal</div><div class="v"><span id="o_q">–</span> <span class="u">m³/h</span></div></div>
+   <div class="kpi" id="k_h"><div class="l">Carga</div><div class="v"><span id="o_h">–</span> <span class="u">m</span></div></div>
+   <div class="kpi" id="k_e"><div class="l">Eficiencia</div><div class="v"><span id="o_e">–</span> <span class="u">%</span></div></div>
+   <div class="kpi" id="k_p"><div class="l">Potencia al eje</div><div class="v"><span id="o_p">–</span> <span class="u">kW</span></div></div>
+   <div class="kpi" id="k_n"><div class="l">Margen NPSH</div><div class="v"><span id="o_n">–</span> <span class="u">m</span></div></div>
+   <div class="kpi" id="k_c"><div class="l">Energía al año</div><div class="v"><span id="o_c">–</span> <span class="u">USD</span></div></div>
+  </div>
+  <div class="panel chartbox">
+   <canvas id="cv" height="430"></canvas>
+   <div class="leg"><span><i style="background:#60a5fa"></i>Curva de la bomba</span><span><i style="background:#ffca28"></i>Curva del sistema</span><span><i style="background:#c084fc"></i>Eficiencia</span><span><i style="background:rgba(46,214,146,.35);height:10px"></i>Zona preferida (70–120 % del BEP)</span><span><i style="background:#ff6b6b"></i>Punto de operación</span></div>
+  </div>
+ </section>
+ <section style="grid-area:rest">
+  <div class="two" style="margin-top:0">
+   <div class="panel exp"><h3>🧠 ¿Qué está pasando?</h3><div id="exp"></div></div>
+   <div class="panel"><h3>🎯 Retos</h3><div id="retos"></div></div>
+  </div>
+  <div class="two">
+   <div class="panel"><h3>🫧 Cavitación: NPSH disponible vs requerido</h3><canvas id="cv2" height="210"></canvas>
+    <div class="leg"><span><i style="background:#2ed692"></i>NPSH disponible</span><span><i style="background:#ff6b6b"></i>NPSH requerido</span></div></div>
+   <div class="panel"><h3>📐 Cómo se calcula</h3>
+    <div class="eq">H<sub>sistema</sub> = Δz + (f·L/D + ΣK + K<sub>válvula</sub>)·v²/2g<br>f: Swamee-Jain (turbulento) · 64/Re (laminar)<br>Re = ρ·v·D/μ<br>P = ρ·g·Q·H / η<br>NPSH<sub>d</sub> = (P<sub>atm</sub> − P<sub>v</sub>)/ρg + z<sub>s</sub> − h<sub>f,succión</sub></div>
+    <div class="exp" id="detail" style="font-size:13px;margin-top:8px"></div></div>
+  </div>
+ </section>
+</div>
+<div class="foot">Simulador educativo con una bomba centrífuga genérica y datos ilustrativos: no reemplaza la curva del fabricante ni un cálculo de ingeniería. Tarifa eléctrica ilustrativa de USD 0,15/kWh y 8 000 h/año. · PES Labs · Ing. Ricardo Fonseca Pereira · Creado con ayuda de IA.</div>
+
+<script>
+// ================== MODELO FÍSICO ==================
+const g=9.81, Q0MAX=140, H0=46, QBEP=88, EMAX=0.78; // bomba genérica a 100 % (m³/h, m)
+const DEF={n:100,d:100,a:100,hs:15,L:150,D:0.1023,eps:0.000045,T:25,zs:1,alt:1150};
+let S=Object.assign({},DEF);
+try{const s=JSON.parse(localStorage.getItem('pes_bomba_v1')||'null');if(s)S=Object.assign(S,s.S);var DONE=new Set((s&&s.done)||[]);}catch(e){var DONE=new Set();}
+function water(T){ // propiedades del agua líquida
+ const rho=1000*(1-(T+288.9414)/(508929.2*(T+68.12963))*(T-3.9863)**2);
+ const mu=2.414e-5*10**(247.8/(T+273.15-140)); // Pa·s
+ const pv=10**(8.07131-1730.63/(233.426+T))*0.133322; // kPa (Antoine)
+ return {rho,mu,pv};
+}
+function patm(h){return 101.325*(1-2.25577e-5*h)**5.25588;} // kPa
+function fric(Re,rel){if(Re<1)return 0;const lam=64/Re;
+ const turb=0.25/Math.log10(rel/3.7+5.74/Math.pow(Re,0.9))**2;
+ if(Re<2300)return lam;if(Re>4000)return turb;const t=(Re-2300)/1700;return lam*(1-t)+turb*t;}
+function kValve(a){const x=Math.max(a,3)/100;return 2.5/(x*x)-2.5;} // válvula de globo genérica: K≈0 abierta, crece con 1/x²
+function pumpH(Q,s){const n=s.n/100*s.d/100;const r=Q/(n*Q0MAX);return n*n*H0*(1-0.35*r-0.65*r*r);} // curva cuadrática decreciente
+function pumpEff(Q,s){const n=s.n/100*s.d/100;const x=Q/(n*QBEP);const e=EMAX*(1-(x-1)**2)*(s.d<100?1-(100-s.d)*0.004:1);return Math.max(0.02,Math.min(EMAX,e));}
+function npshR(Q,s){const n=s.n/100*s.d/100;return n*n*(1.6+4.2*(Q/(n*100))**2.2);}
+function vel(Q,D){return (Q/3600)/(Math.PI*D*D/4);}
+function sysH(Q,s,w){const v=vel(Q,s.D);const Re=w.rho*v*s.D/w.mu;const f=fric(Re,s.eps/s.D);
+ return s.hs+(f*s.L/s.D+8+kValve(s.a))*v*v/(2*g);}
+function npshA(Q,s,w){const v=vel(Q,s.D);const Re=w.rho*v*s.D/w.mu;const f=fric(Re,s.eps/s.D);const hfs=(f*6/s.D+2.5)*v*v/(2*g);
+ return (patm(s.alt)-w.pv)*1000/(w.rho*g)+s.zs-hfs;}
+function solve(s){const w=water(s.T);const n=s.n/100*s.d/100;const qmax=n*Q0MAX*0.999;
+ const F=Q=>pumpH(Q,s)-sysH(Q,s,w);
+ if(F(0.01)<=0)return {w,Q:0,H:pumpH(0,s),noflow:true};
+ let lo=0.01,hi=qmax;if(F(hi)>0)return {w,Q:hi,H:pumpH(hi,s),runout:true};
+ for(let i=0;i<70;i++){const m=(lo+hi)/2;if(F(m)>0)lo=m;else hi=m;}
+ const Q=(lo+hi)/2,H=pumpH(Q,s),eta=pumpEff(Q,s);
+ const P=w.rho*g*(Q/3600)*H/eta/1000;
+ const v=vel(Q,s.D),Re=w.rho*v*s.D/w.mu,f=fric(Re,s.eps/s.D);
+ const hfv=kValve(s.a)*v*v/(2*g),hfp=f*s.L/s.D*v*v/(2*g),hff=8*v*v/(2*g);
+ const nA=npshA(Q,s,w),nR=npshR(Q,s);
+ return {w,Q,H,eta,P,v,Re,f,hfv,hfp,hff,nA,nR,bep:n*QBEP,cost:P*8000*0.15,hyd:w.rho*g*(Q/3600)*H/1000};}
+// ================== INTERFAZ ==================
+const $=id=>document.getElementById(id);
+const fmt=(x,d)=>x.toLocaleString('es-CR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const RNG=['n','d','a','hs','L','T','zs','alt'];
+function bind(){RNG.forEach(k=>{$(k).value=S[k];$(k).oninput=()=>{S[k]=+$(k).value;upd();};});
+ segBind('sD','D');segBind('sR','eps');}
+function segBind(id,key){const bs=[...document.querySelectorAll('#'+id+' button')];bs.forEach(b=>{b.classList.toggle('on',+b.dataset.v===S[key]);b.onclick=()=>{S[key]=+b.dataset.v;bs.forEach(x=>x.classList.toggle('on',x===b));upd();};});}
+function reset(){S=Object.assign({},DEF);bind();upd();}
+let R=null;
+function upd(){
+ $('v_n').textContent=S.n+' % · '+Math.round(1750*S.n/100)+' rpm';$('v_d').textContent=S.d+' %';$('v_a').textContent=S.a+' %';$('v_hs').textContent=fmt(S.hs,1)+' m';
+ $('v_L').textContent=S.L+' m';$('v_T').textContent=S.T+' °C';$('v_zs').textContent=(S.zs>0?'+':'')+fmt(S.zs,1)+' m';$('v_alt').textContent=S.alt+' m';
+ R=solve(S);kpis();draw();draw2();explain();retos();
+ try{localStorage.setItem('pes_bomba_v1',JSON.stringify({S,done:[...DONE]}));}catch(e){}
+}
+function setK(id,cls){$(id).className='kpi '+(cls||'');}
+function kpis(){
+ if(R.noflow){['o_q','o_h','o_e','o_p','o_n','o_c'].forEach(i=>$(i).textContent='–');$('o_q').textContent='0';setK('k_q','bad');['k_h','k_e','k_p','k_n','k_c'].forEach(i=>setK(i));return;}
+ $('o_q').textContent=fmt(R.Q,1);$('o_h').textContent=fmt(R.H,1);$('o_e').textContent=fmt(R.eta*100,0);$('o_p').textContent=fmt(R.P,1);
+ const m=R.nA-R.nR;$('o_n').textContent=fmt(m,1);$('o_c').textContent=fmt(R.cost,0);
+ const pr=R.Q/R.bep;setK('k_q');setK('k_h');setK('k_e',pr>=0.7&&pr<=1.2?'ok':(pr<0.5||pr>1.3?'bad':'warn'));setK('k_p');
+ setK('k_n',m<0?'bad':(m<1||R.nA/R.nR<1.3)?'warn':'ok');setK('k_c');
+}
+// ---------- gráfico principal ----------
+function setupCanvas(c){const r=window.devicePixelRatio||1;const w=c.clientWidth,h=+c.getAttribute('height');c.width=w*r;c.height=h*r;c.style.height=h+'px';const x=c.getContext('2d');x.setTransform(r,0,0,r,0,0);return {x,w,h};}
+function draw(){
+ $('cv').setAttribute('height',window.innerWidth<980?Math.min(250,Math.round(window.innerHeight*0.3)):430);
+ const {x,w,h}=setupCanvas($('cv'));const m={l:52,r:52,t:16,b:40};
+ const n=S.n/100*S.d/100;const qM=Math.max(150,Q0MAX*1.1);const hM=Math.max(60,H0*1.25*Math.max(1,n*n),S.hs+10);
+ const X=q=>m.l+(w-m.l-m.r)*q/qM,Y=v=>h-m.b-(h-m.t-m.b)*v/hM,YE=e=>h-m.b-(h-m.t-m.b)*e/100;
+ x.clearRect(0,0,w,h);x.font='12px system-ui';
+ // rejilla
+ x.strokeStyle='#1d2c3c';x.fillStyle='#8aa0b4';x.lineWidth=1;
+ for(let q=0;q<=qM;q+=25){x.beginPath();x.moveTo(X(q),m.t);x.lineTo(X(q),h-m.b);x.stroke();x.fillText(q,X(q)-8,h-m.b+16);}
+ const hs=hM>80?20:10;for(let v=0;v<=hM;v+=hs){x.beginPath();x.moveTo(m.l,Y(v));x.lineTo(w-m.r,Y(v));x.stroke();x.fillText(v,m.l-26,Y(v)+4);}
+ for(let e=0;e<=100;e+=20){x.fillStyle='#b48ae8';x.fillText(e+'%',w-m.r+8,YE(e)+4);}
+ x.fillStyle='#cbd6e0';x.fillText('Caudal Q (m³/h)',w/2-40,h-6);x.save();x.translate(14,h/2+30);x.rotate(-Math.PI/2);x.fillText('Carga H (m)',0,0);x.restore();
+ // zona preferida
+ const b=n*QBEP;x.fillStyle='rgba(46,214,146,.10)';x.fillRect(X(0.7*b),m.t,X(1.2*b)-X(0.7*b),h-m.t-m.b);
+ x.fillStyle='#2ed692';x.fillText('BEP',X(b)-12,m.t+14);x.setLineDash([4,4]);x.strokeStyle='rgba(46,214,146,.6)';x.beginPath();x.moveTo(X(b),m.t+18);x.lineTo(X(b),h-m.b);x.stroke();x.setLineDash([]);
+ const line=(f,col,wd,dash,yf)=>{x.strokeStyle=col;x.lineWidth=wd;x.setLineDash(dash||[]);x.beginPath();let st=false;
+  for(let i=0;i<=200;i++){const q=qM*i/200;const v=f(q);if(v==null||!isFinite(v)){st=false;continue;}const yy=(yf||Y)(v);if(yy<m.t-2||yy>h-m.b+2){st=false;continue;}if(!st){x.moveTo(X(q),yy);st=true;}else x.lineTo(X(q),yy);}x.stroke();x.setLineDash([]);};
+ // curva de referencia 100 %
+ if(S.n!==100||S.d!==100)line(q=>{const r=pumpH(q,{n:100,d:100});return r>0?r:null;},'rgba(96,165,250,.35)',1.5,[6,5]);
+ line(q=>{const r=pumpH(q,S);return r>0?r:null;},'#60a5fa',3);
+ line(q=>sysH(q,S,R.w),'#ffca28',3);
+ // sistema con válvula 100 % como referencia
+ if(S.a<100)line(q=>sysH(q,Object.assign({},S,{a:100}),R.w),'rgba(255,202,40,.35)',1.5,[6,5]);
+ line(q=>{const r=pumpH(q,S);return r>0?pumpEff(q,S)*100:null;},'#c084fc',2,[2,0],YE);
+ // punto de operación
+ if(!R.noflow){x.fillStyle='#ff6b6b';x.beginPath();x.arc(X(R.Q),Y(R.H),7,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.stroke();
+  x.fillStyle='#fff';x.font='bold 12px system-ui';const tx=`Q=${fmt(R.Q,0)} · H=${fmt(R.H,1)} m`;const tw=x.measureText(tx).width;let lx=X(R.Q)+10;if(lx+tw>w-m.r)lx=X(R.Q)-tw-10;x.fillText(tx,lx,Y(R.H)-12);}
+ else{x.fillStyle='#ff6b6b';x.font='bold 15px system-ui';x.fillText('Sin flujo: la bomba no vence la altura estática',m.l+20,m.t+30);}
+}
+function draw2(){
+ const {x,w,h}=setupCanvas($('cv2'));const m={l:44,r:14,t:12,b:30};const qM=150;const n=S.n/100*S.d/100;
+ const vals=[];for(let i=0;i<=60;i++){const q=1+qM*i/60;vals.push(npshA(q,S,R.w),npshR(q,S));}
+ const hM=Math.max(12,Math.ceil(Math.max(...vals.filter(isFinite))/5)*5),hm=Math.min(0,Math.floor(Math.min(...vals)/2)*2);
+ const X=q=>m.l+(w-m.l-m.r)*q/qM,Y=v=>h-m.b-(h-m.t-m.b)*(v-hm)/(hM-hm);
+ x.clearRect(0,0,w,h);x.font='11px system-ui';x.strokeStyle='#1d2c3c';x.fillStyle='#8aa0b4';
+ for(let q=0;q<=qM;q+=25){x.beginPath();x.moveTo(X(q),m.t);x.lineTo(X(q),h-m.b);x.stroke();x.fillText(q,X(q)-8,h-m.b+14);}
+ for(let v=hm;v<=hM;v+=Math.max(2,Math.round((hM-hm)/5))){x.beginPath();x.moveTo(m.l,Y(v));x.lineTo(w-m.r,Y(v));x.stroke();x.fillText(v,m.l-24,Y(v)+4);}
+ const ln=(f,c)=>{x.strokeStyle=c;x.lineWidth=2.5;x.beginPath();for(let i=0;i<=120;i++){const q=1+qM*i/120;const v=f(q);i?x.lineTo(X(q),Y(v)):x.moveTo(X(q),Y(v));}x.stroke();};
+ ln(q=>npshA(q,S,R.w),'#2ed692');ln(q=>npshR(q,S),'#ff6b6b');
+ if(!R.noflow){x.strokeStyle='#fff';x.setLineDash([3,3]);x.beginPath();x.moveTo(X(R.Q),m.t);x.lineTo(X(R.Q),h-m.b);x.stroke();x.setLineDash([]);}
+ x.fillStyle='#cbd6e0';x.fillText('m',6,m.t+8);x.fillText('Q (m³/h)',w-60,h-4);
+}
+// ---------- explicación ----------
+function explain(){
+ const e=[];const w=R.w;
+ if(R.noflow){e.push(`<div class="alert bad">⛔ <b>No hay flujo.</b> La bomba solo levanta ${fmt(pumpH(0,S),1)} m a caudal cero y el sistema necesita ${fmt(S.hs,1)} m de altura estática. Sube la velocidad, usa un impulsor más grande o baja la altura.</div>`);$('exp').innerHTML=e.join('');detail();return;}
+ const pr=R.Q/R.bep,m=R.nA-R.nR;
+ e.push(`<p>La bomba trabaja donde su curva (azul) cruza la curva del sistema (amarilla): <b>${fmt(R.Q,1)} m³/h a ${fmt(R.H,1)} m</b>.</p>`);
+ if(m<0)e.push(`<div class="alert bad">🫧 <b>¡Cavitación!</b> El NPSH disponible (${fmt(R.nA,1)} m) es menor que el requerido (${fmt(R.nR,1)} m). El líquido hierve en el ojo del impulsor: ruido de grava, vibración y daño. Sube el nivel del tanque, enfría el agua, reduce el caudal o agranda la succión.</div>`);
+ else if(m<1||R.nA/R.nR<1.3)e.push(`<div class="alert warn">⚠️ <b>Margen de NPSH justo</b> (${fmt(m,1)} m). La práctica recomienda NPSH<sub>d</sub> ≥ 1,3 × NPSH<sub>r</sub> o al menos 1 m de margen.</div>`);
+ if(pr<0.5)e.push(`<div class="alert bad">📉 Operas al <b>${fmt(pr*100,0)} % del BEP</b>: muy a la izquierda. Recirculación interna, calentamiento, vibración y desgaste de sellos y rodamientos.</div>`);
+ else if(pr<0.7)e.push(`<div class="alert warn">Operas al <b>${fmt(pr*100,0)} % del BEP</b>, fuera de la zona preferida. Funciona, pero gastas energía y vida útil.</div>`);
+ else if(pr>1.2)e.push(`<div class="alert warn">Operas al <b>${fmt(pr*100,0)} % del BEP</b>: a la derecha. Más NPSH requerido y riesgo de sobrecargar el motor.</div>`);
+ else e.push(`<div class="alert ok">✅ Operas al <b>${fmt(pr*100,0)} % del BEP</b>, dentro de la zona preferida (70–120 %).</div>`);
+ if(S.a<80){const eq=equivVFD(R.Q);if(eq&&eq.P<R.P-0.2)e.push(`<p>💸 La válvula al ${S.a} % se come <b>${fmt(R.hfv,1)} m</b> de carga: energía que la bomba entrega y la válvula convierte en calor. Con la válvula abierta y el <b>variador al ${fmt(eq.n,0)} %</b> lograrías el mismo caudal con <b>${fmt(eq.P,1)} kW</b> en vez de ${fmt(R.P,1)} kW: unos <b>USD ${fmt((R.P-eq.P)*8000*0.15,0)} al año</b> de ahorro.</p>`);}
+ if(R.v>3)e.push(`<p>🚀 Velocidad en la tubería: <b>${fmt(R.v,2)} m/s</b>. Por encima de ~3 m/s hay mucho desgaste y pérdidas. Un diámetro mayor bajaría la curva del sistema.</p>`);
+ if(S.T>=70)e.push(`<p>🌡️ A ${S.T} °C la presión de vapor del agua es ${fmt(w.pv,1)} kPa: casi no queda margen para la succión.</p>`);
+ $('exp').innerHTML=e.join('');detail();
+}
+function detail(){
+ if(R.noflow){$('detail').innerHTML='';return;}
+ const reg=R.Re<2300?'laminar':R.Re<4000?'de transición':'turbulento';
+ $('detail').innerHTML=`Agua a ${S.T} °C: ρ = ${fmt(R.w.rho,1)} kg/m³ · μ = ${fmt(R.w.mu*1000,3)} mPa·s · P<sub>v</sub> = ${fmt(R.w.pv,2)} kPa · P<sub>atm</sub> = ${fmt(patm(S.alt),1)} kPa<br>
+ v = ${fmt(R.v,2)} m/s · Re = ${fmt(R.Re,0)} (${reg}) · f = ${fmt(R.f,4)}<br>
+ Pérdidas: tubería ${fmt(R.hfp,1)} m · accesorios ${fmt(R.hff,1)} m · válvula ${fmt(R.hfv,1)} m<br>
+ Potencia hidráulica ${fmt(R.hyd,1)} kW ÷ η ${fmt(R.eta*100,0)} % = <b>${fmt(R.P,1)} kW</b> al eje`;
+}
+function equivVFD(Q){let lo=30,hi=120;const f=n=>{const r=solve(Object.assign({},S,{a:100,n}));return r.noflow?-1:r.Q-Q;};if(f(hi)<0)return null;
+ for(let i=0;i<40;i++){const m=(lo+hi)/2;if(f(m)<0)lo=m;else hi=m;}const n=(lo+hi)/2;const r=solve(Object.assign({},S,{a:100,n}));return r.noflow?null:{n,P:r.P};}
+// ---------- retos ----------
+const RETOS=[
+ {id:'r1',t:'Llega a 100 m³/h sin cavitar',h:'Pista: más velocidad o un tubo más grande, y cuida el NPSH.',ok:()=>!R.noflow&&R.Q>=100&&R.nA>R.nR},
+ {id:'r2',t:'Opera justo en el punto de mejor eficiencia (95–105 % del BEP)',h:'Ajusta la tubería, la válvula o la velocidad hasta quedar sobre la línea punteada del BEP.',ok:()=>!R.noflow&&R.Q/R.bep>=0.95&&R.Q/R.bep<=1.05},
+ {id:'r3',t:'Bombea agua a 85 °C o más sin cavitar',h:'El agua caliente casi hierve: sube el nivel del tanque y baja el caudal.',ok:()=>!R.noflow&&S.T>=85&&R.nA-R.nR>=0.5},
+ {id:'r4',t:'Entrega 60 m³/h (±3) gastando menos de 6 kW',h:'Con la válvula estrangulada no se logra; con el variador sí.',ok:()=>!R.noflow&&Math.abs(R.Q-60)<=3&&R.P<6},
+ {id:'r5',t:'Sube agua 30 m con la bomba en San José (1150 m)',h:'Altura estática 30 m: necesitas más velocidad o impulsor completo.',ok:()=>!R.noflow&&S.hs>=30&&S.alt>=1100&&R.Q>=20&&R.nA>R.nR}];
+function retos(){
+ let html='';for(const r of RETOS){const ok=r.ok();if(ok&&!DONE.has(r.id)){DONE.add(r.id);toast('🎯 ¡Reto logrado! '+r.t);}
+  const d=DONE.has(r.id);html+=`<div class="ret ${d?'done':''}"><span class="ck">${d?'✅':'⬜'}</span><div><div class="rt">${r.t}</div><small style="color:var(--mut)">${r.h}</small></div></div>`;}
+ html+=`<div style="font-size:12.5px;color:var(--mut);margin-top:6px">${DONE.size} de ${RETOS.length} retos · tu avance se guarda en este navegador</div>`;
+ html+=`<div class="btns"><button class="btn" onclick="scenario('valv')">Escenario: estrangular con válvula</button><button class="btn" onclick="scenario('vfd')">Escenario: usar variador</button><button class="btn" onclick="scenario('cav')">Escenario: cavitación</button></div>`;
+ $('retos').innerHTML=html;
+}
+function scenario(k){
+ if(k==='valv')Object.assign(S,DEF,{a:21});
+ if(k==='vfd')Object.assign(S,DEF,{n:86,a:100});
+ if(k==='cav')Object.assign(S,DEF,{T:80,zs:-4,D:0.0779,n:105});
+ bind();upd();
+ toast({valv:'🔧 ~60 m³/h estrangulando la válvula: mira los kW y cuánta carga quema la válvula.',vfd:'⚙️ ~60 m³/h con el variador al 86 %: mismo caudal, muchos menos kW.',cav:'🫧 Agua caliente y succión negativa: ¡cavitación!'}[k]);
+}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
+window.addEventListener('resize',()=>{if(R){draw();draw2();}});
+bind();upd();
+</script>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>
