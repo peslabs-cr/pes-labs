@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Refinería PES · Juego de ingeniería de procesos</title>
+<meta name="description" content="Una mini ciudad petrolera viva: tanques, horno, torre de destilación, antorcha, camiones y barcos. Tú eres el ingeniero de procesos de turno y atiendes los problemas.">
+<meta property="og:title" content="Refinería PES: sé el ingeniero de procesos de turno">
+<meta property="og:description" content="Juego gratis de ingeniería de procesos: cavitación, ensuciamiento, hornos, destilación y seguridad en una refinería viva.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛢️</text></svg>">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0d0f12;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e8e4dc;touch-action:none;-webkit-user-select:none;user-select:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;z-index:5}
+.pn{background:rgba(18,16,14,.88);border:1px solid rgba(255,190,90,.18);border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+#top{top:calc(6px + env(safe-area-inset-top,0px));left:6px;right:6px;display:flex;gap:6px;align-items:stretch;justify-content:center;flex-wrap:wrap;pointer-events:none}
+#top .pn{padding:5px 10px;font-size:12.5px;white-space:nowrap;pointer-events:auto;display:flex;align-items:center;gap:6px}
+#top b{font-size:14px;color:#ffd27a}
+#mg b{color:#9be08f}#mg.neg b{color:#ff8a70}
+.spd{display:flex;gap:3px}
+button{font:inherit}
+.spd button,#bar button{background:rgba(40,34,28,.9);color:#efe6d6;border:1px solid rgba(255,190,90,.25);border-radius:8px;padding:5px 9px;cursor:pointer}
+.spd button.on{background:#c97a1c;color:#fff;border-color:#f0a440}
+#bar{bottom:calc(8px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:6px}
+#bar button{padding:8px 12px;font-size:13.5px;font-weight:600;position:relative;white-space:nowrap}
+#bar .cnt{position:absolute;top:-6px;right:-6px;background:#e0412b;color:#fff;border-radius:9px;font-size:11px;padding:1px 6px}
+#kp{left:6px;top:calc(48px + env(safe-area-inset-top,0px));padding:7px 9px;font-size:11.5px;width:205px}
+#kp h4{margin:0 0 4px;font-size:12px;color:#ffb347;display:flex;justify-content:space-between;cursor:pointer}
+#kp.min .bd{display:none}
+.row{display:flex;justify-content:space-between;gap:6px;margin:2px 0}
+.bar{height:5px;background:#2b2621;border-radius:3px;overflow:hidden;margin:1px 0 4px}.bar i{display:block;height:100%}
+#ov{position:fixed;inset:0;z-index:20;background:rgba(5,4,3,.6);display:flex;align-items:center;justify-content:center;padding:12px}
+#ov[hidden]{display:none}
+#dlg{max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:16px 18px;font-size:14.5px;line-height:1.45}
+#dlg h2{margin:0 0 6px;font-size:19px;color:#ffc56b}
+#dlg .tag{display:inline-block;font-size:11.5px;background:#3a2c1a;color:#ffc56b;border-radius:6px;padding:2px 7px;margin-bottom:6px}
+#dlg .data{background:#1f1b17;border-left:3px solid #c97a1c;padding:7px 10px;margin:8px 0;font-size:13.5px;border-radius:4px}
+#dlg .data b{color:#ffd27a}
+#dlg input{width:100%;padding:9px 11px;margin:3px 0 8px;border-radius:8px;border:1px solid rgba(255,190,90,.35);background:#120f0c;color:#efe6d6;font:inherit;font-size:15px}
+#dlg label{font-size:12.5px;color:#a99e8e}
+.opt{display:block;width:100%;text-align:left;margin:7px 0;padding:10px 12px;background:#2a241e;border:1px solid rgba(255,190,90,.25);color:#efe6d6;border-radius:9px;cursor:pointer;font-size:14px}
+.opt:hover{background:#3a3026}
+.btn{display:inline-block;padding:9px 16px;background:#c97a1c;color:#fff;border:0;border-radius:9px;font-weight:700;cursor:pointer;margin:8px 6px 0 0;text-decoration:none;font-size:14px}
+.btn.o{background:transparent;border:1px solid #c97a1c;color:#ffc56b}
+.ok{color:#9be08f}.bad{color:#ff8a70}.mut{color:#a99e8e;font-size:12.5px}
+.sl{margin:10px 0}.sl label{display:flex;justify-content:space-between;font-size:13.5px}.sl input{width:100%;accent-color:#e08a1c}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;flex-direction:column;gap:5px;align-items:center;pointer-events:none;width:min(94vw,520px)}
+#toast div{background:rgba(25,20,15,.94);border:1px solid rgba(255,190,90,.35);border-radius:9px;padding:7px 12px;font-size:13px;text-align:center;animation:fi .25s}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}}
+.hide2{}@media (max-width:360px){.hide2{display:none}}
+.tbs{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0}.tb{background:#1f2a33;color:#cfe3f0;border:1px solid #3b5a70;border-radius:8px;padding:6px 9px;font-size:12.5px;cursor:pointer}.tb.on{opacity:.45}.tb.sug{border-color:#3cff7a;box-shadow:0 0 0 2px rgba(60,255,122,.35)}
+.li{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:#221d18;margin:6px 0;cursor:pointer}
+.li:hover{background:#2e2620}
+@media (max-width:640px){#kp{width:150px;font-size:11px;top:calc(84px + env(safe-area-inset-top,0px))}#toast{bottom:calc(64px + env(safe-area-inset-bottom,0px))}#top .pn{font-size:11.5px;padding:4px 7px}#top b{font-size:12.5px}.hide{display:none}#bar button{padding:8px 9px;font-size:12.5px}}
+</style></head><body>
+<canvas id="cv"></canvas>
+<div id="top" class="hud">
+ <div class="pn">🕒 <b id="clk">06:00</b><span class="hide mut" id="shf">Turno día</span></div>
+ <div class="pn" id="mg">💲 <b id="mny">0</b><span class="hide mut">margen</span></div>
+ <div class="pn" title="Seguridad">⛑️ <b id="seg">70</b><span class="hide mut">seguridad</span></div>
+ <div class="pn" title="Confianza del equipo y la comunidad">🤝 <b id="conf">60</b><span class="hide mut">confianza</span></div>
+ <div class="pn">🛢️ <b id="fd">90</b><span class="mut">kbbl/d</span></div>
+ <div class="pn spd"><button data-s="0">⏸</button><button data-s="1" class="on">▶</button><button data-s="2">▶▶</button><button data-s="4">▶▶▶</button></div>
+</div>
+<div id="kp" class="hud pn"><h4 onclick="this.parentNode.classList.toggle('min')">📊 Producción <span>▾</span></h4><div class="bd" id="kpb"></div></div>
+<div id="bar" class="hud">
+ <button onclick="ctrlDlg()">🎛️<span class="hide"> Sala de control</span></button>
+ <button onclick="listDlg()">❗<span class="hide2"> Problemas</span><span class="cnt" id="ninc" hidden>0</span></button>
+ <button onclick="mapDlg()">🗺️<span class="hide"> Zonas</span></button>
+ <button onclick="shopDlg()">🏗️<span class="hide"> Mejoras</span></button>
+ <button onclick="misDlg()">🎯<span class="hide"> Misiones</span></button>
+ <button onclick="helpDlg()">❓</button>
+ <button id="snd" onclick="toggleSnd()">🔇</button>
+</div>
+<div id="toast"></div>
+<div id="ov" hidden><div id="dlg" class="pn"></div></div>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script src="../pes-api.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const cv=$("cv"),cx=cv.getContext("2d");
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;}
+addEventListener("resize",resize);resize();
+// ---------- utilidades ----------
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+const TW=32,TH=16;
+const P=(x,y,z=0)=>[(x-y)*TW,(x+y)*TH-z];
+function hex(c){c=c.replace("#","");if(c.length===3)c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];return [parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)]}
+function sh(c,k){const [r,g,b]=hex(c);const f=v=>Math.round(clamp(v*k,0,255));return `rgb(${f(r)},${f(g)},${f(b)})`}
+function poly(pts,fill,stroke){cx.beginPath();cx.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)cx.lineTo(pts[i][0],pts[i][1]);cx.closePath();if(fill){cx.fillStyle=fill;cx.fill()}if(stroke){cx.strokeStyle=stroke;cx.lineWidth=1;cx.stroke()}}
+// caja isométrica con mugre
+function box(x,y,w,d,h,col,z0=0,o={}){
+ const A=P(x,y,z0),B=P(x+w,y,z0),C=P(x+w,y+d,z0),D=P(x,y+d,z0),Ah=P(x,y,z0+h),Bh=P(x+w,y,z0+h),Ch=P(x+w,y+d,z0+h),Dh=P(x,y+d,z0+h);
+ poly([D,C,Ch,Dh],sh(col,.62));poly([C,B,Bh,Ch],sh(col,.82));poly([Ah,Bh,Ch,Dh],o.top||sh(col,1.05));
+ // mugre: degradado inferior
+ if(h>8&&!o.clean){const g=cx.createLinearGradient(0,D[1],0,Dh[1]);g.addColorStop(0,"rgba(20,14,8,.45)");g.addColorStop(.5,"rgba(20,14,8,0)");poly([D,C,B,Bh,Ch,Dh],g);}
+ if(o.win){// ventanas
+  const n=o.win, lit=o.lit;
+  for(let i=0;i<n;i++){const t=(i+.5)/n;for(const lv of (o.lv||[.55])){
+   const p1=P(x+w,y+d*t-.12,z0+h*lv),p2=P(x+w,y+d*t+.12,z0+h*lv);const q=P(x+w*t-.12,y+d,z0+h*lv),q2=P(x+w*t+.12,y+d,z0+h*lv);
+   cx.strokeStyle=lit?`rgba(255,${200+((i*37)%40)},120,${.55+.4*NIGHT})`:"rgba(30,40,50,.9)";cx.lineWidth=3.2;
+   cx.beginPath();cx.moveTo(p1[0],p1[1]);cx.lineTo(p2[0],p2[1]);cx.stroke();cx.beginPath();cx.moveTo(q[0],q[1]);cx.lineTo(q2[0],q2[1]);cx.stroke();}}
+ }
+ if(o.rust){cx.strokeStyle="rgba(110,60,25,.35)";cx.lineWidth=1.5;for(let i=0;i<o.rust;i++){const t=(i*0.37+0.13)%1;const a=P(x+w,y+d*t,z0+h*.95),b=P(x+w,y+d*t,z0+h*(.3+.4*((i*.53)%1)));cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();}}
+}
+// tanque cilíndrico
+function cyl(x,y,r,h,col,z0=0,o={}){
+ const [sx,sy]=P(x,y,z0),rx=r*TW*1.414,ry=r*TH*1.414,ty=sy-h;
+ const g=cx.createLinearGradient(sx-rx,0,sx+rx,0);g.addColorStop(0,sh(col,.45));g.addColorStop(.35,sh(col,.95));g.addColorStop(.6,sh(col,.8));g.addColorStop(1,sh(col,.4));
+ cx.fillStyle=g;cx.beginPath();cx.moveTo(sx-rx,ty);cx.lineTo(sx-rx,sy);cx.ellipse(sx,sy,rx,ry,0,Math.PI,0,true);cx.lineTo(sx+rx,ty);cx.closePath();cx.fill();
+ // mugre y óxido
+ const g2=cx.createLinearGradient(0,sy+ry,0,ty);g2.addColorStop(0,"rgba(25,15,5,.55)");g2.addColorStop(.45,"rgba(25,15,5,0)");cx.fillStyle=g2;
+ cx.beginPath();cx.moveTo(sx-rx,ty);cx.lineTo(sx-rx,sy);cx.ellipse(sx,sy,rx,ry,0,Math.PI,0,true);cx.lineTo(sx+rx,ty);cx.closePath();cx.fill();
+ if(o.rust!==0){cx.strokeStyle="rgba(120,62,22,.4)";cx.lineWidth=2;for(let i=0;i<(o.rust||5);i++){const a=-.85+1.7*((i*0.618+x*.1)%1),xx=sx+rx*a,yy=ty+ry*Math.sqrt(1-a*a)*.9;cx.beginPath();cx.moveTo(xx,yy);cx.lineTo(xx,yy+h*(.25+.5*((i*.41)%1)));cx.stroke();}}
+ if(o.bands){cx.strokeStyle="rgba(0,0,0,.25)";cx.lineWidth=1;for(let k=1;k<o.bands;k++){const yy=sy-h*k/o.bands;cx.beginPath();cx.ellipse(sx,yy,rx,ry,0,0,Math.PI);cx.stroke();}}
+ if(o.stripe){cx.fillStyle=o.stripe;cx.beginPath();const y1=sy-h*.62,y2=sy-h*.5;cx.moveTo(sx-rx,y1);cx.ellipse(sx,y1,rx,ry,0,Math.PI,0,true);cx.lineTo(sx+rx,y2);cx.ellipse(sx,y2,rx,ry,0,0,Math.PI);cx.closePath();cx.fill();}
+ cx.fillStyle=o.top||sh(col,.75);cx.beginPath();cx.ellipse(sx,ty,rx,ry,0,0,Math.PI*2);cx.fill();
+ if(o.roof!==false){cx.strokeStyle="rgba(0,0,0,.3)";cx.beginPath();cx.ellipse(sx,ty,rx*.6,ry*.6,0,0,Math.PI*2);cx.stroke();}
+ if(o.level!=null){// indicador de nivel
+  const lx=sx+rx*.55,lh=h*.8,ly=sy-h*.1;cx.fillStyle="rgba(0,0,0,.55)";cx.fillRect(lx-3,ly-lh,6,lh);cx.fillStyle=o.level>.9||o.level<.12?"#ff6b4a":"#e8b04a";cx.fillRect(lx-2,ly-lh*o.level,4,lh*o.level);}
+ return [sx,ty];
+}
+function sphere(x,y,r,z,col){const [sx,sy]=P(x,y,0),R=r*TW*1.1;
+ cx.strokeStyle="#3b3a36";cx.lineWidth=3;for(const a of[-.7,-.25,.25,.7]){cx.beginPath();cx.moveTo(sx+R*a,sy-z+R*.3);cx.lineTo(sx+R*a*1.1,sy+R*.25*Math.abs(a));cx.stroke();}
+ const g=cx.createRadialGradient(sx-R*.35,sy-z-R*.4,R*.1,sx,sy-z,R);g.addColorStop(0,sh(col,1.15));g.addColorStop(.7,sh(col,.75));g.addColorStop(1,sh(col,.4));
+ cx.fillStyle=g;cx.beginPath();cx.arc(sx,sy-z,R,0,7);cx.fill();
+ cx.strokeStyle="rgba(100,55,20,.35)";cx.lineWidth=1.5;for(let i=0;i<4;i++){cx.beginPath();cx.moveTo(sx-R*.5+i*R*.3,sy-z+R*.2);cx.lineTo(sx-R*.5+i*R*.3,sy-z+R*.75);cx.stroke();}
+ return [sx,sy-z-R];}
+function pipeLine(pts,col,wd,flow,spd){
+ const s=pts.map(p=>P(p[0],p[1],p[2]||0));cx.lineCap="round";cx.lineJoin="round";
+ cx.strokeStyle="rgba(0,0,0,.35)";cx.lineWidth=wd+2;cx.beginPath();s.forEach((p,i)=>i?cx.lineTo(p[0],p[1]+1):cx.moveTo(p[0],p[1]+1));cx.stroke();
+ cx.strokeStyle=col;cx.lineWidth=wd;cx.beginPath();s.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));cx.stroke();
+ if(flow){cx.setLineDash([3,9]);cx.lineDashOffset=-T*(spd||22);cx.strokeStyle=flow;cx.lineWidth=Math.max(1.2,wd*.45);cx.beginPath();s.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));cx.stroke();cx.setLineDash([]);}
+}
+// ---------- estado del juego ----------
+const S={t:6*60,day:1,money:0,shiftMoney:0,safeH:0,F:90,Tf:355,R:1.8,o2:3,foul:.25,salt:.2,crude:"Liviano",crudeLvl:.62,tk:{gas:.5,naf:.45,ker:.5,die:.55,res:.5},spd:1,
+ res:{ok:0,bad:0,ign:0},seg:70,conf:60,ss:{acc:0,ign:0,meas:0,ok:0},up:{},gm:0,camp:null,trust:{},dilDone:[],foulRate:1,wells:Array(13).fill(1),pipe:1,down:{},rig:.35,newWells:0,shiftLog:[],trip:0,coke:0,started:false,tut:0,cool:1,dieOff:false,flare:0,leak:0};
+let SPD=1,T=0,NIGHT=0;
+const PRICE={gas:40,naf:85,ker:95,die:98,res:60,crude:75};
+const NAMES={gas:"GLP y gas",naf:"Nafta (gasolina)",ker:"Queroseno (jet)",die:"Diésel",res:"Residuo (búnker)"};
+const PCOL={gas:"#7fc4ff",naf:"#ffd166",ker:"#9be08f",die:"#ff9f43",res:"#a0705a"};
+function yields(){
+ const base=S.crude==="Liviano"?{gas:3,naf:22,ker:14,die:26}:{gas:2,naf:15,ker:11,die:24};
+ const dT=(S.Tf-355)/10;const y={gas:base.gas,naf:base.naf,ker:base.ker+dT*1,die:base.die+dT*2};
+ if(S.R<1.3){y.naf-=2;y.ker+=1;y.die+=1}
+ y.res=100-y.gas-y.naf-y.ker-y.die;return y;}
+function preheatT(){return 262-45*S.foul}
+function furnEff(){return clamp(.9-Math.abs(S.o2-3)*.022-(S.o2<1.5?.06:0),.6,.92)}
+function fuelCost(){return (S.Tf-preheatT())*.0125/furnEff()*.9*(S.up&&S.up.aph?.85:1)} // $/bbl
+function fieldRate(){const on=S.wells.reduce((a,b)=>a+b,0);return (on*4.6+S.newWells*3+12)*S.pipe*(S.up&&S.up.esp?1.08:1)}
+function rates(){// $/h
+ let F=S.F*(S.trip>0?.6:1);if(S.down.claus)F=Math.min(F,75);const y=yields(),bblh=F*1000/24;let v=0;
+ for(const k in y){let p=PRICE[k];if(k==="die"){if(S.dieOff)p=PRICE.res+4;else if(S.down.hdt)p=PRICE.die-12;}v+=y[k]/100*p}
+ if(!S.down.fcc&&!S.down.boiler)v+=2;if(S.up.vfd)v+=.2;if(S.up.cogen)v+=.6;if(!S.down.refo)v+=.7;if(S.down.boiler)v-=1.2;
+ const fr=fieldRate(),frac=Math.min(1,fr/Math.max(F,1)),cc=70*frac+PRICE.crude*(1-frac);
+ const m=(v-cc-fuelCost())*bblh;let pen=0;for(const i of INC)pen+=(i.pen||0);
+ return {m:m-pen,F,bblh,y,fr};}
+// ---------- mapa ----------
+const MAP=28;
+const U={};// unidades
+function unit(id,o){U[id]=Object.assign({id},o);}
+unit("muelle",{x:2.2,y:23.5,w:4.5,d:2.6,nm:"Muelle y barco de crudo",ic:"⚓",art:null,info:"Aquí atracan los barcos que traen el petróleo crudo. Una refinería necesita inventario de crudo para varios días: si el barco se atrasa, hay que bajar la carga para estirar el tanque."});
+unit("tkc1",{x:6,y:18.6,nm:"Tanques de crudo",ic:"🛢️",info:"Guardan el crudo antes de procesarlo. En el fondo se separa agua y sedimentos que se drenan. El nivel bajo es peligroso para la bomba de carga: reduce la presión en la succión (NPSH)."});
+unit("bomba",{x:9.6,y:16.6,w:1.4,d:1.2,nm:"Bomba de carga",ic:"💧",sim:"../procesos/bomba.html",art:"bombas",info:"Bombas centrífugas que mandan el crudo a toda la planta. Si la presión en la succión baja de la presión de vapor, el líquido hierve dentro de la bomba: cavitación."});
+unit("pre",{x:10.6,y:12.6,w:4.2,d:1.4,nm:"Tren de precalentamiento",ic:"🔥",sim:"../procesos/intercambiador.html",art:"intercambiador",info:"Intercambiadores de calor que calientan el crudo con los productos calientes que salen de la torre. Cada grado que se gana aquí es combustible que el horno no quema. El ensuciamiento les roba calor mes a mes."});
+unit("desal",{x:11.2,y:9.4,w:2.6,d:1.1,nm:"Desaladora",ic:"🧂",info:"Mezcla el crudo con agua de lavado y separa la salmuera con un campo eléctrico. Si la sal pasa, se forma ácido clorhídrico en el tope de la torre y corroe los equipos."});
+unit("horno",{x:14.6,y:7.2,w:2.6,d:2.2,nm:"Horno de crudo",ic:"♨️",info:"Calienta el crudo hasta unos 350–370 °C para vaporizar parte de él. Es el mayor consumidor de energía de la unidad. El exceso de aire (oxígeno en gases) define su eficiencia: poco aire hace humo, mucho aire calienta aire."});
+unit("torre",{x:19.2,y:7,nm:"Torre de destilación atmosférica",ic:"⚗️",sim:"../procesos/destilacion.html",art:"destilacion",info:"Separa el crudo por puntos de ebullición: arriba salen gases y nafta, en medio queroseno y diésel, y abajo el residuo. El reflujo y la temperatura del horno controlan qué tan limpios salen los cortes."});
+unit("aero",{x:20.8,y:3.2,w:3,d:1.6,nm:"Condensador y acumulador",ic:"🌀",info:"Condensa los vapores del tope de la torre. Parte del líquido regresa como reflujo; el resto es nafta. Si no condensa bien, sube la presión de la torre."});
+unit("enf",{x:8.4,y:3,w:3.2,d:2.6,nm:"Torre de enfriamiento",ic:"🌫️",info:"Enfría el agua que usan los condensadores y enfriadores, evaporando una parte. En las tardes calientes enfría menos, y la planta lo siente."});
+unit("ant",{x:3.2,y:4.6,nm:"Antorcha (flare)",ic:"🔥",info:"Quema de forma segura los gases que liberan las válvulas de alivio. Es un equipo de seguridad: una llama grande o humo negro indican que algo está aliviando en la planta."});
+unit("tkp",{x:13.6,y:20.4,nm:"Tanques de productos",ic:"🏭",info:"Guardan la nafta, el queroseno, el diésel y el residuo hasta que se despachan por camión o barco. Un tanque lleno obliga a bajar la carga de la planta."});
+unit("glp",{x:21.6,y:13.4,nm:"Esferas de GLP",ic:"🔵",info:"El gas licuado se guarda a presión en esferas, porque así ocupa mucho menos espacio. Son zonas de máxima seguridad: nada de chispas."});
+unit("rack",{x:19.4,y:19.6,w:3.2,d:2.2,nm:"Llenadero de camiones",ic:"🚚",info:"Aquí se cargan los camiones cisterna con gasolina y diésel. La logística también es parte del proceso: si los camiones no salen, los tanques se llenan."});
+unit("ctrl",{x:6.6,y:11.4,w:2.6,d:2.2,nm:"Sala de control",ic:"🎛️",info:"Desde aquí los operadores controlan la planta con el sistema de control distribuido (DCS). Tú, como ingeniero de procesos, decides los ajustes y resuelves problemas."});
+unit("ofi",{x:3.2,y:9.6,w:2.4,d:3,nm:"Oficinas y comedor",ic:"🏢",info:"Oficinas de ingeniería, mantenimiento y el comedor. La comunicación entre turnos y áreas es parte de la seguridad."});
+unit("bomb",{x:6.4,y:15.2,w:2.2,d:1.6,nm:"Estación de bomberos",ic:"🚒",info:"Brigada contra incendios de la refinería, lista las 24 horas."});
+unit("sub",{x:15.2,y:2.2,w:2.4,d:1.8,nm:"Subestación eléctrica",ic:"⚡",info:"Recibe la energía de la red y la distribuye a motores, bombas y ventiladores."});
+unit("agua",{x:22.4,y:23.4,w:3.2,d:2.4,nm:"Tratamiento de aguas",ic:"💦",info:"Separa el aceite del agua de proceso antes de devolverla al ambiente. Lo que entra sucio debe salir dentro de los límites de la ley."});
+unit("vacio",{x:22.6,y:8.6,nm:"Unidad de vacío",ic:"🏗️",info:"Destila el residuo de la torre atmosférica a presión muy baja. Al bajar la presión, los componentes pesados hierven a menor temperatura y se sacan gasóleos sin coquizar el crudo."});
+unit("rackp",{x:9,y:11,nm:"Rack de tuberías",ic:"🧱",info:"La «autopista» de la refinería: decenas de tuberías de crudo, productos, vapor, agua y aire viajan juntas sobre estructuras de acero. Cada color de línea lleva un fluido distinto."});
+// tanques de productos individuales
+const TKP=[{k:"naf",x:13.4,y:19.4},{k:"ker",x:16.2,y:19.4},{k:"die",x:13.4,y:22.2},{k:"res",x:16.2,y:22.2}];
+// ---------- incidentes ----------
+const INC=[];let incId=1;
+const CASES=[
+ {id:"cav",u:"bomba",t:"La bomba de carga suena a grava",tag:"Mecánica de fluidos",
+  data:()=>`Ruido como piedras dentro de la bomba y la presión de descarga oscila.<br>Nivel en tanques de crudo: <b>${Math.round(S.crudeLvl*100)} %</b> · Temperatura del crudo: <b>41 °C</b>.`,
+  opts:[["Subir la velocidad de la bomba para recuperar el caudal",0,"Subir la velocidad aumenta el NPSH requerido: la cavitación empeora y el impulsor se daña más rápido."],
+        ["Bajar un poco la carga y subir el nivel del tanque para recuperar presión en la succión",1,"Correcto. Es cavitación: la presión en la succión bajó cerca de la presión de vapor. Más nivel en el tanque y menos caudal (menos pérdidas en la succión) devuelven margen de NPSH."],
+        ["Arrancar la bomba de respaldo y dejar las dos en paralelo",0,"Dos bombas en paralelo con la misma succión pobre siguen cavitando. Primero hay que recuperar la presión en la succión."]],
+  fix:()=>{S.F=Math.min(S.F,88);S.crudeLvl=Math.max(S.crudeLvl,.35)},pen:2500,dl:3,esc:"La bomba se dañó por cavitación: la planta opera a carga reducida mientras se repara."},
+ {id:"foul",u:"pre",t:"El horno quema cada vez más combustible",tag:"Transferencia de calor",
+  data:()=>`La temperatura del crudo a la entrada del horno bajó a <b>${Math.round(preheatT())} °C</b> (diseño: 262 °C).<br>El ΔT del intercambiador E-3 cayó un 30 % en dos meses.`,
+  opts:[["Subir el combustible del horno y seguir",0,"Eso solo esconde el problema: cada grado perdido en el tren se paga en combustible todos los días."],
+        ["Aislar E-3 con su bypass y programar la limpieza",1,"Correcto. Es ensuciamiento: la capa de depósitos agrega resistencia térmica. Limpiar el intercambiador más sucio recupera el calor; se hace con bypass para no parar la planta."],
+        ["Bajar la temperatura de salida del horno para ahorrar",0,"Ahorras combustible, pero produces menos diésel y más residuo, que vale menos. No ataca la causa."]],
+  fix:()=>{S.foul=.05;S.money-=15000;toast("🧽 Limpieza de E-3: −$15 000, pero el horno ahorrará todos los días.")},pen:1800,dl:6,esc:null,cond:()=>S.foul>.45},
+ {id:"salt",u:"desal",t:"Sal alta en el crudo desalado",tag:"Separación · Corrosión",
+  data:()=>`Laboratorio: <b>12 PTB</b> de sal a la salida de la desaladora (meta &lt; 3).<br>El pH del agua del tope de la torre bajó a <b>4,8</b>.`,
+  opts:[["No pasa nada, la sal sale con el residuo",0,"La sal se hidroliza en el horno y forma HCl, que corroe el tope de la torre y los condensadores. Es una de las causas más caras de fugas."],
+        ["Aumentar el agua de lavado y revisar la válvula de mezcla y el campo eléctrico",1,"Correcto. Más agua de lavado y una buena mezcla disuelven la sal; el campo eléctrico separa la salmuera. Mientras tanto se refuerza la inyección de neutralizante en el tope."],
+        ["Subir la temperatura del horno para evaporar la sal",0,"La sal no se evapora: se queda y forma ácido. Además subir el horno aumenta el riesgo de coquizar los tubos."]],
+  fix:()=>{S.salt=.1},pen:2000,dl:5,esc:"Corrosión en el condensador del tope: fuga pequeña y reparación de emergencia."},
+ {id:"o2low",u:"horno",t:"Humo negro en la chimenea del horno",tag:"Combustión",
+  data:()=>`Oxígeno en gases de combustión: <b>0,8 %</b>. Las llamas se ven largas y amarillas, y hay monóxido de carbono en la chimenea.`,
+  opts:[["Abrir el registro de aire hasta 2–3 % de O₂",1,"Correcto. Falta aire: la combustión es incompleta, hay CO y hollín. Entre 2 y 3 % de O₂ hay aire suficiente sin calentar aire de más."],
+        ["Cerrar más el aire para ahorrar",0,"¡Peligro! Con menos aire puede acumularse combustible sin quemar en el horno y provocar una explosión al entrar aire de golpe."],
+        ["Apagar un quemador",0,"Baja el calor pero no corrige la mezcla aire–combustible de los demás quemadores."]],
+  fix:()=>{S.o2=3},pre:()=>{S.o2=.8},pen:3000,dl:2,esc:"Hollín y CO: se apagó el horno por seguridad y la planta bajó carga."},
+ {id:"o2hi",u:"horno",t:"El horno calienta aire",tag:"Eficiencia energética",
+  data:()=>`Oxígeno en gases de combustión: <b>8 %</b>. Temperatura de chimenea: <b>410 °C</b>. La eficiencia bajó de 90 % a <b>${Math.round((.9-5*.022)*100)} %</b>.`,
+  opts:[["Cerrar el registro de aire hasta 2–3 % de O₂",1,"Correcto. Todo el aire de más entra frío y sale caliente por la chimenea: es energía tirada. Ajustar el exceso de aire es de las mejoras más rentables en un horno."],
+        ["Subir el combustible porque el crudo no alcanza temperatura",0,"Más combustible con tanto aire en exceso solo calienta más aire."],
+        ["Dejarlo así: más aire es más seguro",0,"Algo de exceso es seguro (2–3 %). Un 8 % ya es desperdicio de combustible."]],
+  fix:()=>{S.o2=3},pre:()=>{S.o2=8},pen:1500,dl:6},
+ {id:"dieoff",u:"torre",t:"El diésel sale fuera de especificación",tag:"Destilación",
+  data:()=>`Laboratorio: punto final de destilación del diésel <b>372 °C</b> (máximo 360). Color oscuro.<br>Temperatura del horno: <b>${S.Tf} °C</b> · Reflujo: <b>${S.R.toFixed(1)}</b>.`,
+  opts:[["Bajar la extracción de diésel (corte más liviano) y revisar la temperatura del plato",1,"Correcto. Si se saca demasiado diésel, se arrastran componentes pesados del residuo. Bajar la extracción sube el reflujo interno y limpia el corte."],
+        ["Subir la temperatura del horno",0,"Más temperatura vaporiza más pesados y el diésel sale todavía más pesado."],
+        ["Mandarlo al tanque igual y mezclarlo después",0,"Mezclar un producto fuera de especificación sin análisis puede contaminar todo el tanque."]],
+  fix:()=>{S.dieOff=false;if(S.Tf>365)S.Tf=360},pre:()=>{S.dieOff=true},pen:1200,dl:4,cond:()=>S.Tf>366||S.R<1.3},
+ {id:"flood",u:"torre",t:"La presión diferencial de la torre se disparó",tag:"Hidráulica de torres",
+  data:()=>`ΔP en la zona de diésel: <b>0,45 bar</b> (normal 0,15). Las purezas de los cortes se están mezclando.<br>Carga: <b>${S.F} kbbl/d</b> · Reflujo: <b>${S.R.toFixed(1)}</b>.`,
+  opts:[["Reducir la carga y el reflujo hasta que baje la ΔP",1,"Correcto. Es inundación: hay demasiado líquido y vapor para la capacidad de los platos. Se reduce el tráfico de líquido y vapor y la torre se recupera."],
+        ["Subir el reflujo para mejorar la separación",0,"Más reflujo es más líquido bajando: la inundación empeora."],
+        ["Subir el vapor de despojamiento del fondo",0,"Más vapor subiendo también aumenta la carga hidráulica."]],
+  fix:()=>{S.F=Math.min(S.F,95);S.R=Math.min(S.R,1.9)},pen:3500,dl:2,esc:"La torre se inundó: productos fuera de especificación por varias horas.",cond:()=>S.F>104&&S.R>2.2},
+ {id:"cool",u:"enf",t:"Sube la presión del tope de la torre",tag:"Servicios",
+  data:()=>`Son las <b>${clk()}</b>. Agua de enfriamiento a <b>33 °C</b> (diseño 29 °C). El condensador no da abasto y la presión del tope subió a <b>1,9 bar</b>.`,
+  opts:[["Arrancar el ventilador de respaldo de la torre de enfriamiento y bajar un poco la carga",1,"Correcto. En las tardes calientes el agua sale menos fría. Más tiro de aire recupera enfriamiento, y bajar la carga temporalmente reduce los vapores que hay que condensar."],
+        ["Mandar el exceso de vapores a la antorcha",0,"Quemar producto en la antorcha es perder dinero y emitir. Es una medida de emergencia, no de operación."],
+        ["Esperar a que caiga la noche",0,"La presión alta puede abrir las válvulas de alivio antes de que anochezca."]],
+  fix:()=>{S.F=Math.min(S.F,94);S.cool=1},pen:2200,dl:2,esc:"Abrieron las válvulas de alivio: se quemó producto en la antorcha.",hours:[12,17]},
+ {id:"flare",u:"ant",t:"Llama grande y humo negro en la antorcha",tag:"Seguridad de procesos",
+  data:()=>`El caudal a la antorcha subió de golpe y la llama echa humo. La comunidad vecina está llamando.`,
+  opts:[["Identificar qué válvula de alivio abrió y agregar vapor a la antorcha para quemar sin humo",1,"Correcto. El vapor mejora la mezcla con aire y elimina el humo. Lo importante es encontrar la causa: una válvula de alivio no abre sin razón."],
+        ["Apagar la antorcha",0,"¡Nunca! La antorcha es un equipo de seguridad: sin ella, los gases se liberarían sin quemar."],
+        ["Ignorarlo, la antorcha está para eso",0,"Humo negro es contaminación y producto perdido. Hay que encontrar qué está aliviando."]],
+  fix:()=>{S.flare=0},pre:()=>{S.flare=1},pen:2800,dl:2,esc:"Denuncia ambiental por humo negro y producto perdido."},
+ {id:"leak",u:"tkp",t:"Gotea una brida en la línea de diésel",tag:"Seguridad",
+  data:()=>`Un operador reporta goteo en una brida de la línea de diésel caliente, cerca de un pasillo. Hay un charco pequeño.`,
+  opts:[["Aislar la zona, contener el derrame y reparar con permiso de trabajo",1,"Correcto. Primero la seguridad: señalizar, contener el producto y reparar con el procedimiento y el permiso adecuado (equipo aislado y sin presión)."],
+        ["Que alguien la apriete ya, en caliente y con la línea presurizada",0,"Apretar una brida en caliente y con presión puede romper el empaque o el perno y convertir el goteo en un chorro."],
+        ["Poner un balde y avisar al siguiente turno",0,"Un derrame de hidrocarburo caliente es riesgo de incendio. No se pasa al siguiente turno."]],
+  fix:()=>{S.leak=0},pre:()=>{S.leak=1},pen:1500,dl:3,esc:"El goteo se volvió un derrame: incidente ambiental y de seguridad.",safety:true},
+ {id:"ppe",u:"glp",t:"Un contratista sin EPP en la zona de esferas",tag:"Seguridad",
+  data:()=>`Un contratista entró a la zona de esferas de GLP sin lentes, sin casco y con el celular en la mano.`,
+  opts:[["Detener el trabajo, hablar con respeto, explicar el riesgo y que vuelva con su EPP y su permiso",1,"Correcto. Detener el trabajo inseguro es responsabilidad de todos. Con respeto: el objetivo es que entienda el riesgo, no regañarlo."],
+        ["Ignorarlo, no es mi área",0,"La seguridad es de todos. Un celular en zona de GLP puede ser fuente de ignición."],
+        ["Gritarle desde lejos",0,"Detener el trabajo es correcto, pero el respeto importa: así se construye cultura de seguridad."]],
+  fix:()=>{},pen:800,dl:2,esc:"El contratista se lesionó: se reinicia el contador de horas sin accidentes.",safety:true},
+ {id:"truck",u:"rack",t:"Fila de camiones y el tanque de nafta al 94 %",tag:"Logística",
+  data:()=>`Se dañó un brazo de carga del llenadero. Hay 6 camiones esperando y el tanque de nafta está al <b>94 %</b>.`,
+  opts:[["Reparar el brazo, priorizar camiones de nafta y bajar la carga si el tanque llega a 97 %",1,"Correcto. La logística también limita la planta. Mientras se repara, se prioriza el producto que más se acumula y se protege el tanque de un rebalse."],
+        ["Seguir a la misma carga y que el tanque rebalse si tiene que rebalsar",0,"Un rebalse de nafta es un incidente grave de seguridad y ambiente."],
+        ["Mandar la nafta al tanque de diésel",0,"Mezclar productos los contamina a los dos."]],
+  fix:()=>{S.tk.naf=.8},pre:()=>{S.tk.naf=.94},pen:1500,dl:3,esc:"Se tuvo que parar la unidad para evitar un rebalse."},
+ {id:"ship",u:"muelle",t:"El barco de crudo viene atrasado",tag:"Planificación",
+  data:()=>`El barco llega con <b>2 días</b> de atraso por mal tiempo. Inventario de crudo: <b>${Math.round(S.crudeLvl*100)} %</b> (unos 2 días a la carga actual).`,
+  opts:[["Bajar la carga a ~75 kbbl/d para estirar el inventario hasta que llegue",1,"Correcto. Es mejor producir menos unos días que vaciar los tanques y parar: un arranque de planta es caro y riesgoso."],
+        ["Seguir a carga máxima y ver qué pasa",0,"Si el tanque se vacía, la bomba cavita y la planta se para."],
+        ["Mezclar el agua del fondo de los tanques para tener más volumen",0,"El agua en el crudo daña la desaladora y causa golpes de presión en el horno y la torre."]],
+  fix:()=>{S.F=75},pen:1000,dl:4,cond:()=>S.crudeLvl<.3},
+ {id:"heavy",u:"muelle",t:"Llegó un crudo más pesado",tag:"Operación",
+  data:()=>`El nuevo barco trae un crudo más pesado: más residuo y más sal. Densidad 26 °API (antes 34).`,
+  opts:[["Revisar la desaladora, subir un poco la temperatura del horno y vigilar los cortes",1,"Correcto. Un crudo pesado trae más sal y produce más residuo. Se ajusta la desaladora y el horno para recuperar destilados sin coquizar."],
+        ["No cambiar nada, el crudo es crudo",0,"Cada crudo es distinto: cambian los rendimientos, la sal y la carga de los equipos."],
+        ["Subir el horno a 385 °C para sacar todo el diésel posible",0,"Por encima de ~370 °C el crudo empieza a craquearse y coquiza los tubos del horno."]],
+  fix:()=>{S.Tf=Math.min(362,S.Tf+4);S.salt=.15},pre:()=>{S.crude="Pesado"},pen:800,dl:4,esc:null}
+];
+CASES.push(
+ {id:"kick",u:"rig",t:"¡Patada de pozo en la perforadora!",tag:"Perforación · Control de pozo",safety:true,
+  data:()=>`El nivel de los tanques de lodo subió <b>12 bbl</b> en 5 minutos y el flujo de retorno aumentó con las bombas quietas. El gas del yacimiento está entrando al pozo.`,
+  opts:[["Cerrar el pozo con el BOP y circular el gas afuera con lodo más pesado",1,"Correcto. Es una patada (kick): la presión del yacimiento superó el peso del lodo. Se cierra el pozo con el preventor de reventones, se mide la presión y se circula con lodo de mayor densidad para recuperar el control."],
+        ["Sacar la tubería rápido para revisar la broca",0,"Sacar tubería rápido «chupa» más fluido del yacimiento (efecto pistón) y puede convertir la patada en un reventón."],
+        ["Seguir perforando, ya se estabilizará",0,"Cada barril de gas que entra se expande al subir. Ignorar una patada es el camino directo a un reventón."]],
+  fix:()=>{},pen:6000,dl:1.5,esc:"Reventón controlado de emergencia: pozo cerrado, equipo dañado y días de trabajo perdidos."},
+ {id:"loss",u:"rig",t:"El lodo no regresa a superficie",tag:"Perforación",
+  data:()=>`Pérdida de circulación: de cada 100 barriles bombeados solo regresan <b>60</b>. La formación se está «tragando» el lodo.`,
+  opts:[["Bombear material obturante (fibras y carbonatos) y bajar un poco la densidad del lodo",1,"Correcto. El lodo entra a fracturas de la formación. El material obturante las sella y una densidad algo menor reduce la presión sobre la roca, sin perder el control del pozo."],
+        ["Subir el caudal de las bombas para que regrese más",0,"Más caudal aumenta la presión en el fondo y abre más las fracturas."],
+        ["Seguir perforando sin retorno",0,"Sin retorno no se ve el pozo: si baja el nivel de lodo, puede ocurrir una patada."]],
+  fix:()=>{},pen:3000,dl:3,esc:"Se perdió mucho lodo y hubo que cementar la zona: días de atraso."},
+ {id:"bit",u:"rig",t:"La perforación avanza a la mitad de velocidad",tag:"Perforación · Mantenimiento",
+  data:()=>`La velocidad de penetración bajó de <b>18 m/h</b> a <b>8 m/h</b> en la misma formación, y el torque oscila. La broca lleva 140 horas.`,
+  opts:[["Sacar la sarta y cambiar la broca desgastada",1,"Correcto. Una broca gastada perfora lento y castiga el equipo. Cambiarla cuesta un viaje de tubería, pero recupera la velocidad y evita daños mayores."],
+        ["Poner todo el peso posible sobre la broca",0,"Exceso de peso sobre una broca gastada puede romperla y dejar piezas en el fondo (pesca), un problema mucho más caro."],
+        ["Seguir así hasta terminar el pozo",0,"Perforar a la mitad de velocidad cuesta días de equipo, que es lo más caro de un pozo."]],
+  fix:()=>{S.money-=8000;S.shiftMoney-=8000},pen:2500,dl:5},
+ {id:"rod",u:"jacks",t:"Un balancín dejó de bombear",tag:"Producción",
+  data:()=>{const k=S.wellOff??0;return `El pozo <b>P-${k+1}</b> no produce y el balancín se mueve sin carga: probablemente se rompió la varilla de bombeo.`},
+  opts:[["Parar el balancín, bloquear la energía (candado y tarjeta) y programar el reacondicionamiento del pozo",1,"Correcto. Con la energía bloqueada nadie puede arrancarlo mientras se trabaja. El equipo de reacondicionamiento (workover) saca la sarta y cambia la varilla."],
+        ["Dejarlo funcionando, ya volverá a bombear",0,"Un balancín sin carga se daña y una varilla rota no se arregla sola."],
+        ["Reiniciarlo varias veces a ver si arranca",0,"Arrancar repetidamente sin diagnosticar puede dañar el motor y la caja de engranajes, y es inseguro."]],
+  pre:()=>{const on=S.wells.map((w,i)=>w?i:-1).filter(i=>i>=0);S.wellOff=on[Math.floor(rnd()*on.length)]??0;S.wells[S.wellOff]=0},fix:()=>{S.wells[S.wellOff]=1},pen:1500,dl:6,esc:null},
+ {id:"sep",u:"sep",t:"El crudo sale del campo con mucha agua",tag:"Separación",
+  data:()=>`El crudo enviado al oleoducto tiene <b>4 % de agua</b> (máximo 0,5 %). En el separador se ve una emulsión espesa entre el agua y el petróleo.`,
+  opts:[["Revisar el control de nivel de interfaz y dosificar desemulsificante",1,"Correcto. La emulsión no deja que el agua se separe. El desemulsificante rompe la película entre gotas y el control de interfaz evita que el agua salga con el petróleo."],
+        ["Subir la presión del separador",0,"La presión no rompe la emulsión; la separación depende del tiempo de residencia y de la química."],
+        ["Mandarlo así, la refinería tiene desaladora",0,"El agua extra sobrecarga la desaladora y trae sal: corrosión aguas abajo."]],
+  pre:()=>{S.salt=.5},fix:()=>{S.salt=.2},pen:1800,dl:4},
+ {id:"h2s",u:"gas",t:"¡Alarma de H₂S en la planta de gas!",tag:"Seguridad · Gas tóxico",safety:true,
+  data:()=>`Un detector marca <b>40 ppm</b> de H₂S cerca de los compresores. Un operador no responde por radio.`,
+  opts:[["Evacuar contra el viento (mirar la manga de viento), y que solo entre el equipo de rescate con respiración autónoma",1,"Correcto. El H₂S es más pesado que el aire y paraliza el olfato. La regla de oro: nunca entrar a rescatar sin equipo de respiración, porque así ocurren las víctimas múltiples."],
+        ["Correr a rescatar al operador de inmediato",0,"Es el error que más muertes causa en accidentes con H₂S: el rescatista sin protección también cae."],
+        ["Quedarse quieto y esperar que baje",0,"Hay que alejarse de la nube hacia el punto de reunión, en dirección contraria al viento."]],
+  fix:()=>{},pen:4000,dl:1,esc:"Un trabajador intoxicado con H₂S fue trasladado al hospital."},
+ {id:"wax",u:"pipe",t:"Sube la presión del oleoducto y baja el caudal",tag:"Transporte · Flujo",
+  data:()=>`La presión de descarga de la estación subió <b>18 %</b> y llega <b>35 %</b> menos crudo a la refinería. El último chancho pasó hace 3 meses.`,
+  opts:[["Lanzar un chancho (pig) de limpieza por el oleoducto",1,"Correcto. Es parafina depositada en las paredes: reduce el diámetro y aumenta la fricción. El chancho la arrastra y recupera la capacidad. Míralo viajar por el tubo."],
+        ["Subir la presión de bombeo al máximo",0,"Se acerca a la presión máxima de operación del tubo: riesgo de ruptura, y la parafina sigue ahí."],
+        ["Esperar a que el crudo la disuelva sola",0,"La parafina se sigue acumulando hasta tapar la línea."]],
+  pre:()=>{S.pipe=S.up&&S.up.loop?.85:.65},fix:()=>{S.pipe=1;PIG.on=true;PIG.s=0},pen:2000,dl:5,esc:"El oleoducto casi se tapó: la refinería tuvo que vivir del inventario."},
+ {id:"hammer",u:"pipe",t:"Golpe fuerte en el oleoducto",tag:"Transporte · Golpe de ariete",
+  data:()=>`Se escuchó un golpe seco y la presión hizo un pico de <b>+40 %</b> cuando un operador cerró una válvula en la llegada a la refinería.`,
+  opts:[["Revisar la línea y cambiar el procedimiento: las válvulas se cierran lentamente",1,"Correcto. Es golpe de ariete: al frenar de golpe una columna de líquido, su energía se convierte en un pico de presión. Cerrar despacio lo evita."],
+        ["Cerrar las válvulas todavía más rápido para que dure menos",0,"Mientras más rápido el cierre, más alto el pico de presión."],
+        ["Nada, fue solo un ruido",0,"Los golpes de ariete fatigan soportes y uniones hasta que algo se rompe."]],
+  fix:()=>{},pen:1200,dl:4},
+ {id:"plat",u:"plat",t:"Se acerca una tormenta a la plataforma",tag:"Seguridad · Offshore",safety:true,
+  data:()=>`Pronóstico: olas de <b>6 m</b> y vientos de <b>90 km/h</b> en 10 horas. Hay 80 personas a bordo.`,
+  opts:[["Evacuar al personal no esencial en helicóptero a tiempo y cerrar los pozos de forma controlada",1,"Correcto. Se reduce la gente expuesta mientras el helicóptero todavía puede volar, y los pozos quedan seguros antes de que llegue la tormenta."],
+        ["Seguir operando normal",0,"Con la tormenta encima ya no se puede evacuar: la gente queda atrapada en la peor condición."],
+        ["Evacuar a todos en bote cuando empiecen las olas",0,"Transferir personas a un bote con mar alta es extremadamente peligroso."]],
+  fix:()=>{},pen:2000,dl:3,esc:"La tormenta llegó con todo el personal a bordo: lesiones y producción perdida."},
+ {id:"fcc",u:"fcc",escDown:6,t:"La chimenea del FCC echa polvo",tag:"Conversión · FCC",
+  data:()=>`Las pérdidas de catalizador subieron de <b>2</b> a <b>9 t/día</b> y la opacidad de la chimenea está fuera del permiso ambiental.`,
+  opts:[["Bajar el aire y el vapor (la velocidad en los ciclones) y programar la inspección de los ciclones",1,"Correcto. Los ciclones separan el catalizador de los gases. Si la velocidad es muy alta o un ciclón está dañado, el polvo escapa. Se baja la velocidad mientras se inspecciona."],
+        ["Subir el aire para quemar mejor el coque",0,"Más aire es más velocidad en los ciclones: se pierde todavía más catalizador."],
+        ["Agregar catalizador nuevo y seguir",0,"Reponer catalizador cuesta caro y no corrige la emisión."]],
+  pre:()=>{},fix:()=>{},pen:3000,dl:4,esc:"Multa ambiental y el FCC tuvo que bajar carga."},
+ {id:"hdt",u:"hdt",t:"El diésel sale con más azufre de lo permitido",tag:"Conversión · Hidrotratamiento",
+  data:()=>`Azufre en el diésel: <b>24 ppm</b> (máximo 15). El catalizador lleva 3 años y la pureza del hidrógeno bajó a <b>78 %</b>.`,
+  opts:[["Subir poco a poco la temperatura del reactor, mejorar la pureza del hidrógeno y planificar el cambio de catalizador",1,"Correcto. Un catalizador envejecido necesita más temperatura para la misma conversión, y el hidrógeno puro ayuda. Se sube despacio porque la reacción es exotérmica."],
+        ["Subir 40 °C de golpe",0,"¡Peligro! El hidrotratamiento es exotérmico: un aumento brusco puede provocar un descontrol de temperatura en el reactor."],
+        ["Mezclarlo con diésel bueno sin analizar",0,"Mezclar sin análisis es apostar con la especificación de todo el tanque."]],
+  pre:()=>{S.down.hdt=99},fix:()=>{delete S.down.hdt},pen:2500,dl:5},
+ {id:"refo",u:"refo",t:"Octanaje bajo en el reformado",tag:"Conversión · Reformado",
+  data:()=>`El reformado sale con <b>91</b> de octanaje (meta 98). Producción de hidrógeno también a la baja.`,
+  opts:[["Subir la temperatura de entrada a los reactores y revisar el contenido de cloruro del catalizador",1,"Correcto. Las reacciones de reformado necesitan temperatura, y el catalizador necesita su balance de cloruro para mantener la actividad."],
+        ["Bajar la temperatura para cuidar el catalizador",0,"Con menos temperatura el octanaje baja todavía más."],
+        ["Mandar la nafta directo a la gasolina",0,"Sin reformar, la nafta tiene muy poco octanaje: la gasolina no cumpliría."]],
+  pre:()=>{S.down.refo=99},fix:()=>{delete S.down.refo},pen:1800,dl:5},
+ {id:"claus",u:"claus",t:"La planta de azufre no da abasto",tag:"Ambiente · Azufre",
+  data:()=>`Llega más gas ácido del que la planta puede procesar y parte se está quemando en la antorcha (SO₂ a la atmósfera).`,
+  opts:[["Ajustar la relación aire/H₂S (se quema un tercio) y reducir la carga de crudo agrio",1,"Correcto. La reacción de Claus necesita la proporción exacta: 1/3 del H₂S se quema a SO₂ y luego reacciona con los 2/3 restantes. Mientras se ajusta, se reduce el gas ácido que llega."],
+        ["Mandar el gas ácido a la antorcha todo el tiempo",0,"Eso libera SO₂, contamina y viola el permiso ambiental."],
+        ["Apagar la planta de azufre",0,"Sin ella no hay a dónde mandar el H₂S: la refinería tendría que parar."]],
+  pre:()=>{S.down.claus=99},fix:()=>{delete S.down.claus},pen:3000,dl:3,esc:"Emisión de SO₂ reportada a las autoridades; se bajó la carga de la refinería."},
+ {id:"boiler",u:"boiler",t:"Se disparó una caldera",tag:"Servicios · Vapor",
+  data:()=>`La caldera B-2 se disparó por bajo nivel de agua. La presión del cabezal de vapor bajó de <b>42</b> a <b>33 bar</b>.`,
+  opts:[["Arrancar la caldera de respaldo y desconectar los consumidores de vapor no esenciales",1,"Correcto. Se protege el vapor para las unidades críticas (deslastre de cargas) mientras se recupera la producción. El disparo por bajo nivel protege la caldera: hay que investigar la causa antes de rearrancarla."],
+        ["Subir la otra caldera por encima de su límite",0,"Operar una caldera sobre su límite es arriesgar una falla grave. Las válvulas de seguridad están por algo."],
+        ["Rearrancar B-2 de inmediato sin revisar",0,"Si se disparó por bajo nivel de agua, arrancarla sin revisar puede dañar los tubos o algo peor."]],
+  pre:()=>{S.down.boiler=99},fix:()=>{delete S.down.boiler},pen:4000,dl:2,esc:"Sin vapor suficiente, el FCC y otras unidades bajaron carga."},
+ {id:"blend",u:"blend",t:"Un lote de gasolina no cumple octanaje",tag:"Calidad · Mezclas",
+  data:()=>`El laboratorio reporta <b>89</b> de octanaje en un lote de gasolina súper (mínimo 95). Hay camiones esperando.`,
+  opts:[["Ajustar la receta con más reformado y verificar con laboratorio antes de despachar",1,"Correcto. La mezcla se corrige con componentes de alto octanaje. Ningún lote sale sin certificado de calidad."],
+        ["Despacharlo igual, nadie se va a dar cuenta",0,"Un producto fuera de especificación daña motores y la confianza de los clientes, y es ilegal."],
+        ["Agregarle diésel",0,"El diésel tiene octanaje muy bajo: empeora la gasolina."]],
+  fix:()=>{},pen:1500,dl:4},
+ {id:"olor",u:"pueblo",t:"Los vecinos se quejan por olores",tag:"Comunidad",
+  data:()=>`Llegaron 12 quejas del pueblo por olor a «huevo podrido» en la noche. El viento sopla hacia el pueblo.`,
+  opts:[["Medir en el perímetro, buscar la fuente (tratamiento de aguas, tanques, azufre) e informar a la comunidad",1,"Correcto. El olor a huevo podrido es H₂S o mercaptanos, que se huelen a concentraciones muy bajas. Se mide, se corrige la fuente y se comunica con transparencia."],
+        ["Ignorarlos, siempre se quejan",0,"La licencia social para operar depende de la comunidad. Y el olor puede ser señal de una fuga real."],
+        ["Decir que no es de la refinería",0,"Negarlo sin medir rompe la confianza, sobre todo si después resulta que sí era."]],
+  fix:()=>{},pen:1000,dl:4}
+);
+
+function caseById(id){return CASES.find(c=>c.id===id)}
+function spawn(id){const c=caseById(id);if(!c||INC.find(i=>i.c.id===id))return;
+ if(S.tut&&!c.safety&&S.conf>=80&&rnd()<.2){meter("conf",1);toast(`👵 <b>Doña Marta</b> detectó a tiempo «${c.t}» y lo corrigió con su equipo. ¡La confianza paga!`);return;}
+ if(c.pre)c.pre();const i={id:incId++,c,t0:S.t,pen:c.pen,seen:false,dl:c.dl*dlMult()*(c.safety&&S.up&&S.up.det?1.5:1)};INC.push(i);beep(880,.08);updInc();
+ toast(`❗ <b>${U[c.u].nm}:</b> ${c.t}${S.conf>=70?" <span class='mut'>(te avisaron temprano)</span>":""}`);return i;}
+function updInc(){const n=$("ninc");n.hidden=!INC.length;n.textContent=INC.length;}
+// ---------- personajes ----------
+const CHARS={
+ marta:{n:"Doña Marta",r:"Operadora de la sala de control · 28 años en la planta",sk:"#c99a74",hr:"#c8c8c8",hat:null,v:"#2f6db5",a:"bun"},
+ andres:{n:"Andrés",r:"Mecánico de mantenimiento",sk:"#a87452",hr:"#2a1a10",hat:"#f2c21b",v:"#e2701c",a:"beard"},
+ lucia:{n:"Ing. Lucía Vargas",r:"Gerente de planta",sk:"#d6a983",hr:"#3a2418",hat:"#f2f0e8",v:"#3b4a5a",a:"long"},
+ jorge:{n:"Jorge",r:"Supervisor de seguridad",sk:"#8a5a3c",hr:"#111",hat:"#2f9a4a",v:"#d4c21a",a:"must"},
+ beto:{n:"Beto",r:"Jefe de perforación en el campo",sk:"#b8865e",hr:"#4a3020",hat:"#f2f0e8",v:"#e2701c",a:"beard"},
+ rafa:{n:"Don Rafa",r:"Vecino del pueblo",sk:"#c99a74",hr:"#eeeeee",hat:"straw",v:"#7a5a3a",a:"must"},
+ sofia:{n:"Sofía",r:"Practicante de ingeniería química",sk:"#e0b48e",hr:"#5a3420",hat:"#f2f0e8",v:"#e2701c",a:"glasses"}};
+function face(id,sz=56){const c=CHARS[id];let s=`<svg width="${sz}" height="${sz}" viewBox="0 0 64 64" style="flex:none;border-radius:50%;background:#2a241e;border:2px solid #c97a1c">`;
+ s+=`<path d="M8 64 Q10 46 32 44 Q54 46 56 64Z" fill="${c.v}"/><path d="M26 44 L32 52 L38 44Z" fill="#e8e4dc"/><rect x="27" y="36" width="10" height="9" fill="${c.sk}"/>`;
+ if(c.a==="long")s+=`<path d="M17 30 Q16 50 24 50 L24 26Z M47 30 Q48 50 40 50 L40 26Z" fill="${c.hr}"/>`;
+ if(c.a==="bun")s+=`<circle cx="32" cy="12" r="7" fill="${c.hr}"/>`;
+ s+=`<ellipse cx="32" cy="28" rx="13" ry="14" fill="${c.sk}"/>`;
+ if(!c.hat||c.a==="bun")s+=`<path d="M19 26 Q20 13 32 13 Q44 13 45 26 Q40 19 32 19 Q24 19 19 26Z" fill="${c.hr}"/>`;
+ s+=`<circle cx="27" cy="29" r="1.8" fill="#222"/><circle cx="37" cy="29" r="1.8" fill="#222"/><path d="M28 36 Q32 39 36 36" stroke="#5a2a1a" stroke-width="1.6" fill="none"/>`;
+ if(c.a==="beard")s+=`<path d="M20 31 Q22 44 32 44 Q42 44 44 31 Q40 38 32 38 Q24 38 20 31Z" fill="${c.hr}" opacity=".9"/>`;
+ if(c.a==="must")s+=`<path d="M26 34 Q32 31 38 34 Q32 35 26 34Z" fill="${c.hr}"/>`;
+ if(c.a==="glasses")s+=`<circle cx="27" cy="29" r="4" stroke="#222" stroke-width="1.4" fill="none"/><circle cx="37" cy="29" r="4" stroke="#222" stroke-width="1.4" fill="none"/><path d="M31 29h2" stroke="#222" stroke-width="1.4"/>`;
+ if(c.hat==="straw")s+=`<ellipse cx="32" cy="18" rx="20" ry="4" fill="#d8c48a"/><path d="M22 18 Q23 8 32 8 Q41 8 42 18Z" fill="#cdb878"/><rect x="22" y="15" width="20" height="2" fill="#7a5a3a"/>`;
+ else if(c.hat&&c.a!=="bun")s+=`<path d="M17 22 Q18 9 32 9 Q46 9 47 22Z" fill="${c.hat}"/><rect x="15" y="21" width="34" height="3" rx="1.5" fill="${c.hat}"/><rect x="30" y="9" width="4" height="13" fill="rgba(0,0,0,.12)"/>`;
+ return s+"</svg>";}
+function bubble(id,txt){const c=CHARS[id];return `<div style="display:flex;gap:10px;align-items:flex-start;margin:8px 0">${face(id)}<div><b style="color:#ffc56b">${c.n}</b> <span class="mut">· ${c.r}</span><div style="background:#2a241e;border-radius:4px 12px 12px 12px;padding:7px 10px;margin-top:3px">«${txt}»</div></div></div>`;}
+const WHO={cav:"marta",foul:"marta",salt:"marta",o2low:"marta",o2hi:"marta",dieoff:"marta",flood:"marta",cool:"marta",flare:"jorge",leak:"andres",ppe:"jorge",truck:"lucia",ship:"lucia",heavy:"lucia",kick:"beto",loss:"beto",bit:"beto",rod:"andres",sep:"beto",h2s:"jorge",wax:"beto",hammer:"andres",plat:"jorge",fcc:"marta",hdt:"marta",refo:"marta",claus:"marta",boiler:"andres",blend:"lucia",olor:"rafa"};
+const SAY={cav:"Ingeniero, esa bomba no suena así nunca. Suena como si tuviera piedras adentro.",foul:"Cada mes le meto más gas al horno para llegar a la misma temperatura. Algo no cuadra.",salt:"El laboratorio mandó la sal de la desaladora en rojo. Y el agua del tope está ácida.",o2low:"¡Mire la chimenea del horno! Está saliendo humo negro.",o2hi:"El horno está estable, pero la chimenea está muy caliente. ¿Será normal?",dieoff:"Calidad me rechazó el diésel. Dicen que sale oscuro.",flood:"La torre se puso rara: la presión diferencial se disparó y los cortes se están mezclando.",cool:"Con este calor, el tope de la torre no aguanta. La presión sigue subiendo.",flare:"La antorcha está echando humo negro y ya están llamando del pueblo.",leak:"Gotea una brida en la línea de diésel. Si quiere, la aprieto ya mismo, son dos minutos.",ppe:"Hay un contratista en la zona de esferas sin casco ni lentes, y con el celular en la mano.",truck:"Los camiones se están acumulando y el tanque de nafta casi lleno. Comercial me está llamando.",ship:"Me avisan que el barco viene atrasado dos días. ¿Cómo estamos de crudo?",heavy:"Compramos un crudo más barato. Es más pesado, pero la diferencia de precio vale la pena… ¿o no?",kick:"¡Ingeniero! Los tanques de lodo están subiendo solos. ¡El pozo está fluyendo!",loss:"Bombeamos y el lodo no regresa. La formación se lo está tragando.",bit:"Vamos lento. A este paso no terminamos el pozo este mes.",rod:"El balancín se mueve, pero no levanta nada. Me huele a varilla rota.",sep:"El crudo sale con mucha agua del campo. En el separador hay una nata espesa.",h2s:"¡Alarma de H₂S en compresores! Y Toño no contesta el radio.",wax:"El oleoducto viene pesado: la presión sube y llega menos crudo.",hammer:"Se escuchó un golpazo en la tubería cuando cerramos la válvula de llegada.",plat:"Viene una tormenta fuerte hacia la plataforma. Hay 80 personas a bordo.",fcc:"La chimenea del FCC está echando polvo. Ambiente ya preguntó.",hdt:"El diésel no está cumpliendo el azufre. El catalizador ya está viejito.",refo:"El octanaje del reformado viene bajando toda la semana.",claus:"La planta de azufre no da abasto y está mandando gas ácido a la antorcha.",boiler:"¡Se disparó la caldera B-2! ¡Se nos cae el vapor!",blend:"El lote de súper salió bajo de octanaje y hay camiones esperando. ¿Lo despachamos?",olor:"Buenas, ingeniero. Anoche todo el barrio olía a huevo podrido. Los chiquitos no podían dormir."};
+// ---------- herramientas de medición ----------
+const TOOLS={gas:{n:"📟 Detector de gases",t:15,no:"Sin gases fuera de lo normal en la zona."},term:{n:"🌡️ Cámara termográfica",t:15,no:"Temperaturas normales en el equipo."},vib:{n:"🩺 Analizador de vibraciones",t:15,no:"Vibraciones y ruido dentro de lo normal."},trend:{n:"📈 Tendencias del DCS",t:10,no:"Las tendencias no muestran nada raro."},lab:{n:"🧪 Muestra al laboratorio",t:60,no:"La muestra salió dentro de especificación."}};
+const MEAS={cav:["vib","Ruido de alta frecuencia en la succión y vibración de 7 mm/s (normal &lt; 3). La presión de succión está apenas 0,4 bar sobre la presión de vapor: <b>cavitación</b>."],
+ foul:["term","El intercambiador E-3 muestra casi la misma temperatura a la entrada y a la salida del crudo: <b>no está transfiriendo calor</b>. Los demás se ven normales."],
+ salt:["lab","Sal a la salida de la desaladora: <b>12 PTB</b>. Cloruros en el agua del tope: <b>180 ppm</b>. La sal está pasando."],
+ o2low:["trend","El O₂ en chimenea cayó de 3 % a <b>0,8 %</b> justo cuando se subió el combustible: <b>falta aire</b>."],
+ o2hi:["trend","El O₂ subió a <b>8 %</b> hace dos semanas, después de un mantenimiento a los quemadores. Nadie reajustó el registro de aire."],
+ dieoff:["lab","Punto final del diésel: <b>372 °C</b> (máx. 360). El corte está arrastrando pesados."],
+ flood:["trend","La ΔP subió en paralelo con el reflujo y la carga: <b>inundación</b> por tráfico hidráulico."],
+ cool:["term","El agua sale de la torre de enfriamiento a 33 °C y uno de los ventiladores está detenido."],
+ leak:["gas","Vapores de hidrocarburo al <b>12 % del LEL</b> junto a la brida. La brida está a 180 °C: no se puede intervenir en caliente."],
+ h2s:["gas","<b>40 ppm de H₂S</b> en compresores y la manga de viento apunta al oeste: la nube va hacia el taller. Punto de reunión seguro: al este."],
+ sep:["lab","Agua en el crudo: <b>4 %</b>. Emulsión estable: no se rompe sola ni en 30 minutos de reposo."],
+ wax:["trend","La presión de bombeo ha subido <b>2 % por semana</b> desde el último chancho, hace 3 meses."],
+ bit:["trend","La velocidad de perforación cae y el torque se vuelve errático desde hace 30 horas, en la misma formación."],
+ boiler:["trend","El nivel de agua del domo de B-2 cayó durante 6 minutos antes del disparo: la protección actuó bien."],
+ hdt:["lab","Azufre en el diésel: <b>24 ppm</b>. Pureza del hidrógeno de reciclo: <b>78 %</b>."],
+ blend:["lab","Octanaje del lote: <b>89</b> (mín. 95). Al lote le falta reformado."],
+ fcc:["trend","Las pérdidas de catalizador subieron cuando se aumentó el aire al regenerador hace 2 días."],
+ olor:["gas","Lecturas en el perímetro norte de <b>0,02 ppm de H₂S</b>, junto al separador de aguas aceitosas. Se huele a niveles muy bajos."],
+ rod:["vib","La carga en la varilla cayó a cero en la carrera ascendente: <b>varilla rota</b>."],
+ refo:["lab","Octanaje del reformado: <b>91</b>. Cloruro en el catalizador por debajo de lo recomendado."]};
+// ---------- dilemas ----------
+const DILS=[
+ {id:"d_carga",who:"lucia",u:"ofi",t:"Pedido urgente: subir la carga al 105 %",tag:"Dilema · Producción",say:"Comercial cerró un pedido grande. Necesito la planta al 105 % toda la semana. ¿Se puede?",data:()=>`El intercambiador E-3 está sucio (${Math.round(S.foul*100)} %) y la torre ya trabaja cerca de su límite hidráulico.`,
+  opts:[["Subir al 105 % ya",{m:30000,seg:-6,conf:2},"La gerente queda feliz y entra dinero, pero la planta trabaja al límite: aumenta el riesgo de inundar la torre y el horno quema más.",()=>{S.F=105}],
+        ["Subir solo al 98 % y programar la limpieza del E-3 para ganar capacidad",{m:12000,seg:2,conf:5},"Buen balance: más producción sin pasar el límite seguro, y un plan para ganar capacidad de verdad.",()=>{S.F=Math.max(S.F,98)}],
+        ["No subir: la planta no está lista",{m:0,seg:1,conf:-6},"Es prudente, pero sin una alternativa la gerencia siente que ingeniería solo dice que no.",null]]},
+ {id:"d_empaque",who:"andres",u:"pre",t:"¿Parar 8 horas por un empaque que gotea poco?",tag:"Dilema · Mantenimiento",say:"El empaque de la bomba de reflujo gotea poquito. Puedo cambiarlo en 8 horas con la unidad parada, o esperamos al paro de marzo.",data:()=>`Goteo: 2 gotas por minuto de nafta. El paro programado es en 5 meses.`,
+  opts:[["Parar ahora y cambiarlo",{m:-60000,seg:8,conf:3},"Se pierde producción, pero se elimina un riesgo de incendio. Con nafta, el goteo puede crecer rápido.",()=>{S.trip=Math.max(S.trip,1)}],
+        ["Esperar, con inspección diaria, bandeja de contención y un plan si empeora",{m:0,seg:-2,conf:4},"Riesgo gestionado: no es ignorarlo. Si el goteo aumenta, se para. Es una decisión válida si se cumple la vigilancia.",()=>{if(rnd()<.3)setTimeout(()=>spawn("leak"),20000)}],
+        ["Ignorarlo hasta el paro",{m:0,seg:-12,conf:-4},"Un goteo de nafta sin vigilancia es cómo empiezan muchos incendios.",()=>{if(rnd()<.7)setTimeout(()=>spawn("leak"),12000)}]]},
+ {id:"d_contrat",who:"lucia",u:"ofi",t:"Contratista barato o contratista seguro",tag:"Dilema · Seguridad y costos",say:"Para el andamiaje del FCC tengo dos ofertas. Una es 20 000 dólares más barata. ¿Cuál firmamos?",data:()=>`Contratista A: más barato, 3 incidentes el último año. Contratista B: más caro, 0 incidentes en 4 años.`,
+  opts:[["El barato: el presupuesto está apretado",{m:20000,seg:-10,conf:-2},"Se ahorra hoy, pero un historial de incidentes casi siempre se repite.",()=>{if(rnd()<.5)setTimeout(()=>spawn("ppe"),15000)}],
+        ["El de buen récord de seguridad",{m:-10000,seg:7,conf:3},"La seguridad del contratista es parte del costo real del trabajo. Un accidente cuesta muchísimo más que la diferencia.",null],
+        ["El barato, pero con supervisión y charla de seguridad diarias",{m:12000,seg:-3,conf:1},"Mejora el riesgo, pero la supervisión extra también cuesta y no cambia la cultura del contratista.",null]]},
+ {id:"d_doble",who:"beto",u:"rig",t:"¿Turno doble para terminar el pozo?",tag:"Dilema · Personas",say:"Si la cuadrilla dobla turno esta semana, terminamos el pozo antes. La gente quiere las horas extra.",data:()=>`Avance del pozo nuevo: ${Math.round(S.rig*100)} %. Turnos de 12 h ya son largos.`,
+  opts:[["Sí, turno doble",{m:5000,seg:-9,conf:-2},"El pozo avanza, pero la fatiga es una de las causas más comunes de accidentes en perforación.",()=>{S.rig=Math.min(.99,S.rig+.3)}],
+        ["Traer una cuadrilla de relevo",{m:-15000,seg:2,conf:4},"Cuesta más, pero se avanza sin cansar a la gente.",()=>{S.rig=Math.min(.99,S.rig+.2)}],
+        ["No: seguimos al ritmo normal",{m:0,seg:3,conf:1},"Prudente. El pozo sale cuando sale.",null]]},
+ {id:"d_puertas",who:"rafa",u:"pueblo",t:"La comunidad pide un día de puertas abiertas",tag:"Dilema · Comunidad",say:"Ingeniero, la gente del pueblo quiere conocer la refinería. Muchos tienen miedo de lo que pasa aquí adentro.",data:()=>`Organizarlo cuesta tiempo del personal y transporte. La relación con el pueblo ha tenido roces por la antorcha y los olores.`,
+  opts:[["Organizarlo, con charla de seguridad y recorrido",{m:-8000,seg:1,conf:10},"La confianza se construye mostrando. Mucha gente cambia de opinión cuando ve cómo se cuida la seguridad.",null],
+        ["Solo enviar un comunicado",{m:0,seg:0,conf:1},"Es algo, pero un papel no responde preguntas ni genera confianza.",null],
+        ["No, es un riesgo tener visitas",{m:0,seg:0,conf:-8},"Cerrarse alimenta los rumores.",null]]},
+ {id:"d_casi",who:"jorge",u:"ctrl",t:"Un reporte de casi accidente",tag:"Dilema · Cultura de seguridad",say:"Un operador reportó que casi lo golpea un montacargas en el cruce. Lo reportó él mismo. ¿Qué hacemos?",data:()=>`No hubo lesión. El cruce no tiene espejo y la cebra está borrosa.`,
+  opts:[["Agradecer el reporte e investigar la causa con el equipo, sin buscar culpables",{m:-3000,seg:10,conf:7},"Correcto. Un casi accidente es un regalo: avisa sin que nadie salga herido. Si se agradece, la gente sigue reportando.",null],
+        ["Sancionar al operador por estar en el cruce",{m:0,seg:-6,conf:-10},"La próxima vez nadie va a reportar. Los problemas no desaparecen: se esconden.",null],
+        ["Archivarlo, no pasó nada",{m:0,seg:-5,conf:-2},"El cruce sigue igual de peligroso hasta que pase algo de verdad.",null]]},
+ {id:"d_recorte",who:"lucia",u:"ofi",t:"Recortar 30 % el mantenimiento preventivo",tag:"Dilema · Costos",say:"Finanzas pide recortar 30 % del mantenimiento preventivo este año. ¿Qué opinas?",data:()=>`El preventivo incluye limpiezas de intercambiadores, inspección de quemadores y cambio de empaques.`,
+  opts:[["Aceptar el recorte",{m:40000,seg:-8,conf:-2},"Ahorro inmediato, pero el ensuciamiento y las fallas aumentan: es pagar después y más caro.",()=>{S.foulRate=2}],
+        ["Proponer mantenimiento basado en condición: medir y mantener lo que lo necesita",{m:15000,seg:1,conf:5},"Buena respuesta de ingeniería: se ahorra sin a ciegas, usando datos de vibración, termografía y tendencias.",null],
+        ["Rechazarlo sin más",{m:0,seg:1,conf:-5},"Defiende la planta, pero sin una propuesta la conversación termina mal.",null]]},
+ {id:"d_idea",who:"sofia",u:"ctrl",t:"La practicante propone una mejora",tag:"Dilema · Personas",say:"Ingeniero, calculé que si bajamos el exceso de aire de los hornos de 4 % a 2,5 %, ahorramos combustible. ¿Puedo probarlo?",data:()=>`Sofía hizo el cálculo en una hoja y lo revisó con Doña Marta.`,
+  opts:[["Escucharla y probarlo juntos, con un plan y vigilancia",{m:6000,seg:1,conf:7},"Las mejores ideas a veces vienen de quien recién llega. Probarlo con método enseña a todos.",()=>{S.o2=2.5}],
+        ["«Aquí siempre se ha hecho así»",{m:0,seg:0,conf:-7},"Es la frase que mata la mejora continua.",null],
+        ["Dejar que lo haga sola",{m:2000,seg:-3,conf:2},"La intención es buena, pero un cambio en un horno sin supervisión puede salir mal.",()=>{S.o2=2.5}]]}];
+for(const d of DILS){d.dil=true;d.dl=4;d.pen=0;}
+// ---------- medidores ----------
+function meter(k,dv){if(k==="conf"&&dv>0&&S.up&&S.up.train)dv*=1.3;S[k]=clamp((S[k]??60)+dv,0,100);}
+function dlMult(){return (S.conf>=70?1.4:S.conf<35?.7:1)}
+function allowed(id){const u=S.up||{};return !((id==='cav'&&u.vfd)||(id==='ship'&&u.tank)||(id==='boiler'&&u.cogen)||(id==='olor'&&u.biof)||(id==='rod'&&u.esp&&rnd()<.5));}
+function spawnDil(only){let pool=DILS.filter(d=>!INC.find(i=>i.c.id===d.id)&&!(S.dilDone||[]).includes(d.id));if(only){const p2=pool.filter(d=>only.includes(d.id));if(p2.length)pool=p2;}if(!pool.length){S.dilDone=[];return}const d=pool[Math.floor(rnd()*pool.length)];
+ const i={id:incId++,c:d,t0:S.t,pen:0,seen:false,dl:d.dl};INC.push(i);beep(660,.08);updInc();toast(`💬 <b>${CHARS[d.who].n}:</b> ${d.t}`);}
+// ---------- campaña ----------
+const CAMP=[
+ {t:"Primer día",who:"lucia",say:"Bienvenido. Hoy conoces la unidad de crudo: la bomba de carga, el horno y la torre. Escucha a Doña Marta: lleva 28 años aquí.",pool:["cav","foul","o2low","o2hi","salt","dieoff"],dil:["d_idea"],
+  goals:[{t:"Margen del turno ≥ $200 000",f:()=>S.shiftMoney>=200000},{t:"Resolver bien 3 problemas",f:()=>S.ss.ok>=3},{t:"Seguridad ≥ 60",f:()=>S.seg>=60}]},
+ {t:"El campo llama",who:"beto",say:"Ingeniero, aquí en el campo también lo necesitamos. Pozos, lodo, separadores… y el H₂S no perdona.",pool:["kick","loss","bit","rod","sep","h2s","wax"],dil:["d_doble"],
+  goals:[{t:"Margen del turno ≥ $250 000",f:()=>S.shiftMoney>=250000},{t:"Ningún problema vencido",f:()=>S.ss.ign===0},{t:"Seguridad ≥ 65",f:()=>S.seg>=65}]},
+ {t:"Semana de la seguridad",who:"jorge",say:"Esta semana el foco es la seguridad. Quiero cero accidentes y que la gente se sienta libre de reportar.",pool:["ppe","leak","h2s","flare","plat","kick"],dil:["d_casi","d_contrat"],
+  goals:[{t:"Cero accidentes",f:()=>S.ss.acc===0},{t:"Seguridad ≥ 80",f:()=>S.seg>=80},{t:"Medir antes de decidir 2 veces",f:()=>S.ss.meas>=2}]},
+ {t:"Crudo nuevo",who:"lucia",say:"Compramos un crudo más pesado y barato. Más residuo, más sal. Veamos si la planta y tú están listos.",pool:["heavy","salt","sep","dieoff","foul","hdt"],dil:["d_empaque"],setup:()=>{S.crude="Pesado";setTimeout(()=>spawn("heavy"),1500)},
+  goals:[{t:"Margen del turno ≥ $250 000",f:()=>S.shiftMoney>=250000},{t:"Ningún problema vencido",f:()=>S.ss.ign===0},{t:"Diésel en especificación al final",f:()=>!S.dieOff}]},
+ {t:"Ola de calor",who:"marta",say:"Dicen que hoy llegamos a 38 grados. La torre de enfriamiento va a sufrir, y las calderas también.",pool:["cool","flood","boiler","o2low","truck","fcc"],dil:["d_carga"],
+  goals:[{t:"Margen del turno ≥ $280 000",f:()=>S.shiftMoney>=280000},{t:"Ningún problema vencido",f:()=>S.ss.ign===0},{t:"Seguridad ≥ 65",f:()=>S.seg>=65}]},
+ {t:"Auditoría ambiental",who:"rafa",say:"Vienen los del ministerio de ambiente. Y en el pueblo estamos atentos, ingeniero.",pool:["claus","fcc","flare","olor","leak","salt"],dil:["d_puertas","d_recorte"],
+  goals:[{t:"Confianza ≥ 70",f:()=>S.conf>=70},{t:"Ningún problema vencido",f:()=>S.ss.ign===0},{t:"Planta de azufre funcionando al final",f:()=>!S.down.claus}]},
+ {t:"Presión de producción",who:"lucia",say:"Fin de trimestre. Necesitamos producir al máximo… sin que nadie salga lastimado.",pool:["truck","ship","flood","blend","refo","hdt"],dil:["d_carga","d_recorte","d_doble"],
+  goals:[{t:"Margen del turno ≥ $380 000",f:()=>S.shiftMoney>=380000},{t:"Seguridad ≥ 60",f:()=>S.seg>=60},{t:"Confianza ≥ 60",f:()=>S.conf>=60}]},
+ {t:"Tormenta",who:"jorge",say:"Se acerca una tormenta tropical. Plataforma, oleoducto y barcos van a estar en riesgo. Primero la gente.",pool:["plat","wax","hammer","ship","boiler","flare"],dil:["d_casi"],setup:()=>{setTimeout(()=>spawn("plat"),1500)},
+  goals:[{t:"Cero accidentes",f:()=>S.ss.acc===0},{t:"Seguridad ≥ 75",f:()=>S.seg>=75},{t:"Oleoducto ≥ 80 % al final",f:()=>S.pipe>=.8}]},
+ {t:"Paro programado",who:"andres",say:"¡Llegó el paro programado! Cientos de contratistas, grúas y andamios. La unidad de crudo trabaja a carga mínima.",pool:["ppe","leak","h2s","bit","boiler","fcc"],dil:["d_contrat","d_casi","d_empaque"],setup:()=>{S.F=Math.min(S.F,70)},
+  goals:[{t:"Cero accidentes",f:()=>S.ss.acc===0},{t:"Seguridad ≥ 85",f:()=>S.seg>=85},{t:"Confianza ≥ 65",f:()=>S.conf>=65}]},
+ {t:"La prueba final",who:"sofia",say:"Ingeniero, hoy lo evalúan para el ascenso. ¡Yo voy a estar anotando todo! 📒",pool:null,dil:null,rate:.7,
+  goals:[{t:"Margen del turno ≥ $380 000",f:()=>S.shiftMoney>=380000},{t:"Seguridad ≥ 75",f:()=>S.seg>=75},{t:"Confianza ≥ 70",f:()=>S.conf>=70}]}];
+function campCur(){return S.camp&&!S.camp.done?CAMP[S.camp.n-1]:null}
+function shiftIntro(){const c=campCur();if(!c){SPD=1;setSpd(1);return}SPD=0;setSpd(0);
+ openD(`<span class="tag">Campaña · Turno ${S.camp.n} de 10</span><h2>${c.t}</h2>${bubble(c.who,c.say)}<div class="data"><b>🎯 Metas del turno</b> (una ⭐ por cada una):<br>${c.goals.map(g=>"⬜ "+g.t).join("<br>")}</div>
+ <p class="mut">Estrellas acumuladas: ${S.camp.stars.reduce((a,b)=>a+b,0)} de ${(S.camp.n-1)*3}. Margen acumulado para mejoras: <b>${fmt(S.money)}</b>.</p>
+ <button class="btn" onclick="closeD();beginShift()">Empezar turno ▶</button> <button class="btn o" onclick="shopDlg(true)">🏗️ Mejoras</button>`);}
+function beginShift(){S.shiftMoney=0;S.shiftLog=[];S.ss={acc:0,ign:0,meas:0,ok:0};S.gm=0;const c=campCur();if(c&&c.setup)c.setup();setSpd(1);save();if(c&&S.camp.n>=2&&!(S.misDone&&Object.keys(S.misDone).length))setTimeout(()=>toast("🎯 Tienes <b>misiones de campo</b> disponibles: plataforma marina, laboratorio y auditoría en Planta Norte."),2500);}
+function shiftEnd(){SPD=0;setSpd(0);const L=S.shiftLog;const ok=L.filter(x=>x.ok===true).length,bad=L.filter(x=>x.ok===false).length,ign=L.filter(x=>x.ok===null).length;
+ const c=campCur();let st,goalsHtml="";
+ if(c){const res=c.goals.map(g=>({g,ok:!!g.f()}));st=res.filter(x=>x.ok).length;goalsHtml=`<div class="data"><b>🎯 Metas</b><br>${res.map(x=>(x.ok?"✅ ":"❌ ")+x.g.t).join("<br>")}</div>`;S.camp.stars[S.camp.n-1]=Math.max(S.camp.stars[S.camp.n-1]||0,st);}
+ else st=S.shiftMoney>380000&&S.seg>=70&&S.conf>=60?3:S.shiftMoney>250000&&S.seg>=50?2:1;
+ if(!S.ss.sent){S.ss.sent=true;sendRes("turno",{turno:c?`${S.camp.n}/10 · ${c.t}`:"Modo libre",titulo:c?c.t:"Modo libre",estrellas:st,margen:Math.round(S.shiftMoney),seg:Math.round(S.seg),conf:Math.round(S.conf),ok,bad,ign,meas:S.ss.meas},S.decBuf);S.decBuf=[];}
+ const last=c&&S.camp.n===10;
+ openD(`<span class="tag">${c?`Campaña · Turno ${S.camp.n} de 10 · ${c.t}`:"Modo libre · Fin del turno"}</span><h2>${"⭐".repeat(st)}${"☆".repeat(3-st)} Resumen del turno</h2>${goalsHtml}
+ <div class="data">Margen del turno: <b>${fmt(S.shiftMoney)}</b> · Acumulado: <b>${fmt(S.money)}</b><br>Bien resueltos: <b>${ok}</b> · Mal decididos: <b>${bad}</b> · Vencidos: <b>${ign}</b> · Midiendo primero: <b>${S.ss.meas}</b><br>⛑️ Seguridad: <b>${Math.round(S.seg)}</b> · 🤝 Confianza: <b>${Math.round(S.conf)}</b> · Horas sin accidentes: <b>${Math.floor(S.safeH)}</b></div>
+ ${L.length?"<p><b>Lo que pasó:</b></p>"+L.map(x=>`<div class="mut">${x.ok==="dil"?"💬":x.ok===true?"✅":x.ok===false?"❌":"⏱️"} ${x.c.t} <i>(${x.c.tag})</i></div>`).join(""):""}
+ ${c&&st<3?`<p class="mut">Puedes repetir este turno para mejorar tus estrellas, o seguir adelante.</p>`:""}
+ <button class="btn" onclick="nextShift()">${last?"Ver mi carrera 🏆":"Siguiente turno ▶"}</button>${c&&st<3?` <button class="btn o" onclick="closeD();shiftIntro()">↺ Repetir turno</button>`:""} <button class="btn o" onclick="shopDlg(false,true)">🏗️ Mejoras</button>`);save();}
+function nextShift(){closeD();if(campCur()){if(S.camp.n>=10){S.camp.done=true;save();return careerDlg()}S.camp.n++;save();shiftIntro();}else{beginShift();}}
+function careerDlg(){const tot=S.camp.stars.reduce((a,b)=>a+b,0);const tit=tot>=26?"Superintendente de planta":tot>=20?"Ingeniero de procesos senior":tot>=12?"Ingeniero de procesos":"Ingeniero de procesos junior";
+ openD(`<span class="tag">🏆 Fin de la campaña</span><h2>${tit}</h2>${bubble("lucia",tot>=20?"Excelente trabajo. La planta es más segura, más rentable y la gente confía en ti.":"Buen trabajo. Todavía hay cosas por pulir, pero vas por buen camino.")}
+ <div class="data">⭐ Estrellas: <b>${tot} de 30</b><br>${CAMP.map((c,k)=>`${"⭐".repeat(S.camp.stars[k]||0)}${"☆".repeat(3-(S.camp.stars[k]||0))} ${k+1}. ${c.t}`).join("<br>")}<br><br>Margen total: <b>${fmt(S.money)}</b> · Mejoras: <b>${Object.keys(S.up||{}).length} de ${UPG.length}</b><br>⛑️ Seguridad final: <b>${Math.round(S.seg)}</b> · 🤝 Confianza final: <b>${Math.round(S.conf)}</b></div>
+ ${bubble("sofia","¡Anoté todo! Lo más importante que aprendí: medir antes de decidir, la seguridad primero y escuchar a la gente.")}
+ <p>Desde ahora el juego sigue en <b>modo libre</b>: turnos sin fin con todos los problemas mezclados.</p><button class="btn" onclick="closeD();beginShift()">Seguir en modo libre ▶</button> <button class="btn o" onclick="if(confirm('¿Empezar una campaña nueva desde cero?')){localStorage.removeItem(SK);location.reload()}">Nueva campaña</button>`);}
+// ---------- mejoras ----------
+const UPG=[
+ {k:"vfd",n:"Variadores de frecuencia en bombas",ic:"💧",c:150000,d:"Las bombas se regulan con velocidad, no con válvula: ahorran energía (+$0,20/bbl) y se acaba la cavitación de la bomba de carga.",u:"bomba"},
+ {k:"aph",n:"Precalentador de aire del horno",ic:"♨️",c:300000,d:"Aprovecha el calor de los gases de chimenea para calentar el aire de combustión: −15 % de combustible en el horno.",u:"horno"},
+ {k:"foul",n:"Monitoreo de ensuciamiento y limpieza programada",ic:"🧽",c:180000,d:"Los intercambiadores se ensucian a la mitad de velocidad: el horno ahorra todos los días.",u:"pre"},
+ {k:"ana",n:"Analizadores en línea",ic:"🧪",c:200000,d:"El laboratorio responde en 10 minutos en lugar de 1 hora.",u:"torre"},
+ {k:"det",n:"Detectores de gas y cámaras",ic:"📟",c:120000,d:"Los problemas de seguridad dan 50 % más tiempo para actuar. Seguridad +5 al instalarlos.",u:"ctrl"},
+ {k:"pred",n:"Mantenimiento predictivo",ic:"📡",c:300000,d:"El sistema te sugiere qué herramienta de medición usar en cada problema.",u:"ctrl"},
+ {k:"cogen",n:"Planta de cogeneración",ic:"⚡",c:500000,d:"Produce electricidad y vapor juntos: +$0,60/bbl y ya no se disparan las calderas.",u:"boiler"},
+ {k:"esp",n:"Automatización de pozos",ic:"🐴",c:250000,d:"Balancines con control automático: +8 % de producción del campo y menos varillas rotas.",u:"jacks"},
+ {k:"loop",n:"Segundo oleoducto (loop)",ic:"🛤️",c:400000,d:"Con dos líneas en paralelo, la parafina nunca baja el caudal de crudo propio por debajo del 85 %.",u:"pipe"},
+ {k:"tank",n:"Tanque de crudo adicional",ic:"🛢️",c:260000,d:"Más inventario de crudo: un barco atrasado ya no es problema.",u:"tkc1"},
+ {k:"train",n:"Centro de capacitación",ic:"🎓",c:220000,d:"Personal mejor entrenado: confianza +10 y las buenas decisiones suben más la confianza.",u:"pueblo"},
+ {k:"biof",n:"Biofiltro de olores",ic:"🌿",c:160000,d:"Trata los gases del tratamiento de aguas: se acaban las quejas por olores en el pueblo. Confianza +5.",u:"agua"}];
+function buy(k){const g=UPG.find(x=>x.k===k);S.up=S.up||{};if(S.up[k]||S.money<g.c)return;S.money-=g.c;S.up[k]=1;
+ if(k==="det")meter("seg",5);if(k==="train")meter("conf",10);if(k==="biof")meter("conf",5);beep(1200,.12);toast(`🏗️ <b>${g.n}</b> instalada. Búscala en el mapa.`);save();}
+function shopDlg(fromIntro,fromEnd){S.up=S.up||{};const back=fromIntro?"closeD();shiftIntro()":fromEnd?"closeD();shiftEnd2()":"closeD()";
+ openD(`<span class="tag">🏗️ Mejoras de planta</span><h2>Invierte tu margen</h2><p class="mut">Presupuesto disponible: <b style="color:#9be08f">${fmt(S.money)}</b>. Cada mejora se ve en el mapa y cambia cómo se juega.</p>
+ ${UPG.map(g=>{const own=S.up[g.k],can=S.money>=g.c;return `<div class="li" style="cursor:default;align-items:flex-start"><div style="font-size:22px">${g.ic}</div><div style="flex:1"><b>${g.n}</b> ${own?'<span class="ok">✔ instalada</span>':""}<br><span class="mut">${g.d}</span></div>
+ ${own?"":`<button class="btn${can?"":" o"}" style="margin:0;white-space:nowrap" ${can?"":"disabled"} onclick="buy('${g.k}');shopDlg(${!!fromIntro},${!!fromEnd})">${fmt(g.c)}</button>`}</div>`}).join("")}
+ <button class="btn" onclick="${back}">Listo</button>`);}
+let _lastEnd=null;function shiftEnd2(){shiftEnd();}
+function drawUpgrades(add){const u=S.up||{};
+ if(u.vfd)add(17.6+8.8,()=>{box(8.6,17.4,.6,.4,12,"#2f6db5",0,{clean:1});const [a,b]=P(8.9,17.8,10);cx.fillStyle="#3cff7a";cx.fillRect(a-1.5,b-1.5,3,3)});
+ if(u.aph)add(6.6+17.6+2,()=>{box(17.4,6.4,1.2,1,30,"#6a6d68",0,{rust:2});pipeLine([[18,6.9,30],[16.2,8,52]],"#6a6d68",5)});
+ if(u.ana)add(9.6+20.6,()=>{box(20.4,9.4,.8,.6,8,"#d8d3c7",0,{top:"#2f6db5",clean:1});box(21.4,9.4,.8,.6,8,"#d8d3c7",0,{top:"#2f6db5",clean:1})});
+ if(u.foul)add(14.4+13.6+1,()=>{box(13.6,14.4,1.4,.8,6,"#c8a23a",0,{clean:1});box(13.8,14.5,.5,.5,10,"#555",6,{clean:1})});
+ if(u.det)for(const [x,y] of [[9,15.8],[15,11.4],[21,12.4],[-14,12.6],[18.6,18],[11,9]])add(x+y,()=>{const a=P(x,y),b=P(x,y,20);cx.strokeStyle="#d4c21a";cx.lineWidth=2;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();cx.fillStyle=Math.sin(T*4+x)>0?"#ffdc3a":"#7a6a1a";cx.beginPath();cx.arc(b[0],b[1]-2,2.6,0,7);cx.fill()},x,y);
+ if(u.pred)add(12.6+8.2+5,()=>{const a=P(8.2,12.4,30);cx.strokeStyle="#aaa";cx.lineWidth=1.5;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(a[0],a[1]-16);cx.stroke();cx.fillStyle="#e8e4dc";cx.beginPath();cx.ellipse(a[0]+4,a[1]-18,7,4,-.5,0,7);cx.fill()});
+ if(u.cogen)add(9.6+44.8+2,()=>{box(44.8,9.6,1.8,1.6,22,"#5f6a6a",0,{win:2,lit:1,lv:[.5]});cyl(46.2,10.2,.3,70,"#555",22,{rust:0,roof:false})},45,10);
+ if(u.esp)for(const j of JACKS)add(j[0]+j[1]+1.2,()=>{const [a,b]=P(j[0]-.6,j[1]+.6,4);cx.fillStyle="#1f3d6b";cx.beginPath();cx.moveTo(a-8,b);cx.lineTo(a+6,b-6);cx.lineTo(a+10,b-2);cx.lineTo(a-4,b+4);cx.closePath();cx.fill();cx.strokeStyle="#7fb2ff";cx.lineWidth=.6;cx.stroke()},j[0],j[1]);
+ if(u.loop)add(-1+15.4+3,()=>pipeLine(PL.map(p=>[p[0]+.5,p[1]+.5,3]),"#4d5052",5,"rgba(255,170,70,.55)",12),-3,16);
+ if(u.tank)add(19.2+10.6+1,()=>{const p=cyl(10.6,19.2,1,36,"#5a5c5b",0,{bands:3,level:S.crudeLvl,stripe:"rgba(180,40,30,.6)"});hitU("tkc1",p,60,50)});
+ if(u.train)add(28.6+10.4+3,()=>{box(10.4,28.6,2.4,1.8,14,"#7a7f66",0,{win:3,lit:1,lv:[.5]});const s=P(11.6,29.5,20);cx.fillStyle="#1d6b45";cx.fillRect(s[0]-20,s[1]-10,40,11);cx.fillStyle="#fff";cx.font="bold 8px system-ui";cx.fillText("CAPACITACIÓN",s[0]-18,s[1]-2)},11,29);
+ if(u.biof)add(24.6+21.2+1,()=>{box(21.2,24.6,1.2,.7,6,"#3c7a46",0,{top:"#4f9a5a",clean:1})});
+ // paro programado: grúas y andamios
+ if(S.camp&&!S.camp.done&&S.camp.n===9){add(7+19.2+3,()=>{for(let k=0;k<6;k++){const [a,b]=P(19.9,7.7,k*28);cx.strokeStyle="rgba(200,200,190,.7)";cx.lineWidth=1;cx.strokeRect(a-6,b-28,12,28);}});
+  add(10+13+2,()=>{box(12.6,9.2,1.2,.6,6,"#d9a62b");const a=P(13.2,9.5,12),b=P(15.4,8.2,150);cx.strokeStyle="#e0b53a";cx.lineWidth=3;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();cx.strokeStyle="#222";cx.lineWidth=1;cx.beginPath();cx.moveTo(b[0],b[1]);cx.lineTo(b[0],b[1]+50);cx.stroke();});}
+}
+
+
+// ---------- entidades vivas ----------
+const ROAD=[[1.2,1.2],[26.6,1.2],[26.6,26.6],[18,26.6],[18,17.8],[12,17.8],[12,26.6],[7.5,26.6],[7.5,7.5],[1.2,7.5]];
+const TRUCKS=[];for(let i=0;i<6;i++)TRUCKS.push({s:i*14,col:["#c9c3b5","#b8452f","#d9a62b","#8a9aa3","#c9c3b5"][i%5],wait:0});
+const RTRK=[[27.5,20.5],[23.2,20.5],[23.2,18.8],[19,18.8],[19,15.6],[27.5,15.6]];// ruta de camiones al llenadero
+function pathLen(p){let L=0;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];L+=Math.hypot(b[0]-a[0],b[1]-a[1])}return L}
+function pathAt(p,s){const L=pathLen(p);s=((s%L)+L)%L;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length],l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(s<=l){const t=s/l;return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,Math.atan2(b[1]-a[1],b[0]-a[0])]}s-=l}return p[0].concat(0)}
+const WALK=[[5,8],[9,8],[9,14],[12,14],[12,11],[18,11],[18,5],[13,5],[13,8],[5,14],[17,14],[17,17],[9,17],[22,11],[22,17],[5,17],[10,6.5],[20,10.5]];
+const PEOPLE=[];for(let i=0;i<36;i++){const a=WALK[i%WALK.length];PEOPLE.push({x:a[0],y:a[1],tx:a[0],ty:a[1],sp:.6+rnd()*.5,v:["#e2701c","#e2701c","#d4c21a","#3b6fb6","#e2701c"][i%5],h:["#f2f0e8","#f2c21b","#f2f0e8","#2f6db5"][i%4],wait:rnd()*3})}
+const CARS=[];for(let i=0;i<7;i++)CARS.push({s:i*14+5,col:["#5b6770","#7a2e2e","#2e4a7a","#c9c3b5"][i%4]});
+const PARK=[];for(let i=0;i<9;i++)PARK.push({x:2.4+(i%3)*1.1,y:13.6+Math.floor(i/3)*1.3,col:["#5b6770","#7a2e2e","#2e4a7a","#a8a39a","#3c3c3c"][i%5]});
+const PART=[];
+function emit(x,y,z,k,n){for(let j=0;j<n;j++){if(PART.length>420)return;PART.push({x:x+(rnd()-.5)*.3,y:y+(rnd()-.5)*.3,z,k,l:0,L:k==="st"?4+rnd()*3:k==="sm"?5+rnd()*3:k==="bk"?6:1,vx:(rnd()-.3)*.25,vz:k==="fi"?40:14+rnd()*10,r:k==="st"?6+rnd()*5:4+rnd()*3})}}
+const SHIP={x:-6,state:"in",t:0};
+// ---------- cámara ----------
+const CAM={x:0,y:0,z:1};
+function fitCam(){if(W<700){const c=P(11.5,15);CAM.x=c[0];CAM.y=c[1]-70;CAM.z=.72;}else{const c=P(14,13);CAM.x=c[0];CAM.y=c[1]-90;CAM.z=clamp(Math.min(W/1500,H/900),.5,1.3);}}
+fitCam();
+function s2w(px,py){return [(px-W/2)/CAM.z+CAM.x,(py-H/2)/CAM.z+CAM.y]}
+// ---------- suelo pre-renderizado ----------
+let GROUND=null;const X0=-36,X1=50,Y0=-17,Y1=37;const GO=[-(X0-Y1)*TW+40,-(X0+Y0)*TH+240];
+function zoneCol(x,y){if(y>=26.5&&x<9)return [22,34,40];if(y>=26.8&&x>=9)return [50,55,42];if(y<-3.9&&x>3&&x<25)return [60,58,52];if(y<-3.9&&x>-13&&x<=3)return [54,58,46];if(y<-1.2)return [66,62,46];if(x<-3)return [92,74,54];return [58,56,50];}
+function buildGround(){const g=document.createElement("canvas");g.width=((X1-Y0)-(X0-Y1))*TW+80;g.height=((X1+Y1)-(X0+Y0))*TH+320;const c=g.getContext("2d");
+ c.translate(GO[0],GO[1]);
+ const tile=(x,y,col)=>{const a=P(x,y),b=P(x+1,y),d=P(x+1,y+1),e=P(x,y+1);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.lineTo(d[0],d[1]);c.lineTo(e[0],e[1]);c.closePath();c.fillStyle=col;c.fill()};
+ for(let x=X0;x<X1;x++)for(let y=Y0;y<Y1;y++){const col=zoneCol(x+.5,y+.5);const k=.86+rnd()*.17;tile(x,y,`rgb(${col[0]*k|0},${col[1]*k|0},${col[2]*k|0})`);}
+ const quad=(x,y,w,d,col,st)=>{const a=P(x,y),b=P(x+w,y),e=P(x+w,y+d),f=P(x,y+d);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.lineTo(e[0],e[1]);c.lineTo(f[0],f[1]);c.closePath();c.fillStyle=col;c.fill();if(st!==0){c.strokeStyle="rgba(0,0,0,.35)";c.stroke()}};
+ const pad=quad;
+ // losas refinería
+ pad(9,2.2,16,13.2,"#55534c");pad(4.6,17,7,5.4,"#4d4b45");pad(12.4,18.2,5.6,6.2,"#4f4c46");pad(19,12,4.6,4.4,"#57544d");pad(2.6,9,7.6,7.6,"#5a5952");pad(19,19,4,3,"#4f4c46");pad(1.6,17,3.4,5.4,"#4d4b45");
+ // losas conversión
+ pad(29,2,18,8.6,"#55534c");pad(30,11.6,16.4,5.6,"#57544d");pad(30.4,17.8,15.2,5.8,"#4d4b45");
+ // campo: plataformas de grava
+ pad(-32,2,10,9,"#7a6650");pad(-17,6.6,10,6,"#6f6656");pad(-16,14.2,9,7.6,"#6f6656");
+ for(const j of JACKS)pad(j[0]-.9,j[1]-.6,1.8,1.2,"#6e5e48");
+ // fosas de lodo y manchas en el campo
+ for(let i=0;i<140;i++){const x=X0+rnd()*(-3-X0),y=rnd()*25.5,[sx,sy]=P(x,y);const r=5+rnd()*18;c.fillStyle=`rgba(${rnd()<.5?"40,28,18":"20,14,10"},${.15+rnd()*.25})`;c.beginPath();c.ellipse(sx,sy,r*1.6,r*.8,0,0,7);c.fill();}
+ // diques
+ const dike=(x,y,w,d)=>{const a=P(x,y),b=P(x+w,y),e=P(x+w,y+d),f=P(x,y+d);c.strokeStyle="#7a756a";c.lineWidth=3;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.lineTo(e[0],e[1]);c.lineTo(f[0],f[1]);c.closePath();c.stroke()};
+ dike(4.6,17,7,5.4);dike(12.4,18.2,5.6,6.2);dike(30.4,17.8,15.2,5.8);dike(1.6,17,3.4,5.4);
+ // calles
+ const road=(pts,w,col,dash,closed)=>{const n=closed?pts.length:pts.length-1;for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%pts.length];const pa=P(a[0],a[1]),pb=P(b[0],b[1]);c.strokeStyle=col;c.lineWidth=TW*w;c.lineCap="square";c.beginPath();c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);c.stroke();
+   if(dash){c.strokeStyle=dash;c.lineWidth=1.5;c.setLineDash([8,10]);c.beginPath();c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);c.stroke();c.setLineDash([]);}}};
+ road(ROAD,1.15,"#24231f","rgba(220,190,90,.55)",1);road(RTRK,1,"#24231f",null,1);road(ROAD2,1.1,"#24231f","rgba(220,190,90,.5)",1);
+ road(FROAD,1,"#4a3a2a",null,1);road([[-19,1],[-19,24]],.9,"#4a3a2a",null,0);road([[-19,1],[-19,-2.6]],.9,"#4a3a2a",null,0);
+ road([[X0,-2.6],[X1,-2.6]],1.9,"#1f1e1b","rgba(240,230,200,.7)",0);road([[1.2,1.2],[1.2,-2.6]],1,"#24231f",null,0);road([[46.8,1.2],[46.8,-2.6]],1,"#24231f",null,0);
+ road(TROAD,1,"#2a2925","rgba(240,240,230,.35)",1);for(const x of [20,30,40])road([[x,30],[x,33.6]],.9,"#2a2925",null,0);road([[46.8,24.6],[46.8,30]],1,"#24231f",null,0);
+ road([[-4.5,22],[-1,22],[-1,14.5]],.8,"#4a3a2a",null,0);road([[1.2,7.5],[1.2,14.6],[-1,14.6]],.9,"#24231f",null,0);
+ road([[14,-2.6],[14,-6.2]],1,"#24231f",null,0);road([[4,-6.2],[24,-6.2],[24,-15.6],[4,-15.6]],.9,"#2a2925",null,1);road([[-12,-9.6],[2,-9.6]],.9,"#2a2925","rgba(240,240,230,.3)",0);road([[-12,-13],[2,-13]],.9,"#2a2925",null,0);road([[2,-2.6],[2,-15.6]],.9,"#2a2925",null,0);
+ pad(4.4,-15,19,8.4,"#57544d");for(const h of NHOUSES)pad(h[0]-.3,h[1]-.3,2.4,2,"#4a5340",0);
+ {const a=P(4,-6),b=P(24,-6),e=P(24,-15.8),f=P(4,-15.8);c.strokeStyle="rgba(150,150,140,.5)";c.lineWidth=1;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.lineTo(e[0],e[1]);c.lineTo(f[0],f[1]);c.closePath();c.stroke();}
+ // vía férrea
+ {const a=P(10,26.3),b=P(X1,26.3);c.strokeStyle="#3b3127";c.lineWidth=TW*.8;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();
+  for(let x=10;x<X1;x+=.35){const p=P(x,26.05),q=P(x,26.55);c.strokeStyle="#2a2018";c.lineWidth=2;c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.stroke();}
+  for(const yy of [26.15,26.45]){const p=P(10,yy),q=P(X1,yy);c.strokeStyle="#8a8478";c.lineWidth=1.2;c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.stroke();}}
+ // manchas de aceite y charcos en refinería
+ for(let i=0;i<420;i++){const x=rnd()*48,y=rnd()*25,[sx,sy]=P(x,y);const r=4+rnd()*16;c.fillStyle=`rgba(${rnd()<.5?"10,8,6":"35,28,20"},${.15+rnd()*.3})`;c.beginPath();c.ellipse(sx,sy,r*1.6,r*.8,0,0,7);c.fill();}
+ for(let i=0;i<50;i++){const x=rnd()*48,y=rnd()*24,[sx,sy]=P(x,y);const r=6+rnd()*12;const gr=c.createRadialGradient(sx,sy,1,sx,sy,r*1.6);gr.addColorStop(0,"rgba(60,70,80,.35)");gr.addColorStop(1,"rgba(60,70,80,0)");c.fillStyle=gr;c.beginPath();c.ellipse(sx,sy,r*1.6,r*.8,0,0,7);c.fill();}
+ // mallas
+ const fence=(pts)=>{c.strokeStyle="rgba(150,150,140,.5)";c.lineWidth=1;for(let i=0;i<pts.length-1;i++){const a=P(pts[i][0],pts[i][1]),b=P(pts[i+1][0],pts[i+1][1]);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}};
+ fence([[.2,.2],[48,.2],[48,25.6],[9,25.6]]);fence([[-34,.2],[-3.6,.2],[-3.6,25],[-34,25],[-34,.2]]);
+ // estacionamiento y muelle
+ for(let i=0;i<4;i++){const a=P(2,13+i*1.3),b=P(5.6,13+i*1.3);c.strokeStyle="rgba(230,230,220,.35)";c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}
+ pad(2,23,5.2,3.2,"#5c5a54");
+ // helipuerto
+ {const [hx,hy]=P(-5.6,22.2);c.fillStyle="#3f3f3a";c.beginPath();c.ellipse(hx,hy,48,24,0,0,7);c.fill();c.strokeStyle="#e8c43a";c.lineWidth=2;c.stroke();c.fillStyle="#e8e4dc";c.font="bold 22px system-ui";c.save();c.translate(hx,hy);c.scale(1,.5);c.textAlign="center";c.fillText("H",0,8);c.restore();}
+ // pueblo: aceras y jardines
+ for(const h of HOUSES){pad(h[0]-.3,h[1]-.3,2.4,2,"#4a5340",0);}
+ pad(21,28.2,4,2.6,"#3a3934");
+ GROUND=g;}
+
+// ---------- mundo ampliado: campo, mar, conversión y pueblo ----------
+const JACKS=[[-31,13.5],[-27,13.5],[-23,13.5],[-31,17.5],[-27,17.5],[-23,17.5],[-31,21.5],[-27,21.5],[-23,21.5],[-12.5,3],[-8.5,3],[-12,23],[-8,23.2]];
+const HOUSES=[];for(let x=13;x<48;x+=3.4)for(const y of [27.6,31.2,34.6]){if(x>20&&x<25.6&&y<28)continue;if(Math.abs(x-30)<1.3||Math.abs(x-20)<1.3||Math.abs(x-40)<1.3)continue;HOUSES.push([x,y,["#8a7f6e","#6f7a80","#8a6a5a","#7a7f66","#9a8f7a"][HOUSES.length%5],["#5a2a22","#3a3a3a","#4a3a2a","#2e3a4a"][HOUSES.length%4]])}
+const TREES=[];for(let i=0;i<40;i++){const x=12+rnd()*36,y=27+rnd()*9;if(HOUSES.some(h=>Math.abs(h[0]+.9-x)<1.6&&Math.abs(h[1]+.7-y)<1.3))continue;if(Math.abs(y-30)<.8||Math.abs(y-33.6)<.8)continue;TREES.push([x,y,.6+rnd()*.5])}
+for(let i=0;i<26;i++)TREES.push([X0+1+rnd()*84,-4.6+rnd()*1.4,.5+rnd()*.5]);
+const ROAD2=[[27,1.2],[46.8,1.2],[46.8,24.6],[27,24.6]];
+const FROAD=[[-33.5,1],[-4.5,1],[-4.5,24.2],[-33.5,24.2]];
+const TROAD=[[12.4,30],[48.6,30],[48.6,33.6],[12.4,33.6]];
+const PL=[[-10.5,16.6],[-6,14.6],[-1,14.6],[1,16.6],[1.9,18.4]];
+const WALKF=[[-30,4],[-24,4],[-24,9],[-30,9],[-15,8],[-9,8],[-15,12],[-9,12],[-15,15],[-9,15],[-15,20],[-9,20],[-29,15.5],[-21,15.5],[-29,19.5],[-21,19.5]];
+const WALKD=[[30,3],[36,3],[36,9],[30,9],[42,3],[46,3],[46,9],[42,9],[31,11],[37,11],[44,11],[31,17],[44,17],[38,17]];
+const WALKT=[[13,29.4],[47,29.4],[13,32.9],[47,32.9],[20.6,30],[30.6,32],[40.6,30]];
+unit("rig",{x:-27,y:6,nm:"Torre de perforación",ic:"🏗️",info:"Perfora pozos nuevos. La broca gira al fondo de una sarta de tubería y el lodo de perforación baja por dentro, enfría la broca, sube los recortes y, con su peso, mantiene controlada la presión del yacimiento. El BOP (preventor de reventones) es la última barrera de seguridad."});
+unit("jacks",{x:-27,y:17.5,nm:"Pozos con bomba de balancín",ic:"🐴",info:"Cuando el yacimiento ya no tiene presión para que el petróleo suba solo, se usa levantamiento artificial. El balancín sube y baja una varilla que acciona una bomba en el fondo del pozo."});
+unit("sep",{x:-14,y:16.6,nm:"Estación de separación",ic:"🫧",info:"Lo que sale del pozo es una mezcla de petróleo, gas y agua. Los separadores trifásicos los separan por densidad: el gas sale por arriba, el agua por abajo y el petróleo en medio."});
+unit("gas",{x:-12,y:9,nm:"Planta de gas",ic:"☠️",info:"Trata el gas asociado: lo deshidrata y le quita el H₂S con aminas (endulzamiento). El H₂S es extremadamente tóxico: a concentraciones altas paraliza el olfato y puede matar en minutos. Por eso hay detectores y mangas de viento."});
+unit("pipe",{x:-4,y:14.6,nm:"Oleoducto y estación de bombeo",ic:"🛤️",info:"Lleva el crudo del campo a la refinería. Cada cierto tiempo se envía un «chancho» (pig) por dentro del tubo para limpiarlo de parafina y agua. Cerrar una válvula de golpe provoca golpe de ariete."});
+unit("plat",{x:-16,y:32.5,nm:"Plataforma marina",ic:"🌊",info:"Produce petróleo desde pozos bajo el mar. Todo llega por helicóptero o barco de abastecimiento, y la seguridad del personal depende del clima."});
+unit("fcc",{x:32,y:5.6,nm:"Craqueo catalítico (FCC)",ic:"⚙️",info:"Convierte gasóleos pesados en gasolina y GLP rompiendo las moléculas con un catalizador en polvo muy caliente. El catalizador circula entre el reactor y el regenerador, donde se le quema el coque."});
+unit("refo",{x:39,y:5,nm:"Reformadora catalítica",ic:"🔺",info:"Transforma la nafta pesada en un componente de gasolina de alto octanaje, y de paso produce hidrógeno que usa el hidrotratamiento."});
+unit("hdt",{x:43.4,y:5.4,nm:"Hidrotratamiento de diésel",ic:"💨",info:"Quita el azufre del diésel con hidrógeno sobre un catalizador, a alta presión y temperatura. Así el diésel cumple la norma de bajo azufre."});
+unit("claus",{x:32.6,y:13.6,nm:"Planta de azufre (Claus)",ic:"🟡",info:"Convierte el H₂S que se separa en la refinería en azufre sólido: se quema un tercio del H₂S y el resto reacciona con el SO₂ formado. Las montañas amarillas son azufre, un subproducto que se vende."});
+unit("boiler",{x:38.8,y:13.4,nm:"Calderas y vapor",ic:"♨️",info:"Generan el vapor que usan casi todas las unidades: turbinas, despojamiento, calentamiento. Si cae el vapor, cae media refinería."});
+unit("blend",{x:44,y:14,nm:"Planta de mezclas",ic:"🧪",info:"Mezcla los componentes (reformado, nafta de FCC, butano…) para obtener gasolinas que cumplan octanaje, presión de vapor y demás especificaciones."});
+unit("tren",{x:40,y:26.3,nm:"Despacho por tren",ic:"🚆",info:"Los carros tanque llevan productos a otras regiones. Cargar un tren completo requiere coordinar el llenadero, la calidad y la seguridad."});
+unit("lab",{x:6.3,y:6.3,nm:"Laboratorio de calidad",ic:"🔬",info:"Analiza muestras de crudo y productos: agua, azufre, densidad, octanaje, punto de inflamación. Ningún producto sale de la refinería sin su certificado."});
+unit("norte",{x:14,y:-10,nm:"Planta Norte (ciudad vecina)",ic:"🏭",info:"Terminal de envasado de GLP en la ciudad vecina: aquí el gas de la refinería se llena en cilindros para los hogares. Es parte de la misma empresa y se audita como cualquier otra planta."});
+unit("pueblo",{x:30,y:31,nm:"Pueblo vecino",ic:"🏘️",info:"La refinería es parte de una comunidad. Ruido, olores, antorchas y tráfico de camiones afectan a los vecinos: la buena relación con la comunidad también se gestiona."});
+const FTK=[{k:"naf",x:32,y:19.4,n:"Gasolina"},{k:"naf",x:35,y:19.4,n:"Gasolina súper"},{k:"die",x:38,y:19.4,n:"Diésel"},{k:"ker",x:41,y:19.4,n:"Jet A-1"},{k:"die",x:32,y:22.2,n:"Diésel"},{k:"res",x:35,y:22.2,n:"Búnker"},{k:"naf",x:38,y:22.2,n:"Reformado"},{k:"gas",x:41.4,y:22.4,n:"GLP"}];
+const PICK=[];for(let i=0;i<4;i++)PICK.push({s:i*22,col:["#e8e4dc","#c9c3b5","#8a2a1e","#e8e4dc"][i]});
+const HWY=[];for(let i=0;i<12;i++)HWY.push({x:X0+rnd()*86,d:i%2?1:-1,col:["#5b6770","#7a2e2e","#2e4a7a","#c9c3b5","#3c3c3c","#c8a23a"][i%6],tr:i%4===0});
+const TCAR=[];for(let i=0;i<6;i++)TCAR.push({s:i*13,col:["#2e4a7a","#7a2e2e","#a8a39a","#3c5a3c"][i%4]});
+const CAR2=[];for(let i=0;i<4;i++)CAR2.push({s:i*17,col:["#c9c3b5","#d9a62b","#5b6770","#b8452f"][i]});
+const PEOPLEF=[],PEOPLED=[],PEOPLET=[];
+function crowd(arr,W,n,vests){for(let i=0;i<n;i++){const a=W[i%W.length];arr.push({x:a[0],y:a[1],tx:a[0],ty:a[1],sp:.6+rnd()*.5,v:vests[i%vests.length],h:["#f2f0e8","#f2c21b","#f2f0e8","#2f6db5"][i%4],wait:rnd()*3,W})}}
+crowd(PEOPLEF,WALKF,18,["#e2701c","#d4c21a","#3b6fb6"]);crowd(PEOPLED,WALKD,18,["#e2701c","#e2701c","#d4c21a"]);crowd(PEOPLET,WALKT,12,["#5a6a8a","#8a4a4a","#4a7a5a","#c9c3b5"]);
+for(const p of PEOPLET)p.civ=1;
+const HELI={u:0},BOAT={a:0},TRAIN={x:14,st:"in",t:0},PIG={s:0,on:false};
+function stepPeople(arr,dt,spdv){for(const p of arr){if(p.wait>0){p.wait-=dt*Math.max(SPD,0);p.mv=0;continue}
+  const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy);
+  if(d<.05){const n=p.W[Math.floor(rnd()*p.W.length)];if(rnd()<.5){p.tx=n[0];p.ty=p.y}else{p.tx=p.x;p.ty=n[1]}p.wait=rnd()*2;}
+  else{const s=Math.min(d,p.sp*dt*spdv);if(Math.abs(dx)>.01)p.x+=Math.sign(dx)*s;else p.y+=Math.sign(dy)*s;p.mv=SPD>0;}}}
+function updZones(dt){const spdv=Math.max(SPD,0);
+ for(const c of PICK)c.s+=dt*1.5*spdv;for(const c of TCAR)c.s+=dt*1.2*spdv;for(const c of CAR2)c.s+=dt*1.3*spdv;
+ for(const c of HWY){c.x+=c.d*dt*(c.tr?1.6:2.6)*spdv;if(c.x>X1)c.x=X0;if(c.x<X0)c.x=X1;}
+ stepPeople(PEOPLEF,dt,spdv);stepPeople(PEOPLEN,dt,spdv);updYou(dt);stepPeople(PEOPLED,dt,spdv);stepPeople(PEOPLET,dt,spdv);
+ HELI.u=(HELI.u+dt*.035*spdv)%2;BOAT.a+=dt*.08*spdv;
+ if(TRAIN.st==="in"){TRAIN.x+=dt*.9*spdv;if(TRAIN.x>=36){TRAIN.x=36;TRAIN.st="load";TRAIN.t=0}}else if(TRAIN.st==="load"){TRAIN.t+=dt*spdv;if(TRAIN.t>30)TRAIN.st="out"}else{TRAIN.x+=dt*1.2*spdv;if(TRAIN.x>X1+12){TRAIN.x=-4;TRAIN.st="in"}}
+ if(PIG.on){PIG.s+=dt*1.4*spdv;if(PIG.s>pathLen(PL)){PIG.on=false;PIG.s=0;}}
+ // partículas de las nuevas zonas
+ if(rnd()<dt*10)emit(35.5,3.6,182,"sm",1);
+ if(rnd()<dt*12)emit(38+rnd()*2,12.8,82,"st",1);
+ if(rnd()<dt*6)emit(37.4+rnd()*3.6,2.8,58,"sm",1);
+ if(rnd()<dt*4)emit(34.6,12.4,142,"st",1);
+ if(rnd()<dt*5)emit(-23.8,8.2,14,"bk",1);
+ if(S.down&&S.down.boiler)return;
+}
+// ---------- dibujo de nuevas piezas ----------
+function hdrum(x,y,len,r,col,z){const [a,b]=P(x,y,z);cx.save();cx.translate(a,b);cx.rotate(.46);const g=cx.createLinearGradient(0,-r,0,r);g.addColorStop(0,sh(col,1.1));g.addColorStop(1,sh(col,.5));cx.fillStyle=g;cx.beginPath();cx.ellipse(0,0,len,r,0,0,7);cx.fill();cx.restore();}
+function derrick(x,y){box(x-1.1,y-1.1,2.2,2.2,22,"#4e463c",0,{rust:5});box(x-.35,y+.6,.7,.5,12,"#b8261a",0);
+ const legs=[[-.9,-.9],[.9,-.9],[.9,.9],[-.9,.9]],top=[[-.18,-.18],[.18,-.18],[.18,.18],[-.18,.18]],Z0=22,Z1=210;
+ const pt=(i,t)=>P(x+legs[i][0]+(top[i][0]-legs[i][0])*t,y+legs[i][1]+(top[i][1]-legs[i][1])*t,Z0+(Z1-Z0)*t);
+ cx.strokeStyle="#c9a43a";cx.lineWidth=2.4;for(let i=0;i<4;i++){const a=pt(i,0),b=pt(i,1);cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();}
+ cx.lineWidth=1;cx.strokeStyle="rgba(201,164,58,.8)";for(const [i,j] of [[0,1],[1,2],[2,3],[3,0]])for(let k=0;k<10;k++){const t0=k/10,t1=(k+1)/10;const a=pt(i,t0),b=pt(j,t1),c2=pt(j,t0),d=pt(i,t1);cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.moveTo(c2[0],c2[1]);cx.lineTo(d[0],d[1]);cx.stroke();}
+ box(x-.3,y-.3,.6,.6,8,"#6a6458",Z1);
+ const stop=INC.find(i=>i.c.u==="rig"),bz=stop?70:60+80*(.5+.5*Math.sin(T*.35));const [cx0,cy0]=P(x,y,Z1),[bx,by]=P(x,y,bz);
+ cx.strokeStyle="#222";cx.lineWidth=1;cx.beginPath();cx.moveTo(cx0,cy0);cx.lineTo(bx,by);cx.stroke();cx.fillStyle="#d9a62b";cx.fillRect(bx-4,by-6,8,10);
+ cx.strokeStyle="#777";cx.lineWidth=3;cx.beginPath();cx.moveTo(bx,by+4);cx.lineTo(P(x,y,Z0)[0],P(x,y,Z0)[1]);cx.stroke();
+ if(!stop){cx.strokeStyle="#ddd";cx.lineWidth=1.5;const ang=T*6;cx.beginPath();cx.moveTo(bx+Math.cos(ang)*5,by+8);cx.lineTo(bx-Math.cos(ang)*5,by+8);cx.stroke();}
+ const [lx,ly]=P(x,y,Z1+12);cx.fillStyle=`rgba(255,60,40,${.5+.5*Math.sin(T*2.5)})`;cx.beginPath();cx.arc(lx,ly,2.5,0,7);cx.fill();}
+function pumpjack(x,y,on,ph,k){box(x-.7,y-.12,1.5,.24,3,"#4c4a44",0,{clean:1});const [px,py]=P(x,y,24);const [b1x,b1y]=P(x-.35,y,3),[b2x,b2y]=P(x+.35,y,3);
+ cx.strokeStyle="#7a2e1e";cx.lineWidth=2.4;cx.beginPath();cx.moveTo(b1x,b1y);cx.lineTo(px,py);cx.lineTo(b2x,b2y);cx.stroke();
+ const a=on?Math.sin(T*1.7*Math.max(SPD,.25)+ph)*.32:0;const L1=30,L2=20,ca=Math.cos(a+.46),sa=Math.sin(a+.46);
+ const hx=px+ca*L1,hy=py+sa*L1,tx=px-ca*L2,ty=py-sa*L2;
+ cx.strokeStyle="#262626";cx.lineWidth=3.2;cx.beginPath();cx.moveTo(tx,ty);cx.lineTo(hx,hy);cx.stroke();
+ cx.fillStyle="#c9a43a";cx.beginPath();cx.arc(hx,hy+3,6,-1.2+a,1.6+a);cx.lineTo(hx,hy);cx.fill();
+ const [wx,wy]=P(x+.9,y+.45,0);cx.strokeStyle="#555";cx.lineWidth=1;cx.beginPath();cx.moveTo(hx+5,hy+8);cx.lineTo(wx,wy-6);cx.stroke();cx.fillStyle="#b8261a";cx.fillRect(wx-3,wy-8,6,8);
+ const cr=on?T*1.7*Math.max(SPD,.25)+ph:0;const [kx,ky]=P(x-.45,y-.2,10);cx.fillStyle="#3a3a3a";cx.beginPath();cx.arc(kx+Math.cos(cr)*4,ky+Math.sin(cr)*4,5,0,7);cx.fill();
+ cx.strokeStyle="#333";cx.lineWidth=1.5;cx.beginPath();cx.moveTo(tx,ty);cx.lineTo(kx+Math.cos(cr)*4,ky+Math.sin(cr)*4);cx.stroke();
+ if(!on){cx.fillStyle="#ff6b4a";cx.font="bold 10px system-ui";cx.fillText("OFF",px-8,py-12);}
+ hitU("jacks",[px,py+10],60,40);}
+function house(x,y,wall,roof){box(x,y,1.8,1.4,10,wall,0,{win:2,lit:NIGHT>.3,lv:[.5],clean:1});
+ const a=P(x,y,10),b=P(x+1.8,y,10),c2=P(x+1.8,y+1.4,10),d=P(x,y+1.4,10),r1=P(x,y+.7,18),r2=P(x+1.8,y+.7,18);
+ poly([d,c2,r2,r1],sh(roof,.85));poly([a,b,r2,r1],sh(roof,1.1));poly([c2,b,r2],sh(roof,.6));}
+function tree(x,y,r){const [sx,sy]=P(x,y,0);cx.fillStyle="#3a2a1c";cx.fillRect(sx-1.5,sy-12,3,12);const g=cx.createRadialGradient(sx-4,sy-20*r-6,2,sx,sy-18*r-4,14*r);g.addColorStop(0,"#4f6a3e");g.addColorStop(1,"#22301c");cx.fillStyle=g;cx.beginPath();cx.arc(sx,sy-16*r-6,13*r,0,7);cx.fill();}
+function zoneDrawables(add){
+ // --- campo ---
+ add(6-27+1.2,()=>{derrick(-27,6);hitU("rig",P(-27,6,110),80,200)},-27,6);
+ add(4.6-24.6+1.6,()=>{box(-25.6,3.6,2.4,1.6,4,"#4a4038",0,{top:"#3b2414",clean:1});box(-25.6,5.4,2.4,1.2,4,"#4a4038",0,{top:"#3e2a18",clean:1});},-24.6,4.6);
+ add(10-27,()=>{for(let i=0;i<7;i++)pipeLine([[-29.6,9.4+i*.12,4+(i%3)*2],[-24.6,9.4+i*.12,4+(i%3)*2]],"#7b7f80",2.4)},-27,9.8);
+ add(3-31,()=>{for(let i=0;i<3;i++)box(-32+i*.1,2.2+i*1.3,2.6,1,9,"#d8d3c7",0,{win:3,lit:1,lv:[.55]})},-31,3.5);
+ add(8-24,()=>{box(-24.4,7.4,1.4,1,8,"#c8a23a");box(-24.4,8.6,1.4,1,8,"#c8a23a")},-24,8);
+ JACKS.forEach((j,k)=>add(j[0]+j[1]+.6,()=>pumpjack(j[0],j[1],S.wells[k]!==0,k*1.3,k),j[0],j[1]));
+ add(16.6-14+1.5,()=>{box(-15,15.1,.3,.8,6,"#4a4640");box(-13,15.1,.3,.8,6,"#4a4640");hdrum(-14,15.5,40,11,"#8a8478",12);box(-15,17.4,.3,.8,6,"#4a4640");box(-13,17.4,.3,.8,6,"#4a4640");hdrum(-14,17.8,40,11,"#7d776c",12);
+   hitU("sep",P(-14,16.6,14),110,60)},-14,16.6);
+ add(16.6-10.5+1,()=>{cyl(-10.5,15.6,.85,26,"#5d5f60",0,{bands:2,level:.4+.2*Math.sin(T*.05)});cyl(-10.5,17.9,.85,26,"#626462",0,{bands:2,level:.55});cyl(-12,20.2,.45,40,"#6a675f",0,{rust:3})},-10.5,16.6);
+ add(20-8+.2,()=>{cyl(-8,20.6,.1,74,"#8a3a2a",0,{rust:0,roof:false});const [sx,sy]=P(-8,20.6,74);const fl=7+Math.sin(T*15)*2;cx.fillStyle="rgba(255,170,50,.9)";cx.beginPath();cx.ellipse(sx,sy-fl*.6,fl*.45,fl,0,0,7);cx.fill();},-8,20.6);
+ add(9-12+1,()=>{cyl(-12,8.2,.55,122,"#6c6a64",0,{bands:7,rust:4});cyl(-10.3,9.6,.6,96,"#64625b",0,{bands:5});hitU("gas",P(-11,9,70),80,140)},-11,9);
+ add(10-16+2,()=>{box(-16.4,8.6,2.6,1.8,16,"#6a6d68",0,{win:3,lit:1,lv:[.5]});box(-16.4,10.8,2.6,1,5,"#555",0,{clean:1});const [a,b]=P(-14,10.6,22);cx.fillStyle="#f2c21b";cx.beginPath();cx.moveTo(a,b-10);cx.lineTo(a+8,b+4);cx.lineTo(a-8,b+4);cx.closePath();cx.fill();cx.fillStyle="#111";cx.font="bold 9px system-ui";cx.fillText("H₂S",a-8,b+14);},-15,9.6);
+ add(7-8.6,()=>{const a=P(-8.6,7,0),b=P(-8.6,7,44);cx.strokeStyle="#999";cx.lineWidth=1.5;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();const w=Math.sin(T*.8)*.4;cx.fillStyle="#ff7a1a";cx.beginPath();cx.moveTo(b[0],b[1]);cx.lineTo(b[0]+22*Math.cos(w),b[1]+3+22*Math.sin(w)*.3);cx.lineTo(b[0],b[1]+8);cx.closePath();cx.fill();},-8.6,7);
+ // tuberías de campo (líneas de flujo) y oleoducto
+ add(-40,()=>{for(const j of JACKS)if(j[0]<-20)pipeLine([[j[0]+.9,j[1]+.45,1],[-16,j[1]+.45,1],[-15,16.6,2]],"#3e3a34",1.5);
+   pipeLine([[-12.5,3.4,1],[-12.5,8,2]],"#3e3a34",1.5);pipeLine([[-11.6,23.4,1],[-11.6,17.9,2]],"#3e3a34",1.5);pipeLine([[-13,16.6,3],[-12,10,3]],"#5d5348",2,"rgba(200,200,200,.4)");},-18,15);
+ add(14.6-6+2,()=>{box(-6.8,13.6,1.8,1.4,12,"#3f6b8a",0,{rust:2});box(-6.4,14,.5,.5,18,"#2f4f66",0);hitU("pipe",P(-6,14.4,14),70,50)},-6,14.4);
+ add(-1+14.6+3,()=>{const fl=S.pipe<1?"rgba(255,170,70,.35)":"rgba(255,170,70,.75)";pipeLine(PL.map(p=>[p[0],p[1],4]),"#55585a",6,fl,14);
+   if(PIG.on){const [x,y]=pathAt(PL,PIG.s);const [sx,sy]=P(x,y,4);cx.fillStyle="#e2701c";cx.beginPath();cx.ellipse(sx,sy,6,4,0,0,7);cx.fill();}
+   for(let i=0;i<4;i++){const [x,y]=pathAt(PL,i*3.1);box(x-.15,y-.15,.3,.3,3,"#555",0,{clean:1});}},-4,15);
+ // --- mar: plataforma, barco, helicóptero ---
+ add(32.5-16+2,()=>{for(const [dx,dy] of [[-1.3,-1.3],[1.3,-1.3],[1.3,1.3],[-1.3,1.3]])cyl(-16+dx,32.5+dy,.22,40,"#6a6458",0,{rust:2,roof:false});
+   box(-17.6,30.9,3.2,3.2,7,"#6a6d68",40,{rust:4});box(-17.2,31.3,1.4,1.2,14,"#d8d3c7",47,{win:2,lit:1,lv:[.5]});box(-15.4,32.6,1.5,1.4,2,"#2f6a3a",47,{top:"#3c7a46"});
+   const [hx,hy]=P(-14.6,33.3,49);cx.fillStyle="#f2f0e8";cx.font="bold 10px system-ui";cx.fillText("H",hx-3,hy+3);
+   cyl(-16.2,31.6,.15,60,"#c9a43a",47,{rust:0,roof:false});
+   const fb=P(-18.6,30.6,60),fa=P(-17.4,31.2,46);cx.strokeStyle="#8a3a2a";cx.lineWidth=2;cx.beginPath();cx.moveTo(fa[0],fa[1]);cx.lineTo(fb[0],fb[1]);cx.stroke();cx.fillStyle="rgba(255,160,40,.9)";cx.beginPath();cx.ellipse(fb[0],fb[1]-6,4,8,0,0,7);cx.fill();
+   hitU("plat",P(-16,32.5,60),100,90)},-16,32.5);
+ {const bx=-16+5.5*Math.cos(BOAT.a),by=32.5+2.6*Math.sin(BOAT.a);add(bx+by+1,()=>{box(bx-1,by-.4,2,.8,6,"#c8261a",0,{clean:1});box(bx+.2,by-.3,.6,.6,8,"#e8e4dc",6,{clean:1})},bx,by);}
+ // --- conversión ---
+ add(5.6+32+2,()=>{for(const [x,y] of [[30.4,4],[33.6,4],[30.4,7.4],[33.6,7.4]])box(x,y,.18,.18,120,"#4b4741",0,{clean:1});for(const z of [40,80,120])box(30.3,3.9,3.6,3.7,2,"#5a554d",z,{clean:1});
+   cyl(31,5,.8,160,"#6e6c66",0,{bands:7,rust:5});cyl(33.2,6.4,1.4,112,"#5f5d58",0,{bands:5,rust:7});
+   pipeLine([[33.2,6.4,20],[32,6,40],[31.2,5.2,150]],"#7b7568",4,"rgba(220,200,150,.6)",20);
+   cyl(35.5,3.6,.42,182,"#4a4642",0,{rust:3,roof:false,stripe:"rgba(200,60,40,.7)"});box(34.6,6.6,2,1.4,26,"#6d6a62",0,{rust:3});hitU("fcc",P(32,5.6,90),120,190)},32,5.6);
+ add(3.6+39+2.4,()=>{box(37,2.8,4.6,1.6,36,"#5a4a3e",0,{rust:6});for(let i=0;i<4;i++)cyl(37.6+i*1.1,3.6,.18,22,"#3c3a36",36,{rust:0,roof:false});
+   for(let i=0;i<4;i++){const [a,b]=P(41.6,3.2+i*.35,6);cx.fillStyle="rgba(255,130,40,.85)";cx.fillRect(a-2,b-3,4,4);}hitU("refo",P(39.2,3.6,30),130,60)},39,3.6);
+ add(6.6+39+1.4,()=>{for(let i=0;i<3;i++)cyl(37.6+i*1.5,6.6,.55,66,"#6a675f",0,{bands:3,rust:3});pipeLine([[37.6,6.6,60],[39.1,6.6,60],[40.6,6.6,60]],"#7b7568",3);},39,6.6);
+ add(5.4+43.4+2.4,()=>{cyl(43.4,4.6,.9,98,"#6a6a64",0,{bands:6,rust:4});box(42,7.2,2.6,1.6,14,"#77746c",0,{win:3,lit:1,lv:[.5]});cyl(45.8,6.8,.5,84,"#64625b",0,{bands:4});hitU("hdt",P(43.4,5.4,60),110,130)},43.4,5.4);
+ add(13.6+32.6+2,()=>{hdrum(31.6,12.8,36,10,"#7d776c",8);box(30.8,12.2,.3,.8,6,"#4a4640");box(32.2,12.2,.3,.8,6,"#4a4640");box(33,13.6,1.2,.8,10,"#6a6d68");cyl(34.6,12.4,.32,142,"#4a4642",0,{rust:2,roof:false});
+   const [a,b]=P(32.6,15.8,0);const g=cx.createRadialGradient(a-8,b-22,3,a,b-8,44);g.addColorStop(0,"#fff27a");g.addColorStop(.6,"#e8c81a");g.addColorStop(1,"#9a8410");cx.fillStyle=g;cx.beginPath();cx.moveTo(a-48,b+6);cx.quadraticCurveTo(a-10,b-50,a+6,b-34);cx.quadraticCurveTo(a+28,b-20,a+50,b+6);cx.closePath();cx.fill();
+   hitU("claus",P(32.6,14,20),120,80)},32.6,14);
+ add(13.4+38.8+2,()=>{box(37.2,12.2,3.8,2.6,30,"#77746c",0,{win:4,lit:1,lv:[.35,.7],rust:4});cyl(38,12.8,.36,84,"#555",0,{rust:2,roof:false});cyl(39.8,12.8,.36,84,"#555",0,{rust:2,roof:false});hitU("boiler",P(39,13.4,30),110,90)},38.8,13.4);
+ add(14+44+1.8,()=>{for(let i=0;i<6;i++){const x=42.6+(i%3)*1.4,y=12.8+Math.floor(i/3)*1.6;cyl(x,y,.55,22,"#6b6a63",0,{bands:2,stripe:["#ffd166","#ff9f43","#9be08f"][i%3]+"aa",rust:2});}hitU("blend",P(44,14,14),110,70)},44,14);
+ for(const t of FTK)add(t.x+t.y+1.4,()=>{const p=cyl(t.x,t.y,1.25,40,t.k==="res"?"#3a3836":"#6b6a63",0,{level:S.tk[t.k]||.5,bands:3,stripe:PCOL[t.k]+"99"});hitU("tkp",p,70,60);lab(p[0],p[1]-10,t.n)},t.x,t.y);
+ // --- tren ---
+ add(26.3+38,()=>{box(34.8,25.6,3,1.4,3,"#4c4a44",0,{clean:1});for(const [x,y] of [[34.9,25.7],[37.6,25.7],[34.9,26.9],[37.6,26.9]])box(x,y,.15,.15,22,"#777",0,{clean:1});box(34.7,25.5,3.2,1.6,2,"#9a3326",22,{top:"#b13b2b"});hitU("tren",P(36.3,26.3,20),100,50)},36,26.3);
+ add(26.3+TRAIN.x+.5,()=>{for(let i=0;i<7;i++){const x=TRAIN.x-i*1.5;if(x<10||x>X1)continue;if(i===0){box(x-.6,25.95,1.3,.7,12,"#c8a23a",2,{clean:1});box(x+.2,26,.4,.6,6,"#2b2b2b",14,{clean:1});}else{const [a,b]=P(x,26.3,10);cx.fillStyle="#2a2a2a";cx.fillRect(a-14,b+2,28,4);const g=cx.createLinearGradient(0,b-12,0,b+4);g.addColorStop(0,"#3a3a3a");g.addColorStop(1,"#121212");cx.fillStyle=g;cx.beginPath();cx.ellipse(a,b-3,20,8,.46,0,7);cx.fill();}}},TRAIN.x,26.3);
+ // --- pueblo ---
+ for(const h of HOUSES)add(h[0]+h[1]+2,()=>house(h[0],h[1],h[2],h[3]),h[0],h[1]);
+ for(const t of TREES)add(t[0]+t[1],()=>tree(t[0],t[1],t[2]),t[0],t[1]);
+ add(29.4+22+3,()=>{for(const [x,y] of [[21.4,28.6],[24.2,28.6],[21.4,30.2],[24.2,30.2]])box(x,y,.15,.15,16,"#ddd",0,{clean:1});box(21.2,28.4,3.4,2.2,2,"#1d6b45",16,{top:"#24854f"});for(let i=0;i<2;i++)box(22.4+i*1.2,29.2,.4,.4,6,"#e8e4dc",0,{clean:1});
+   const s=P(25.4,28.4,0),s2=P(25.4,28.4,36);cx.strokeStyle="#aaa";cx.lineWidth=2;cx.beginPath();cx.moveTo(s[0],s[1]);cx.lineTo(s2[0],s2[1]);cx.stroke();cx.fillStyle="#1d6b45";cx.fillRect(s2[0]-16,s2[1]-14,32,16);cx.fillStyle="#fff";cx.font="bold 10px system-ui";cx.fillText("PES",s2[0]-10,s2[1]-2);hitU("pueblo",P(23,29.4,10),90,50)},23,29.4);
+ add(5.4+5.2+2.4,()=>{box(5.2,5.4,2.2,1.8,16,"#d8d3c7",0,{win:3,lit:1,lv:[.5]});box(5.2,5.4,2.2,1.8,2,"#2f6db5",16,{clean:1});const s2=P(6.3,7.2,22);cx.fillStyle="#2f6db5";cx.fillRect(s2[0]-12,s2[1]-8,24,10);cx.fillStyle="#fff";cx.font="bold 8px system-ui";cx.fillText("LAB",s2[0]-8,s2[1]);hitU("lab",P(6.3,6.3,10),70,50)},6.3,6.3);
+ northDrawables(add);youDrawable(add);
+ for(const p of PEOPLEN)add(p.x+p.y+.2,()=>person(p),p.x,p.y);
+ // --- vehículos y gente ---
+ for(const c of PICK){const [x,y,a]=pathAt(FROAD,c.s);add(x+y+.3,()=>car(x,y,a,c.col),x,y)}
+ for(const c of TCAR){const [x,y,a]=pathAt(TROAD,c.s);add(x+y+.3,()=>car(x,y,a,c.col),x,y)}
+ for(const c of CAR2){const [x,y,a]=pathAt(ROAD2,c.s);add(x+y+.3,()=>truck(x,y,a,c.col),x,y)}
+ for(const c of HWY){const y=c.d>0?-2.25:-2.95;add(c.x+y+.3,()=>c.tr?truck(c.x,y,c.d>0?0:Math.PI,c.col):car(c.x,y,c.d>0?0:Math.PI,c.col),c.x,y)}
+ for(const arr of [PEOPLEF,PEOPLED,PEOPLET])for(const p of arr)add(p.x+p.y+.2,()=>person(p),p.x,p.y);
+ // helicóptero (siempre arriba)
+ add(999,()=>{const u=HELI.u,go=u<1,f=go?u:u-1;const A=[-5.6,22.2,0],B=[-14.6,33.2,49];const fr=go?A:B,to=go?B:A;const s=clamp((f-.12)/.76,0,1),e=s*s*(3-2*s);
+   const x=fr[0]+(to[0]-fr[0])*e,y=fr[1]+(to[1]-fr[1])*e,z=fr[2]+(to[2]-fr[2])*e+95*Math.pow(Math.sin(Math.PI*f),.6);const [sx,sy]=P(x,y,z+6),[gx,gy]=P(x,y,0);
+   cx.fillStyle="rgba(0,0,0,.22)";cx.beginPath();cx.ellipse(gx,gy,10,5,0,0,7);cx.fill();
+   cx.fillStyle="#d9d4c7";cx.beginPath();cx.ellipse(sx,sy,10,5,0,0,7);cx.fill();cx.fillStyle="#c8261a";cx.fillRect(sx-2,sy-3,14,3);cx.strokeStyle="#222";cx.lineWidth=1.5;cx.beginPath();cx.moveTo(sx+8,sy-1);cx.lineTo(sx+20,sy-4);cx.stroke();
+   const ra=T*30;cx.strokeStyle="rgba(30,30,30,.8)";cx.beginPath();cx.moveTo(sx-16*Math.cos(ra),sy-7-3*Math.sin(ra));cx.lineTo(sx+16*Math.cos(ra),sy-7+3*Math.sin(ra));cx.stroke();
+   if(NIGHT>.2){cx.fillStyle=Math.sin(T*6)>0?"#ff3b30":"#fff";cx.fillRect(sx-1,sy+4,2,2);}});
+}
+// ---------- personaje del jugador y misiones ----------
+const YOU={x:8,y:13.6,mode:"walk",path:[],cb:null,vis:true};const PKG=[3.6,14.6];
+const CTRL_DOOR=[8,13.8];
+function goTo(path,mode){YOU.mode=mode||"walk";YOU.path=path.map(p=>p.slice());return new Promise(r=>{YOU.cb=r})}
+function updYou(dt){if(!YOU.path.length)return;const sp=(YOU.mode==="car"?6:YOU.mode==="heli"?5:2.6)*Math.max(SPD,1)*(SPD?1:0)*dt;
+ const t=YOU.path[0],dx=t[0]-YOU.x,dy=t[1]-YOU.y,d=Math.hypot(dx,dy);YOU.z=YOU.z||0;const tz=t[2]||0;
+ if(d<=sp){YOU.x=t[0];YOU.y=t[1];YOU.z=tz;YOU.path.shift();if(!YOU.path.length&&YOU.cb){const c=YOU.cb;YOU.cb=null;setTimeout(c,250)}}
+ else{YOU.x+=dx/d*sp;YOU.y+=dy/d*sp;YOU.z+=(tz-YOU.z)*Math.min(1,sp/d);YOU.a=Math.atan2(dy,dx);}
+ const c=P(YOU.x,YOU.y,YOU.z*.5);CAM.x+=(c[0]-CAM.x)*.08;CAM.y+=(c[1]-40-CAM.y)*.08;CAM.z+=((W<700?.8:.95)-CAM.z)*.03;CT=null;}
+function heliAt(x,y,z){const [sx,sy]=P(x,y,z+6),[gx,gy]=P(x,y,0);cx.fillStyle="rgba(0,0,0,.22)";cx.beginPath();cx.ellipse(gx,gy,10,5,0,0,7);cx.fill();
+ cx.fillStyle="#e8e4dc";cx.beginPath();cx.ellipse(sx,sy,11,5.5,0,0,7);cx.fill();cx.fillStyle="#2f6db5";cx.fillRect(sx-2,sy-3,15,3);cx.strokeStyle="#222";cx.lineWidth=1.5;cx.beginPath();cx.moveTo(sx+8,sy-1);cx.lineTo(sx+21,sy-4);cx.stroke();
+ const ra=T*30;cx.strokeStyle="rgba(30,30,30,.8)";cx.beginPath();cx.moveTo(sx-17*Math.cos(ra),sy-7-3*Math.sin(ra));cx.lineTo(sx+17*Math.cos(ra),sy-7+3*Math.sin(ra));cx.stroke();return [sx,sy];}
+function youLabel(sx,sy){cx.fillStyle="#2f6db5";cx.beginPath();cx.roundRect?cx.roundRect(sx-13,sy-13,26,13,6):cx.rect(sx-13,sy-13,26,13);cx.fill();cx.fillStyle="#fff";cx.font="bold 9.5px system-ui";cx.textAlign="center";cx.fillText("TÚ",sx,sy-3.5);cx.textAlign="left";
+ cx.strokeStyle="#2f6db5";cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx,sy+5);cx.stroke();}
+function youDrawable(add){if(!YOU.vis)return;add(YOU.mode==="heli"?999:YOU.x+YOU.y+.25,()=>{let sx,sy;
+ if(YOU.mode==="heli"){[sx,sy]=heliAt(YOU.x,YOU.y,YOU.z+70*Math.min(1,YOU.path.length?1:0));sy-=10}
+ else if(YOU.mode==="car"){car(YOU.x,YOU.y,YOU.a||0,"#e8e4dc");[sx,sy]=P(YOU.x,YOU.y,16)}
+ else{person({x:YOU.x,y:YOU.y,v:"#2f6db5",h:"#ffffff",mv:YOU.path.length>0});[sx,sy]=P(YOU.x,YOU.y,22);if(YOU.z)sy-=YOU.z}
+ youLabel(sx,sy-4);});}
+// escenas
+function scene(html,opts,keep){return new Promise(r=>{openD(html+opts.map((o,k)=>`<button class="opt" data-k="${k}">${o}</button>`).join(""));document.querySelectorAll("#dlg .opt").forEach(b=>b.onclick=()=>{if(!keep)closeD();r(+b.dataset.k)})})}
+function info(html,btn){return new Promise(r=>{openD(html+`<button class="btn" id="sgo">${btn||"Seguir"}</button>`);$("sgo").onclick=()=>{closeD();r()}})}
+function pick(html,items,n){return new Promise(r=>{const sel=new Set();const draw=()=>{openD(html+`<p class="mut">Elige ${n} (${sel.size}/${n}):</p>`+items.map((it,k)=>`<button class="opt${sel.has(k)?" pk":""}" data-k="${k}">${sel.has(k)?"☑️":"⬜"} ${it}</button>`).join("")+`<button class="btn" id="pgo" ${sel.size===n?"":"disabled style='opacity:.5'"}>Confirmar</button>`);
+  document.querySelectorAll("#dlg .opt").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;if(sel.has(k))sel.delete(k);else if(sel.size<n)sel.add(k);draw()});const g=$("pgo");if(sel.size===n)g.onclick=()=>{closeD();r([...sel])}};draw();})}
+const RES=(ok,txt)=>`<div class="data"><b class="${ok?"ok":"bad"}">${ok?"✅ Bien":"❌ No era lo mejor"}</b><br>${txt}</div>`;
+async function walkToCar(){await goTo([CTRL_DOOR,[5.6,14],PKG],"walk")}
+async function carBackAndWalk(path){await goTo(path,"car");await goTo([[5.6,14],CTRL_DOOR],"walk")}
+// --- misión 1: plataforma ---
+async function misPlat(M){let sc=0,max=5;
+ await walkToCar();toast("🚙 Rumbo al helipuerto…");
+ await goTo([PKG,[1.2,14.6],[-1,14.6],[-1,22],[-4.4,22.2]],"car");
+ YOU.mode="walk";let k=await scene(`<span class="tag">🌊 Misión · Plataforma marina</span><h2>Antes de abordar</h2>${bubble("jorge","El piloto está listo. ¿Qué hacemos antes de subir?")}`,["Charla de seguridad del vuelo, chaleco salvavidas puesto y revisar la ruta de escape del helicóptero","Subir directo, vamos atrasados","Solo ponerse el chaleco"]);
+ if(k===0)sc++;await info(RES(k===0,"La charla previa al vuelo y el chaleco son obligatorios: en un amerizaje, saber cómo salir salva vidas."));
+ YOU.x=-5.6;YOU.y=22.2;toast("🚁 Volando a la plataforma…");await goTo([[-8,25,90],[-12,30,90],[-14.6,33.2,49]],"heli");YOU.mode="walk";YOU.z=49;
+ const AREAS=[["🛟 Botes salvavidas y chalecos","El gancho de liberación del bote salvavidas #2 no tiene su inspección anual.",true],["📟 Detectores de gas","2 de 12 detectores no pasaron la prueba de funcionamiento (bump test).",true],["🫧 Separador de producción","Niveles y presiones normales; el control de nivel responde bien.",false],["🎛️ Sala de control de la plataforma","Relevos de turno completos y bitácora al día.",false],["🧯 Sistema contra incendio","La bomba diésel contra incendio arrancó en 12 segundos en la prueba: OK.",false]];
+ const ch=await pick(`<span class="tag">🌊 Misión · Plataforma marina</span><h2>¿Qué inspeccionas?</h2>${bubble("jorge","Tenemos tiempo para revisar solo 3 áreas antes de que el helicóptero regrese. Elige bien.")}`,AREAS.map(a=>a[0]),3);
+ const found=ch.filter(i=>AREAS[i][2]).length;sc+=found;
+ await info(`<span class="tag">🌊 Hallazgos</span><h2>Resultado de la inspección</h2>${ch.map(i=>`<div class="data">${AREAS[i][2]?"⚠️":"✅"} <b>${AREAS[i][0]}</b><br>${AREAS[i][1]}</div>`).join("")}<p class="mut">${found===2?"¡Encontraste los dos hallazgos críticos!":found===1?"Encontraste uno de los dos hallazgos críticos.":"No encontraste los hallazgos críticos: esta vez se te escaparon."} Prioriza siempre lo que protege la vida: escape, detección y respuesta.</p>`);
+ k=await scene(`<span class="tag">🌊 Misión · Plataforma marina</span><h2>¿Qué haces con los hallazgos?</h2>`,["Recalibrar o cambiar los detectores ya, restringir trabajos en caliente hasta entonces y programar la inspección del bote antes de la temporada de tormentas","Anotarlo en el informe del próximo mes","Evacuar la plataforma completa"]);
+ if(k===0)sc+=2;await info(RES(k===0,"Los detectores que fallan dejan zonas ciegas: mientras se corrigen, se controlan los riesgos (sin trabajos en caliente). Evacuar todo sería desproporcionado; esperar un mes, irresponsable."));
+ toast("🚁 Regreso a tierra…");await goTo([[-12,30,90],[-8,25,90],[-5.6,22.2,0]],"heli");
+ YOU.x=-4.4;YOU.y=22.2;YOU.z=0;await carBackAndWalk([[-4.4,22.2],[-1,22],[-1,14.6],[1.2,14.6],PKG]);return [sc,max];}
+// --- misión 2: laboratorio ---
+async function misLab(M){let sc=0,max=5;
+ toast("🚶 Al tanque de Jet A-1…");await goTo([CTRL_DOOR,[9,14.4],[15.6,14.4],[15.6,18]],"walk");
+ let k=await scene(`<span class="tag">🧪 Misión · Laboratorio</span><h2>¿Dónde tomas la muestra?</h2>${bubble("marta","El tanque de Jet A-1 tiene 12 metros de alto. El laboratorio te puede analizar una sola muestra.")}`,["Arriba, en la superficie","A media altura","En el fondo del tanque"]);
+ if(k===2)sc++;await info(RES(k===2,k===2?"El agua es más densa que el combustible: se va al fondo. La muestra de fondo sale turbia y con gotas de agua libre en el frasco.":"El agua es más densa que el combustible y se va al fondo. Tu muestra salió clara… pero el problema estaba abajo. El técnico tomó también una de fondo: turbia, con gotas de agua."));
+ toast("🚶 Al laboratorio…");await goTo([[15.6,14.4],[9,14.4],[9,8.2],[6.6,7.6]],"walk");
+ const TESTS=[["💧 Karl Fischer (agua disuelta)","140 ppm de agua: muy alto.",true],["👁️ Aspecto visual «claro y brillante»","Turbio, con gotas de agua libre: NO es claro y brillante.",true],["⚖️ Densidad","0,801 kg/L: normal.",false],["🔥 Punto de inflamación","41 °C: dentro de especificación.",false],["🎨 Color Saybolt","+25: normal.",false]];
+ const ch=await pick(`<span class="tag">🧪 Misión · Laboratorio</span><h2>¿Qué pruebas pides?</h2>${bubble("sofia","El laboratorio está lleno hoy: solo podemos pedir 2 pruebas. ¿Cuáles nos dicen si hay agua?")}`,TESTS.map(t=>t[0]),2);
+ const good=ch.filter(i=>TESTS[i][2]).length;sc+=good;
+ await info(`<span class="tag">🧪 Resultados</span><h2>Informe de laboratorio</h2>${ch.map(i=>`<div class="data"><b>${TESTS[i][0]}</b><br>${TESTS[i][1]}</div>`).join("")}<p class="mut">${good===2?"Elegiste justo las pruebas que miden agua.":"Para agua, las pruebas clave son Karl Fischer y el aspecto visual."}</p>`);
+ toast("🚶 De vuelta al tanque, a buscar la causa…");await goTo([[9,8.2],[9,14.4],[15.6,14.4],[15.6,18]],"walk");
+ k=await scene(`<span class="tag">🧪 Misión · Laboratorio</span><h2>¿De dónde vino el agua?</h2><div class="data">Anoche llovieron <b>60 mm</b>. El sello del techo flotante tiene una grieta. El tanque <b>no tiene</b> serpentín de calentamiento. El queroseno llega del hidrotratamiento pasando por un coalescedor que funciona bien.</div>`,["Lluvia entrando por el sello dañado del techo flotante","Una fuga en el serpentín de calentamiento","El laboratorio se equivocó"]);
+ if(k===0)sc++;await info(RES(k===0,"El sello del techo flotante evita que entre la lluvia. Con una grieta y 60 mm de lluvia, el agua se fue directo al producto."));
+ k=await scene(`<span class="tag">🧪 Misión · Laboratorio</span><h2>¿Qué haces con el tanque?</h2>${bubble("lucia","El próximo camión del aeropuerto llega en 3 horas.")}`,["Detener despachos, drenar el agua del fondo, dejar reposar, re-muestrear y certificar antes de despachar; reparar el sello","Despachar desde la parte alta del tanque","Agregar un aditivo y despachar"]);
+ if(k===0)sc++;await info(RES(k===0,"El combustible de aviación no admite agua libre: un avión no puede recibirla. Primero calidad y seguridad; el camión puede esperar."));
+ await goTo([[15.6,14.4],[9,14.4],CTRL_DOOR],"walk");return [sc,max];}
+// --- misión 3: auditoría en Planta Norte ---
+async function misAud(M){let sc=0,max=8;
+ await walkToCar();toast("🚙 Rumbo a Planta Norte, en la ciudad vecina…");
+ await goTo([PKG,[1.2,14.6],[1.2,1.2],[1.2,-2.4],[14,-2.4],[14,-6.2],[14,-7]],"car");
+ const ST=[[[18.6,-7.6],"🗂️ Oficina · permisos de trabajo","Permiso de trabajo en caliente firmado, con prueba de gas registrada y vigía de fuego asignado.",1,"Así debe verse un permiso: firmado, con prueba de gas y vigía."],
+  [[14.6,-9.6],"🔒 Nave de envasado · mantenimiento","Una bomba de GLP en mantenimiento tiene candado, pero sin tarjeta que diga quién la bloqueó ni por qué.",0,"El bloqueo y etiquetado exige candado y tarjeta con nombre: sin tarjeta nadie sabe a quién preguntar antes de quitarlo."],
+  [[19.4,-10.6],"🧯 Almacén de cilindros","Cilindros llenos de pie, encadenados, bajo techo ventilado y lejos de fuentes de ignición.",1,"Almacenamiento correcto de cilindros de GLP."],
+  [[11.8,-8.2],"🚿 Ducha y lavaojos de emergencia","El acceso a la ducha de emergencia está bloqueado por tarimas de madera.",0,"Una ducha de emergencia debe estar libre: en una quemadura química se necesita en segundos."],
+  [[9.6,-9.4],"📟 Detector de gas de las esferas","El último bump test del detector fue hace 2 meses; el procedimiento pide uno semanal.",0,"Un detector sin pruebas puede estar ciego. La frecuencia del procedimiento existe por algo."],
+  [[6,-7.4],"🧯 Extintor del andén","Extintor con inspección mensual al día y manómetro en verde.",1,"Extintor en condiciones."],
+  [[6.4,-8.8],"🚚 Andén de carga","Un camión carga GLP con el motor encendido y el chofer dentro de la cabina.",0,"Durante la carga de GLP el motor debe estar apagado, el camión calzado y aterrizado, y el chofer fuera de la cabina."]];
+ await info(`<span class="tag">🏭 Misión · Auditoría</span><h2>Llegaste a Planta Norte</h2>${bubble("lucia","Recorre los 7 puntos y clasifica cada uno: conforme o no conforme. Buscamos mejorar, no culpables.")}`,"Empezar la auditoría");
+ let nc=0;
+ for(let s=0;s<ST.length;s++){const st=ST[s];await goTo([st[0]],"walk");
+  const k=await scene(`<span class="tag">🏭 Auditoría · Punto ${s+1} de 7</span><h2>${st[1]}</h2><div class="data">👀 ${st[2]}</div>`,["✅ Conforme","❌ No conforme"]);
+  const ok=(k===0)===(st[3]===1);if(ok)sc++;if(st[3]===0)nc++;
+  await info(RES(ok,(st[3]?"<b>Conforme.</b> ":"<b>No conforme.</b> ")+st[4]));}
+ const k=await scene(`<span class="tag">🏭 Misión · Auditoría</span><h2>Informe: ${nc} no conformidades</h2>${bubble("sofia","¿Cómo presentamos el informe?")}`,["Presentarlo al equipo local, acordar acciones con responsables y fechas, y priorizar las críticas","Mandarlo por correo a la gerencia con los nombres de los culpables","Suavizarlo para no causar problemas"]);
+ if(k===0)sc++;await info(RES(k===0,"Una auditoría sirve si genera acciones. Presentarla con el equipo, sin buscar culpables, hace que la gente corrija y no esconda."));
+ toast("🚙 Regreso a la refinería…");await goTo([[14,-7],[14,-6.2]],"walk");await carBackAndWalk([[14,-6.2],[14,-2.4],[1.2,-2.4],[1.2,1.2],[1.2,14.6],PKG]);return [sc,max];}
+const MISSIONS=[
+ {id:"m_plat",ic:"🌊",t:"Inspección de la plataforma marina",who:"jorge",say:"Necesito que inspecciones la plataforma antes de la temporada de tormentas. El helicóptero sale en 20 minutos.",run:misPlat,u:"plat"},
+ {id:"m_lab",ic:"🧪",t:"Laboratorio: agua en el Jet A-1",who:"marta",say:"El aeropuerto reclamó: el último despacho de Jet A-1 se veía turbio. Hay que revisar el tanque antes del próximo camión.",run:misLab,u:"lab"},
+ {id:"m_aud",ic:"🏭",t:"Auditoría en Planta Norte",who:"lucia",say:"Necesito que audites la Planta Norte, nuestra terminal de envasado de GLP en la ciudad vecina.",run:misAud,u:"norte"}];
+let MIS_ON=null;
+function misDlg(){S.misDone=S.misDone||{};openD(`<span class="tag">🎯 Misiones</span><h2>Misiones de campo</h2><p class="mut">Tu personaje («TÚ») sale de la sala de control y va al lugar. La planta sigue funcionando mientras tanto: ¡los ❗ no esperan!</p>
+ ${MISSIONS.map(m=>{const d=S.misDone[m.id];return `<div class="li" style="cursor:default;align-items:flex-start">${face(m.who,40)}<div style="flex:1"><b>${m.ic} ${m.t}</b> ${d?`<span class="ok">✔ ${d[0]}/${d[1]}</span>`:""}<br><span class="mut">${CHARS[m.who].n}: «${m.say}»</span></div>${MIS_ON?"":`<button class="btn" style="margin:0" onclick="startMis('${m.id}')">${d?"Repetir":"Ir"}</button>`}</div>`}).join("")}
+ ${MIS_ON?`<p class="mut">Misión en curso: <b>${MIS_ON.t}</b>.</p>`:""}<button class="btn o" onclick="closeD()">Cerrar</button>`);}
+async function startMis(id){const m=MISSIONS.find(x=>x.id===id);if(MIS_ON)return;MIS_ON=m;closeD();if(!SPD)setSpd(1);toast(`🎯 Misión: <b>${m.t}</b>`);
+ try{YOU.x=CTRL_DOOR[0];YOU.y=CTRL_DOOR[1];YOU.z=0;const [sc,max]=await m.run(m);const f=sc/max,dm=Math.round(80000*f/1000)*1000,ds=Math.round(6*f),dc=Math.round(6*f);
+  S.money+=dm;S.shiftMoney+=dm;meter("seg",ds);meter("conf",dc);S.misDone=S.misDone||{};const prev=S.misDone[m.id];if(!prev||prev[0]<sc)S.misDone[m.id]=[sc,max];save();sendRes("mision",{turno:"",titulo:m.t,score:sc,max,seg:Math.round(S.seg),conf:Math.round(S.conf)},[]);
+  openD(`<span class="tag">🎯 Misión completada</span><h2>${m.ic} ${m.t}</h2><div class="data">Puntaje: <b>${sc} de ${max}</b> ${"⭐".repeat(f>=.9?3:f>=.6?2:1)}</div>${chips(dm,ds,dc)}${bubble("sofia",f>=.9?"¡Impecable! Anoté todo para mi informe de práctica.":f>=.6?"Bien hecho. Aprendí un montón en esta salida.":"Uy, hubo cosas que se nos escaparon. ¿Repetimos otro día?")}<button class="btn" onclick="closeD()">Volver a la planta</button>`);}
+ finally{MIS_ON=null;YOU.mode="walk";YOU.path=[];YOU.x=CTRL_DOOR[0];YOU.y=CTRL_DOOR[1];YOU.z=0;}}
+// --- Planta Norte y ciudad vecina ---
+const NHOUSES=[];for(let x=-11;x<1.5;x+=3.2)for(const y of [-14.6,-11.2,-7.8]){NHOUSES.push([x,y,["#8a7f6e","#6f7a80","#8a6a5a","#7a7f66"][NHOUSES.length%4],["#5a2a22","#3a3a3a","#4a3a2a"][NHOUSES.length%3]])}
+const NCYL=[];for(let i=0;i<14;i++)NCYL.push(i*1.2);
+function northDrawables(add){
+ add(-12+8+1,()=>{const p=sphere(8,-12,1.05,36,"#b9b5aa");hitU("norte",p,60,70)},8,-12);
+ add(-12+10.6+1,()=>{sphere(10.6,-12,1.05,36,"#aaa69a")},10.6,-12);
+ add(-14+6+1,()=>{cyl(6,-14,1,30,"#7a3a2e",0,{bands:3,stripe:"rgba(240,240,230,.7)"})},6,-14);
+ add(-12+13+5,()=>{box(13,-12,5,2.6,16,"#77746c",0,{win:4,lit:1,lv:[.5],rust:3});const [a,b]=P(13,-9.3,4),[c2,d2]=P(18,-9.3,4);cx.strokeStyle="#3a3a36";cx.lineWidth=4;cx.beginPath();cx.moveTo(a,b);cx.lineTo(c2,d2);cx.stroke();
+   for(const o of NCYL){const x=13+((o+T*.6)%16.8)/16.8*5;cyl(x,-9.3,.16,7,["#e2701c","#b9b5aa","#2f6db5"][Math.floor(o)%3],2,{rust:0,roof:false})}
+   hitU("norte",P(15.5,-10.7,10),130,60)},15.5,-10);
+ add(-11+20+2,()=>{box(18.8,-12.2,3.2,2.2,2,"#4a4a46",0,{clean:1});for(let i=0;i<24;i++)cyl(19.1+(i%8)*.38,-11.9+Math.floor(i/8)*.6,.15,7,i%3?"#e2701c":"#b9b5aa",2,{rust:0,roof:false});box(18.7,-12.3,3.4,2.4,1.5,"#5a5a56",14,{clean:1})},20,-11);
+ add(-8+18+2,()=>{box(18,-8.6,2.6,1.6,18,"#6d6a62",0,{win:3,lit:1,lv:[.4,.75]});const s=P(16.6,-6.4,0),s2=P(16.6,-6.4,30);cx.strokeStyle="#aaa";cx.lineWidth=2;cx.beginPath();cx.moveTo(s[0],s[1]);cx.lineTo(s2[0],s2[1]);cx.stroke();cx.fillStyle="#1d6b45";cx.fillRect(s2[0]-30,s2[1]-14,60,15);cx.fillStyle="#fff";cx.font="bold 9px system-ui";cx.fillText("PLANTA NORTE",s2[0]-27,s2[1]-3)},18,-8);
+ add(-8+5+2,()=>{box(4.6,-9.2,3,1.8,3,"#4c4a44",0,{clean:1});for(const [x,y] of [[4.7,-9.1],[7.4,-9.1],[4.7,-7.6],[7.4,-7.6]])box(x,y,.15,.15,18,"#777",0,{clean:1});box(4.5,-9.3,3.2,2,2,"#9a3326",18,{top:"#b13b2b"});truck(6,-8.4,0,"#c9c3b5")},6,-8);
+ add(-8.2+11.8,()=>{box(11.6,-8.4,.3,.3,12,"#2f9a4a",0,{clean:1});const [a,b]=P(11.75,-8.25,14);cx.fillStyle="#3cff7a";cx.beginPath();cx.arc(a,b,3,0,7);cx.fill();for(let i=0;i<3;i++)box(12.1+i*.45,-8.6+i*.1,.4,.4,4,"#b08a5a",0,{clean:1})},12,-8);
+ for(const h of NHOUSES)add(h[0]+h[1]+2,()=>house(h[0],h[1],h[2],h[3]),h[0],h[1]);
+ add(-11+(-4)+3,()=>{box(-4.6,-12,1.4,1.4,30,"#a89a84",0,{win:1,lit:1,lv:[.7]});const a=P(-3.9,-11.3,30),b=P(-3.9,-11.3,48);poly([P(-4.6,-12,30),P(-3.2,-12,30),P(-3.9,-11.3,50)],"#6a3a2a");cx.strokeStyle="#ddd";cx.beginPath();cx.moveTo(b[0],b[1]-6);cx.lineTo(b[0],b[1]+2);cx.moveTo(b[0]-3,b[1]-3);cx.lineTo(b[0]+3,b[1]-3);cx.stroke()},-4,-11);
+}
+
+const WALKN=[[5,-7],[22,-7],[22,-14],[5,-14],[12,-9],[18,-9]];const PEOPLEN=[];crowd(PEOPLEN,WALKN,12,["#e2701c","#d4c21a","#5a6a8a"]);
+const LIGHTS2=[[-28,3],[-20,8],[-14,13],[-9,19],[-25,16],[-5,15],[30,10],[36,10],[42,10],[33,17],[42,17],[46,22],[15,30],[25,30],[35,30],[45,30],[15,33.6],[30,33.6],[45,33.6],[-1,21],[6,-7],[14,-7],[22,-7],[6,-14],[22,-14],[-10,-9.6],[-4,-9.6],[0,-13]];
+
+// ---------- dibujo ----------
+const HIT=[];// zonas de toque {x,y,w,h,u|inc}
+function drawables(){
+ const L=[];const vw=VIEW();const add=(k,f,wx,wy)=>{if(wx!=null){const [sx,sy]=P(wx,wy);if(sx<vw[0]||sx>vw[2]||sy<vw[1]||sy>vw[3])return}L.push({k,f})};
+ const lvl=(U.tkc1.lv=S.crudeLvl);
+ // tanques de crudo
+ add(18.6+6+1,()=>{const p=cyl(6,18.6,1.5,46,"#5d5f60",0,{level:lvl,bands:4,stripe:"rgba(180,40,30,.6)"});hitU("tkc1",p,90,70)});
+ add(21+8.6,()=>{const p=cyl(8.6,21,1.5,46,"#626462",0,{level:Math.max(0,lvl-.05),bands:4,stripe:"rgba(180,40,30,.6)"});hitU("tkc1",p,90,70)});
+ add(18.6+5.6+.2,()=>{cyl(5.6,21.4,.7,18,"#55524c",0,{rust:3})});
+ // tanques de productos
+ for(const t of TKP)add(t.x+t.y+1.2,()=>{const p=cyl(t.x,t.y,1.15,36,t.k==="res"?"#3a3836":"#6b6a63",0,{level:S.tk[t.k],bands:3,stripe:PCOL[t.k]+"99"});hitU("tkp",p,70,60);
+   lab(p[0],p[1]-10,NAMES[t.k].split(" ")[0]);});
+ // esferas GLP
+ add(13.4+21.6+1,()=>{const p=sphere(21.6,13.4,1.15,40,"#b9b5aa");hitU("glp",p,70,80)});
+ add(15.8+21.6+1,()=>{const p=sphere(21.6,15.8,1.15,40,"#aaa69a");hitU("glp",p,70,80)});
+ // muelle y barco
+ add(26+2,()=>{box(2.2,23.4,4.6,.8,6,"#5a5650");
+   const sx=SHIP.x;const hull=(x,y,w,d,h,c,z)=>box(x,y,w,d,h,c,z,{clean:1});
+   hull(sx,26.2,7,2,10,"#3a2a24",0);hull(sx,26.2,7,2,3,"#8a2a1e",10);box(sx+5.4,26.4,1.3,1.6,16,"#d8d3c7",13,{win:2,lit:1,lv:[.6]});
+   for(let i=0;i<4;i++){const [px,py]=P(sx+.8+i*1.2,27.2,13);cx.fillStyle="#6f6f6a";cx.beginPath();cx.ellipse(px,py,9,4.5,0,0,7);cx.fill();}
+   pipeLine([[4.4,24,6],[4.4,26,12]],"#2b2b2b",3);
+   hitU("muelle",P(4.4,24.8,30),120,70);});
+ // bomba de carga
+ add(16.6+9.6+1.8,()=>{box(9.6,16.6,1.4,1.2,10,"#3f6b8a");box(9.8,16.8,.6,.6,16,"#2f4f66",0);cyl(10.7,17.2,.3,14,"#596a74",0,{rust:0,roof:false});
+   if(INC.find(i=>i.c.id==="cav")&&Math.sin(T*40)>0){const [a,b]=P(10.3,17.2,14);cx.strokeStyle="rgba(255,240,200,.6)";cx.beginPath();cx.arc(a,b,8+Math.sin(T*30)*3,0,7);cx.stroke();}
+   hitU("bomba",P(10.3,17.2,16),60,46)});
+ // tren de precalentamiento
+ add(12.6+10.6+5,()=>{for(let i=0;i<4;i++){const x=10.8+i*1.05;box(x,12.7,.3,1.2,6,"#4a4640");
+    const [a,b]=P(x+.4,13.3,13);const fo=S.foul;cx.fillStyle=`rgb(${110+fo*40|0},${100-fo*30|0},${85-fo*40|0})`;cx.save();cx.translate(a,b);cx.rotate(.46);cx.fillRect(-26,-6,52,12);cx.fillStyle="rgba(0,0,0,.25)";cx.fillRect(-26,2,52,4);cx.fillStyle="#2c2a26";cx.fillRect(-28,-7,5,14);cx.fillRect(23,-7,5,14);cx.restore();}
+   hitU("pre",P(12.6,13.3,14),130,50)});
+ // desaladora
+ add(9.4+11.2+3,()=>{box(11.4,9.5,.3,1,6,"#4a4640");box(13.3,9.5,.3,1,6,"#4a4640");const [a,b]=P(12.5,10,14);cx.save();cx.translate(a,b);cx.rotate(.46);
+   const g=cx.createLinearGradient(0,-12,0,12);g.addColorStop(0,"#9a968a");g.addColorStop(1,"#4b4842");cx.fillStyle=g;cx.beginPath();cx.ellipse(0,0,46,12,0,0,7);cx.fill();cx.restore();
+   box(12.2,9.6,.5,.5,12,"#d1b02a",12,{clean:1});hitU("desal",[a,b],100,40)});
+ // horno
+ add(7.2+14.6+5,()=>{box(14.6,7.2,2.6,2.2,44,"#5a4a3e",0,{rust:6});box(15.4,7.8,1,1,8,"#3c3a36",44);cyl(15.9,8.3,.35,70,"#4a4642",52,{rust:2,roof:false});
+   // mirillas con brillo
+   for(let i=0;i<4;i++){const [a,b]=P(17.2,7.6+i*.5,6);cx.fillStyle=`rgba(255,${120+Math.random()*60|0},30,${.8})`;cx.fillRect(a-2,b-3,4,4);}
+   const [sx,sy]=P(15.9,8.3,125);U.horno.stack=[sx,sy];hitU("horno",P(15.9,8.3,40),90,110)});
+ // torre de destilación
+ add(7+19.2+2,()=>{const top=cyl(19.2,7,.9,190,"#6c6a64",0,{bands:9,rust:7});
+   for(let k=1;k<6;k++){const [a,b]=P(19.2,7,k*32);cx.strokeStyle="#c9a43a";cx.lineWidth=2;cx.beginPath();cx.ellipse(a,b,46,23,0,.2,Math.PI-.2);cx.stroke();}
+   const [la,lb]=P(19.8,7.6,0),[lc,ld]=P(19.8,7.6,190);cx.strokeStyle="rgba(200,190,170,.45)";cx.lineWidth=1;cx.beginPath();cx.moveTo(la+3,lb);cx.lineTo(lc+3,ld);cx.moveTo(la+8,lb);cx.lineTo(lc+8,ld);cx.stroke();
+   cyl(21,8.6,.5,90,"#646259",0,{bands:4});// despojador
+   U.torre.top=top;hitU("torre",P(19.2,7,100),70,210)});
+ // condensador aéreo
+ add(3.2+20.8+3,()=>{for(const [x,y] of [[21,3.4],[23.4,3.4],[21,4.6],[23.4,4.6]])box(x,y,.2,.2,26,"#555",0,{clean:1});box(20.9,3.3,2.8,1.5,6,"#6b6e70",26);
+   for(let i=0;i<3;i++){const [a,b]=P(21.4+i*.9,4,33);cx.fillStyle="#2a2a2a";cx.beginPath();cx.ellipse(a,b,13,6.5,0,0,7);cx.fill();cx.strokeStyle="#888";cx.save();cx.translate(a,b);cx.rotate(T*8+i);cx.beginPath();cx.moveTo(-11,0);cx.lineTo(11,0);cx.moveTo(0,-5);cx.lineTo(0,5);cx.stroke();cx.restore();}
+   const [a,b]=P(22,5.4,8);cx.save();cx.translate(a,b);cx.rotate(.46);cx.fillStyle="#7c7a72";cx.beginPath();cx.ellipse(0,0,24,8,0,0,7);cx.fill();cx.restore();
+   hitU("aero",P(22.2,4,30),110,60)});
+ // torre de enfriamiento
+ add(3+8.4+4,()=>{box(8.4,3,3.2,2.6,30,"#6a6d68",0,{rust:4});box(8.4,3,3.2,2.6,4,"#4a4c48",30);
+   for(let i=0;i<2;i++){const [a,b]=P(9.2+i*1.6,4.3,34);cx.fillStyle="#2c2e2c";cx.beginPath();cx.ellipse(a,b,16,8,0,0,7);cx.fill();}
+   hitU("enf",P(10,4.3,22),110,60)});
+ // antorcha
+ add(4.6+3.2+.5,()=>{cyl(3.2,4.6,.18,160,"#8a3a2a",0,{rust:0,roof:false,stripe:"rgba(240,240,230,.8)"});
+   for(const [dx,dy] of [[-1,0],[1,.3],[0,-1]]){const a=P(3.2+dx*1.4,4.6+dy*1.4),b=P(3.2,4.6,135);cx.strokeStyle="rgba(140,140,130,.35)";cx.lineWidth=1;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();}
+   const [sx,sy]=P(3.2,4.6,160);U.ant.tip=[sx,sy];
+   const big=S.flare?2.2:1,fl=(14+Math.sin(T*17)*3+Math.sin(T*7.3)*3)*big;
+   const g=cx.createRadialGradient(sx,sy-fl*.6,2,sx,sy-fl*.6,fl*1.4);g.addColorStop(0,"rgba(255,250,200,1)");g.addColorStop(.4,"rgba(255,170,40,.9)");g.addColorStop(1,"rgba(255,80,0,0)");
+   cx.fillStyle=g;cx.beginPath();cx.ellipse(sx+Math.sin(T*3)*2,sy-fl*.6,fl*.55,fl*1.2,0,0,7);cx.fill();
+   hitU("ant",[sx,sy+60],50,160)});
+ // llenadero
+ add(19.6+19.4+2.5,()=>{box(19.4,19.6,3.2,2.2,3,"#4c4a44");for(const [x,y] of [[19.5,19.7],[22.4,19.7],[19.5,21.6],[22.4,21.6]])box(x,y,.15,.15,24,"#777",0,{clean:1});box(19.3,19.5,3.4,2.4,3,"#9a3326",24,{top:"#b13b2b"});
+   hitU("rack",P(21,20.7,20),110,60)});
+ // edificios
+ add(11.4+6.6+4.8,()=>{box(6.6,11.4,2.6,2.2,24,"#77746c",0,{win:4,lit:1,lv:[.4,.75]});box(7.6,12.2,.8,.8,6,"#4e4c46",24);
+   const [a,b]=P(8,12.6,34);cx.strokeStyle="#999";cx.beginPath();cx.moveTo(a,b);cx.lineTo(a,b-14);cx.stroke();cx.fillStyle=`rgba(255,40,40,${.5+.5*Math.sin(T*3)})`;cx.beginPath();cx.arc(a,b-14,2,0,7);cx.fill();
+   hitU("ctrl",P(7.9,12.5,14),90,60)});
+ add(9.6+3.2+5.4,()=>{box(3.2,9.6,2.4,3,30,"#6d6a62",0,{win:5,lit:1,lv:[.3,.6,.85]});hitU("ofi",P(4.4,11,16),90,70)});
+ add(15.2+6.4+3.8,()=>{box(6.4,15.2,2.2,1.6,18,"#8a3a2e",0,{win:2,lit:1,lv:[.5]});const [a,b]=P(7.5,16.8,6);cx.fillStyle="#d8d0c0";cx.fillRect(a-10,b-12,20,12);
+   hitU("bomb",P(7.5,16,10),80,50)});
+ add(2.2+15.2+4.2,()=>{box(15.2,2.2,2.4,1.8,4,"#4a4a46");for(let i=0;i<3;i++){box(15.5+i*.7,2.6,.4,.6,12,"#7b7f80",4,{clean:1});}
+   for(let i=0;i<4;i++){const a=P(15.4+i*.6,2.3,22),b=P(15.4+i*.6,2.3,4);cx.strokeStyle="#9a9a90";cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();}
+   hitU("sub",P(16.4,3,10),80,40)});
+ add(23.4+22.4+5.6,()=>{const [a,b]=P(23.6,24.2,2);cx.fillStyle="#3a4a3e";cx.beginPath();cx.ellipse(a,b,34,17,0,0,7);cx.fill();cx.fillStyle="rgba(120,140,110,.35)";cx.beginPath();cx.ellipse(a+Math.sin(T)*3,b,20,9,0,0,7);cx.fill();
+   const [c2,d2]=P(25.2,25,2);cx.fillStyle="#334039";cx.beginPath();cx.ellipse(c2,d2,22,11,0,0,7);cx.fill();box(22.2,22.8,1,.8,10,"#6d6a62");hitU("agua",[a,b],90,50)});
+ // rack principal de tuberías
+ for(let x=9.6;x<24;x+=1.5)add(x+11.2+.3,()=>{for(const yy of[10.85,11.55])box(x,yy,.12,.12,22,"#4b4741",0,{clean:1});box(x,10.85,.12,.82,2,"#5a554d",20,{clean:1});
+   const cols=[["#5b4a36","rgba(255,170,70,.7)"],["#6d6a5a","rgba(255,159,67,.7)"],["#3e5a6a","rgba(120,190,230,.6)"],["#d8d3c7",null],["#7a6a2a","rgba(255,209,102,.6)"]];
+   cols.forEach((c,i)=>{const yy=10.95+i*.13;pipeLine([[x,yy,22.5],[Math.min(x+1.5,24),yy,22.5]],c[0],2.2,c[1],16)});
+   if(x<9.7)hitU("rackp",P(x+.2,11.2,22),40,40);});
+ // unidad de vacío
+ add(8.6+22.6+1.5,()=>{const t=cyl(22.6,8.6,1.15,128,"#5c5a55",0,{bands:6,rust:6});for(let k=1;k<4;k++){const [a,b]=P(22.6,8.6,k*34);cx.strokeStyle="#c9a43a";cx.lineWidth=2;cx.beginPath();cx.ellipse(a,b,55,27,0,.2,Math.PI-.2);cx.stroke();}
+   cyl(23.6,7.4,.35,40,"#6a675f",128,{rust:0,roof:false});hitU("vacio",P(22.6,8.6,70),80,150)});
+ add(9.8+24.2+3,()=>{box(24.2,9.8,1.8,1.6,34,"#574638",0,{rust:5});cyl(25.1,10.6,.25,50,"#4a4642",34,{rust:0,roof:false});const [a,b]=P(26,10.4,5);cx.fillStyle="rgba(255,140,40,.85)";cx.fillRect(a-2,b-3,4,4);hitU("vacio",P(25,10.6,20),60,60)});
+ // más tanques de crudo
+ add(18.4+3.2+1.2,()=>{const p=cyl(3.2,18.4,1.2,40,"#575958",0,{bands:4,level:Math.min(1,S.crudeLvl+.08)});hitU("tkc1",p,70,60)});
+ add(21+3.2+1.2,()=>{const p=cyl(3.2,21,1.2,40,"#5f605d",0,{bands:4,level:Math.max(0,S.crudeLvl-.1)});hitU("tkc1",p,70,60)});
+ // tambores, contenedores y grúa de mantenimiento
+ add(2.8+17.9,()=>{for(let i=0;i<6;i++)cyl(17.9+(i%3)*.35,2.9+Math.floor(i/3)*.35,.15,8,["#2f6db5","#b8452f","#d9a62b"][i%3],0,{rust:0,roof:false});});
+ add(21.4+24.6+2,()=>{box(24.4,21.2,1.8,.7,9,"#8a3a2e");box(24.4,22,1.8,.7,9,"#2e5a7a");box(24.4,21.2,1.8,.7,9,"#6a7a3a",9);});
+ add(4.6+17.6+1,()=>{box(17.2,4.4,1.2,.6,6,"#d9a62b");box(17.5,4.5,.5,.4,6,"#3a3a36",6);const a=P(17.8,4.7,12),b=P(19.4,6.4,200);cx.strokeStyle="#e0b53a";cx.lineWidth=3;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();
+   cx.strokeStyle="#c9a43a";cx.lineWidth=1;for(let k=0;k<10;k++){const t=k/10,u=(k+.5)/10;cx.beginPath();cx.moveTo(a[0]+(b[0]-a[0])*t-2,a[1]+(b[1]-a[1])*t);cx.lineTo(a[0]+(b[0]-a[0])*u+2,a[1]+(b[1]-a[1])*u);cx.stroke();}
+   const hy=b[1]+40+Math.sin(T*.7)*8;cx.strokeStyle="#222";cx.beginPath();cx.moveTo(b[0],b[1]);cx.lineTo(b[0],hy);cx.stroke();cx.fillStyle="#d9a62b";cx.fillRect(b[0]-3,hy,6,5);});
+ // racks de tuberías (siempre detrás de unidades del frente)
+ add(11,()=>{const fl=S.trip>0?"rgba(255,150,60,.35)":"rgba(255,170,70,.75)";
+   pipeLine([[6,18.6,8],[9.6,17.2,8]],"#4d3a2a",4,fl);
+   pipeLine([[10.9,17,6],[10.9,14.2,6],[11,13.3,8]],"#4d3a2a",4,fl);
+   pipeLine([[14.4,13.3,8],[14.4,11,8],[13.4,10,8]],"#4d3a2a",4,fl);
+   pipeLine([[12.6,10,8],[14.6,9,8],[14.8,8.6,10]],"#4d3a2a",4,fl);
+   pipeLine([[17.2,8.2,20],[18.6,7.4,20]],"#6a4a32",5,"rgba(255,120,40,.9)",34);
+   pipeLine([[19.2,7,186],[21,4.4,40]],"#59575a",3,"rgba(200,220,255,.6)");
+   pipeLine([[19.8,7.6,70],[19.8,12,10],[16.4,18.4,10],[16.2,19.4,8]],"#6d6a5a",3,"rgba(155,224,143,.8)");
+   pipeLine([[19.6,7.6,50],[19.6,12.4,10],[17,19,10],[13.6,21.6,8]],"#6d6a5a",3,"rgba(255,159,67,.85)");
+   pipeLine([[19.2,7.6,4],[18.6,12.8,6],[16.4,21.8,6]],"#3d3a36",3,"rgba(160,112,90,.8)");
+   pipeLine([[22,5.4,10],[18,11.8,8],[13.6,18.6,8]],"#6d6a5a",3,"rgba(255,209,102,.8)");
+   pipeLine([[22.4,4.8,10],[21.6,12.6,30]],"#6d6a5a",2,"rgba(127,196,255,.8)");
+   pipeLine([[18.4,10,12],[3.4,4.8,10]],"#5d5348",2,S.flare?"rgba(255,120,40,.9)":null);
+   pipeLine([[10,4.3,10],[18.8,6.6,10]],"#3e5a6a",3,"rgba(120,190,230,.6)");
+   pipeLine([[16.4,22,6],[19.6,20.6,6]],"#6d6a5a",3,"rgba(255,209,102,.6)");
+ });
+ // camiones, carros y gente
+ for(const tr of TRUCKS){const [x,y,a]=pathAt(RTRK,tr.s);add(x+y+.4,()=>truck(x,y,a,tr.col))}
+ for(const c of CARS){const [x,y,a]=pathAt(ROAD,c.s);add(x+y+.3,()=>car(x,y,a,c.col))}
+ for(const c of PARK)add(c.x+c.y,()=>car(c.x,c.y,0,c.col));
+ for(const p of PEOPLE)add(p.x+p.y+.2,()=>person(p));
+ // camión de bomberos si hay fuga
+ if(S.leak)add(20.2+16,()=>truck(16.4,19.2,0,"#c8261a",true));
+ // postes de luz
+ for(const [x,y] of LIGHTS.concat(LIGHTS2))add(x+y,()=>{const a=P(x,y),b=P(x,y,46);cx.strokeStyle="#3a3a36";cx.lineWidth=2;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();cx.fillStyle=NIGHT>.2?"#ffcf7a":"#777";cx.fillRect(b[0]-3,b[1]-2,6,3);},x,y);
+ zoneDrawables(add);drawUpgrades(add);
+ return L;}
+function VIEW(){const m=320;return [CAM.x-W/2/CAM.z-m,CAM.y-H/2/CAM.z-m*.6,CAM.x+W/2/CAM.z+m,CAM.y+H/2/CAM.z+m*1.6]}
+const LIGHTS=[[8,8],[13,14.6],[18,11],[18,17.4],[12,17.4],[3,14],[25,10],[25,20],[7,24],[17,4],[22,12],[10,8]];
+function lab(x,y,t){cx.font="bold 10px system-ui";cx.textAlign="center";cx.fillStyle="rgba(0,0,0,.6)";cx.fillText(t,x+1,y+1);cx.fillStyle="#efe6d6";cx.fillText(t,x,y);cx.textAlign="left";}
+function hitU(u,p,w,h){HIT.push({x:p[0]-w/2,y:p[1]-h*.25,w,h,u})}
+function truck(x,y,a,col,fire){const dx=Math.cos(a),dy=Math.sin(a);const [sx,sy]=P(x,y,0);cx.save();cx.translate(sx,sy);
+ const ex=(dx-dy)*TW,ey=(dx+dy)*TH;const ang=Math.atan2(ey,ex);
+ cx.rotate(ang);cx.fillStyle="rgba(0,0,0,.35)";cx.fillRect(-22,-4,44,10);
+ cx.fillStyle=fire?"#c8261a":"#2b2b2b";cx.fillRect(-20,-6,30,10);
+ if(!fire){const g=cx.createLinearGradient(0,-12,0,2);g.addColorStop(0,sh(col,1.1));g.addColorStop(1,sh(col,.55));cx.fillStyle=g;cx.beginPath();cx.ellipse(-6,-8,15,6,0,0,7);cx.fill();}
+ else{cx.fillStyle="#e33";cx.fillRect(-20,-12,30,8);cx.fillStyle=`rgba(80,160,255,${Math.sin(T*12)>0?1:.2})`;cx.fillRect(10,-14,6,3);}
+ cx.fillStyle=fire?"#d33":"#d8d0c0";cx.fillRect(10,-12,10,12);cx.fillStyle="rgba(120,170,210,.8)";cx.fillRect(16,-10,3,5);
+ if(NIGHT>.25){cx.fillStyle="rgba(255,240,180,.9)";cx.fillRect(19,-3,3,3);}
+ cx.restore();}
+function car(x,y,a,col){const [sx,sy]=P(x,y,0);const ex=(Math.cos(a)-Math.sin(a))*TW,ey=(Math.cos(a)+Math.sin(a))*TH;cx.save();cx.translate(sx,sy);cx.rotate(Math.atan2(ey,ex));
+ cx.fillStyle="rgba(0,0,0,.35)";cx.fillRect(-9,-2,18,6);cx.fillStyle=col;cx.fillRect(-9,-6,18,7);cx.fillStyle=sh(col,1.3);cx.fillRect(-4,-9,9,4);cx.restore();}
+function person(p){const [sx,sy]=P(p.x,p.y,0);const bob=p.mv?Math.abs(Math.sin(T*10+p.x))*1.5:0;
+ cx.fillStyle="rgba(0,0,0,.35)";cx.beginPath();cx.ellipse(sx,sy,4,2,0,0,7);cx.fill();
+ cx.fillStyle="#2c3440";cx.fillRect(sx-2.2,sy-7-bob,1.8,7);cx.fillRect(sx+.4,sy-7-bob,1.8,7);
+ cx.fillStyle=p.v;cx.fillRect(sx-3,sy-13-bob,6,7);cx.fillStyle="rgba(230,230,90,.8)";cx.fillRect(sx-3,sy-10-bob,6,1);
+ cx.fillStyle="#c89a78";cx.beginPath();cx.arc(sx,sy-15.5-bob,2.3,0,7);cx.fill();cx.fillStyle=p.h;cx.beginPath();cx.arc(sx,sy-16.5-bob,2.6,Math.PI,0);cx.fill();}
+// ---------- bucle ----------
+let last=performance.now();
+function step(dt){
+ T+=dt;
+ const gm=dt*4*SPD;// minutos de juego
+ if(SPD>0&&S.started&&$("ov").hidden){
+  S.t+=gm;S.gm=(S.gm||0)+gm;const h=gm/60;
+  const r=rates();S.money+=r.m*h;S.shiftMoney+=r.m*h;S.safeH+=h;
+  S.crudeLvl=clamp(S.crudeLvl+(r.fr-r.F)*h/24/600*4,0,1);
+  for(const k in S.down)if(S.down[k]<90){S.down[k]-=h;if(S.down[k]<=0)delete S.down[k]}
+  if(!INC.some(i=>i.c.u==="rig")){S.rig+=h*.05;if(S.rig>=1){S.rig=0;const off=S.wells.indexOf(0);if(off>=0){S.wells[off]=1;toast(`🛢️ Pozo P-${off+1} de vuelta en producción.`)}else if(S.newWells<6){S.newWells++;toast("🎉 ¡Nuevo pozo terminado! +3 kbbl/d de crudo propio.")}}}
+  if(S.crudeLvl<=0.02&&!S.trip){S.trip=2;toast("⛔ ¡Sin crudo! La bomba se quedó sin succión y la planta bajó carga.")}
+  for(const t of TKP){S.tk[t.k]=clamp(S.tk[t.k]+(rnd()-.5)*.002*SPD+(t.k==="naf"&&INC.find(i=>i.c.id==="truck")?h*.03:0),.15,.99)}
+  S.foul=clamp(S.foul+h*.004*(S.foulRate||1)*(S.up.foul?.5:1),0,1);
+  if(S.seg<25&&rnd()<h*.04){S.safeH=0;S.ss.acc++;S.money-=50000;S.shiftMoney-=50000;meter("conf",-5);meter("seg",12);toast("🚑 <b>Accidente con lesión.</b> Con la seguridad tan baja, era cuestión de tiempo. Se reinician las horas sin accidentes.");beep(180,.4);}
+  if(S.trip>0)S.trip=Math.max(0,S.trip-h);
+  if(S.Tf>370)S.coke+=h*(S.Tf-370)*.05;
+  labCheck();
+  for(const i of INC){const age=(S.t-i.t0)/60;if(age>(i.dl||i.c.dl)&&!i.esc){i.esc=true;S.res.ign++;if(!i.c.dil)S.ss.ign++;
+    if(i.c.escDown)S.down[i.c.u]=i.c.escDown;if(i.c.esc){toast("💥 "+i.c.esc);S.money-=40000;S.shiftMoney-=40000;if(i.c.safety){S.safeH=0;S.ss.acc++}else S.trip=Math.max(S.trip,2);beep(200,.3)}
+    resolve(i,null);break;}}
+  // nuevos incidentes
+  S.nextInc=(S.nextInc??(S.tut?40:6))-gm;
+  if(S.nextInc<=0&&INC.length<4){const hr=(S.t/60)%24;
+   const cc=campCur();let pool=CASES.filter(c=>allowed(c.id)&&!INC.find(i=>i.c.id===c.id)&&(!c.cond||c.cond())&&(cc&&cc.pool?cc.pool.includes(c.id)||rnd()<.12:(!c.hours||(hr>=c.hours[0]&&hr<c.hours[1]))));if(!pool.length)pool=CASES.filter(c=>allowed(c.id)&&!INC.find(i=>i.c.id===c.id));
+   const forced=pool.filter(c=>c.cond&&c.cond());if(!S.tut&&!S.firstDone){pool=[caseById("cav")];}
+   if(S.tut&&rnd()<.28)spawnDil(cc&&cc.dil);else{const pick=forced.length&&rnd()<.6?forced[0]:pool[Math.floor(rnd()*pool.length)];if(pick)spawn(pick.id);}S.nextInc=(40+rnd()*55)*(S.seg<40?.75:1)*((cc&&cc.rate)||1);}
+  if(S.crudeLvl<.22&&SHIP.state==="gone"){SHIP.state="in";SHIP.x=-12;}
+  // fin de turno
+  if(S.gm>=720){S.gm=0;shiftEnd();}
+ }
+ // barco
+ if(SHIP.state==="in"){SHIP.x+=dt*1.2*Math.max(1,SPD);if(SHIP.x>=-.2){SHIP.x=-.2;SHIP.state="dock";SHIP.t=0;}}
+ else if(SHIP.state==="dock"){SHIP.t+=dt*Math.max(SPD,.0001);if(S.started&&SPD)S.crudeLvl=clamp(S.crudeLvl+dt*SPD*.004,0,.95);if(SHIP.t>40||S.crudeLvl>.9){SHIP.state="out";if(rnd()<.35&&S.started&&!INC.find(i=>i.c.id==="heavy"))spawn("heavy");}}
+ else if(SHIP.state==="out"){SHIP.x-=dt*1.2*Math.max(1,SPD);if(SHIP.x<-14)SHIP.state="gone";}
+ // camiones
+ const spdv=Math.max(SPD,.0)*1.0;
+ for(const tr of TRUCKS){const [x,y]=pathAt(RTRK,tr.s);
+  if(tr.wait>0){tr.wait-=dt*Math.max(SPD,0);continue}
+  if(Math.abs(x-21)<.15&&Math.abs(y-18.8)<.3&&!tr.load){tr.wait=INC.find(i=>i.c.id==="truck")?10:3;tr.load=1;continue}
+  if(x>27)tr.load=0;
+  const ahead=TRUCKS.some(o=>o!==tr&&((o.s-tr.s+pathLen(RTRK))%pathLen(RTRK))<1.8&&((o.s-tr.s+pathLen(RTRK))%pathLen(RTRK))>0);
+  if(!ahead)tr.s+=dt*1.6*spdv;}
+ for(const c of CARS)c.s+=dt*1.4*spdv;
+ for(const p of PEOPLE){if(p.wait>0){p.wait-=dt*Math.max(SPD,0);p.mv=0;continue}
+  const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy);
+  if(d<.05){const n=WALK[Math.floor(rnd()*WALK.length)];if(rnd()<.5){p.tx=n[0];p.ty=p.y}else{p.tx=p.x;p.ty=n[1]}p.wait=rnd()*2;}
+  else{const s=Math.min(d,p.sp*dt*spdv);if(Math.abs(dx)>.01)p.x+=Math.sign(dx)*s;else p.y+=Math.sign(dy)*s;p.mv=SPD>0;}}
+ updZones(dt);
+ // partículas
+ if(rnd()<dt*14)emit(15.9,8.3,125,"sm",1);
+ if(rnd()<dt*20)emit(9.2+rnd()*1.6,4.3,36,"st",1);
+ if(rnd()<dt*4)emit(19.2,7,192,"st",1);
+ if(S.flare&&rnd()<dt*14)emit(3.2,4.6,185,"bk",1);
+ if(S.o2<1.5&&rnd()<dt*18)emit(15.9,8.3,125,"bk",1);
+ for(let i=PART.length-1;i>=0;i--){const q=PART[i];q.l+=dt;if(q.l>q.L){PART.splice(i,1);continue}q.z+=q.vz*dt;q.x+=q.vx*dt*.4+dt*.15;q.y-=dt*.12;}
+ // reloj día/noche
+ const hr=(S.t/60)%24;NIGHT=hr<5?1:hr<7?1-(hr-5)/2:hr<17.5?0:hr<19.5?(hr-17.5)/2:1;
+}
+function draw(){
+ cx.setTransform(DPR,0,0,DPR,0,0);
+ // cielo
+ const g=cx.createLinearGradient(0,0,0,H);const n=NIGHT;
+ g.addColorStop(0,`rgb(${60-45*n|0},${55-45*n|0},${55-35*n|0})`);g.addColorStop(1,`rgb(${95-75*n|0},${80-65*n|0},${62-45*n|0})`);
+ cx.fillStyle=g;cx.fillRect(0,0,W,H);
+ cx.setTransform(DPR*CAM.z,0,0,DPR*CAM.z,DPR*(W/2-CAM.x*CAM.z),DPR*(H/2-CAM.y*CAM.z));
+ cx.drawImage(GROUND,-GO[0],-GO[1]);
+ // brillos en el agua
+ cx.strokeStyle="rgba(200,210,220,.12)";cx.lineWidth=1;for(let i=0;i<14;i++){const x=(i*1.7+T*.3)%10-1,y=26+(i*.37)%3;const [a,b]=P(x,y);cx.beginPath();cx.moveTo(a,b);cx.lineTo(a+10,b+5);cx.stroke();}
+ HIT.length=0;
+ const L=drawables();L.sort((a,b)=>a.k-b.k);for(const d of L)d.f();
+ // partículas
+ for(const q of PART){const [sx,sy]=P(q.x,q.y,q.z),f=q.l/q.L,r=q.r*(1+f*2.2);
+  if(q.k==="st"){cx.fillStyle=`rgba(${200-NIGHT*120|0},${200-NIGHT*120|0},${195-NIGHT*110|0},${.28*(1-f)})`}
+  else if(q.k==="sm"){cx.fillStyle=`rgba(70,66,62,${.3*(1-f)})`}else{cx.fillStyle=`rgba(20,18,16,${.55*(1-f)})`}
+  cx.beginPath();cx.arc(sx,sy,r,0,7);cx.fill();}
+ // oscuridad nocturna + bruma industrial
+ cx.setTransform(DPR,0,0,DPR,0,0);
+ const hz=cx.createLinearGradient(0,0,0,H);hz.addColorStop(0,`rgba(90,70,50,${.18})`);hz.addColorStop(.5,"rgba(90,70,50,0)");cx.fillStyle=hz;cx.fillRect(0,0,W,H);
+ if(NIGHT>0){cx.fillStyle=`rgba(4,6,18,${NIGHT*.5})`;cx.fillRect(0,0,W,H);}
+ // luces (aditivo)
+ cx.setTransform(DPR*CAM.z,0,0,DPR*CAM.z,DPR*(W/2-CAM.x*CAM.z),DPR*(H/2-CAM.y*CAM.z));
+ cx.globalCompositeOperation="lighter";
+ const glow=(x,y,r,c,a)=>{const g2=cx.createRadialGradient(x,y,0,x,y,r);g2.addColorStop(0,`rgba(${c},${a})`);g2.addColorStop(1,`rgba(${c},0)`);cx.fillStyle=g2;cx.fillRect(x-r,y-r,2*r,2*r)};
+ if(U.ant.tip){const fl=(S.flare?2:1)*(1+.12*Math.sin(T*13));glow(U.ant.tip[0],U.ant.tip[1]-14,(90+120*NIGHT)*fl,"255,140,40",.35+.3*NIGHT);}
+ const [hx,hy]=P(16,8.4,10);glow(hx,hy,40+40*NIGHT,"255,110,30",.18+.25*NIGHT);
+ if(NIGHT>.15)for(const [x,y] of LIGHTS.concat(LIGHTS2)){const [a,b]=P(x,y,46);glow(a,b,60,"255,190,90",.22*NIGHT);const [c,d]=P(x,y,0);glow(c,d,50,"255,170,70",.12*NIGHT);}
+ cx.globalCompositeOperation="source-over";
+ // marcadores de incidentes
+ for(const i of INC){const u=U[i.c.u];const h=HIT.find(z=>z.u===i.c.u);if(!h)continue;
+  const bx=h.x+h.w/2,by=h.y-18+Math.sin(T*4+i.id)*4;i.bx=bx;i.by=by;
+  const age=(S.t-i.t0)/60/(i.dl||i.c.dl);cx.fillStyle="rgba(0,0,0,.45)";cx.beginPath();cx.arc(bx+1.5,by+2,15,0,7);cx.fill();
+  cx.fillStyle=i.c.dil?"#4f7fd9":age>.66?"#e0412b":"#f2b51b";cx.beginPath();cx.arc(bx,by,15,0,7);cx.fill();cx.strokeStyle="#fff";cx.lineWidth=2;cx.stroke();
+  cx.strokeStyle="rgba(255,255,255,.9)";cx.lineWidth=3;cx.beginPath();cx.arc(bx,by,19,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-Math.min(1,age)));cx.stroke();
+  cx.fillStyle=i.c.dil?"#fff":"#1a1206";cx.font="bold 19px system-ui";cx.textAlign="center";cx.fillText(i.c.dil?"?":"!",bx,by+7);cx.textAlign="left";
+  if(!S.tut){cx.fillStyle="#fff";cx.font="bold 12px system-ui";cx.textAlign="center";cx.fillText("👆 ¡Tócame!",bx,by-24);cx.textAlign="left";}}
+ // viñeta
+ cx.setTransform(DPR,0,0,DPR,0,0);const vg=cx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.55)");cx.fillStyle=vg;cx.fillRect(0,0,W,H);
+}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(CT){CAM.x+=(CT.x-CAM.x)*.08;CAM.y+=(CT.y-CAM.y)*.08;CAM.z+=(CT.z-CAM.z)*.08;if(Math.abs(CT.x-CAM.x)<1&&Math.abs(CT.y-CAM.y)<1&&Math.abs(CT.z-CAM.z)<.005)CT=null;}step(dt);draw();if(((T*4)|0)!==((T*4-dt*4)|0))if(W<700)$('kp').classList.add('min');
+hud();requestAnimationFrame(loop);}
+// ---------- HUD ----------
+function clk(){const m=Math.floor(S.t)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
+const fmt=v=>(v<0?"−":"")+"$"+Math.abs(Math.round(v)).toLocaleString("es-CR");
+function hud(){$("clk").textContent=clk();const hr=(S.t/60)%24;const cc=campCur();$("shf").textContent=cc?` Turno ${S.camp.n}/10 · ${cc.t}`:(hr>=6&&hr<18?" Turno día":" Turno noche");
+ $("mny").textContent=fmt(S.shiftMoney);$("mg").classList.toggle("neg",S.shiftMoney<0);const sc=v=>v>=70?"#9be08f":v>=40?"#ffd27a":"#ff8a70";$("seg").textContent=Math.round(S.seg);$("seg").style.color=sc(S.seg);$("conf").textContent=Math.round(S.conf);$("conf").style.color=sc(S.conf);
+ const r=rates();$("fd").textContent=Math.round(r.F);
+ let h0=1;let h=`<div class="row" style="cursor:pointer" onclick="playerDlg()"><span>👤 <b>${S.player?S.player.nick:"—"}</b></span><span class="mut">${S.player&&S.player.room?"🏫 "+S.player.room+(S.outbox&&S.outbox.length?" ⏳":" ✓"):"sin sala"}</span></div>`;h+=cc?`<div style="margin-bottom:5px"><b style="color:#ffb347">🎯 Metas · turno ${S.camp.n}</b>${cc.goals.map(g=>`<div class="mut">${g.f()?"✅":"⬜"} ${g.t}</div>`).join("")}</div>`:"";h+=`<div class="row mut"><span>Horas sin accidentes</span><span>${Math.floor(S.safeH)}</span></div><div class="row"><span>Margen</span><b style="color:${r.m<0?"#ff8a70":"#9be08f"}">${fmt(r.m)}/h</b></div>`;
+ h+=`<div class="row"><span>Crudo (${S.crude})</span><span>${Math.round(S.crudeLvl*100)} %</span></div><div class="bar"><i style="width:${S.crudeLvl*100}%;background:${S.crudeLvl<.25?"#ff6b4a":"#b88a4a"}"></i></div>`;
+ for(const k of ["naf","ker","die","res"])h+=`<div class="row"><span>${NAMES[k].split(" ")[0]}${k==="die"&&S.dieOff?" ⚠️":""}</span><span>${r.y[k].toFixed(0)} %</span></div><div class="bar"><i style="width:${S.tk[k]*100}%;background:${PCOL[k]}"></i></div>`;
+ h+=`<div class="row"><span>Campo ${S.wells.reduce((a,b)=>a+b,0)+S.newWells} pozos</span><span>${r.fr.toFixed(0)} kbbl/d</span></div><div class="row mut"><span>Oleoducto ${Math.round(S.pipe*100)} % · pozo nuevo ${Math.round(S.rig*100)} %</span></div>`;
+ h+=`<div class="row mut"><span>${["fcc","refo","hdt","claus","boiler"].map(u=>(S.down[u]?"⚠️":"✅")+{fcc:"FCC",refo:"Ref",hdt:"HDT",claus:"S",boiler:"Vap"}[u]).join(" ")}</span></div>`;
+ h+=`<div class="row mut"><span>Horno ${S.Tf} °C · O₂ ${S.o2} %</span></div><div class="row mut"><span>Precalent. ${Math.round(preheatT())} °C</span></div>`;
+ $("kpb").innerHTML=h;}
+// ---------- diálogos ----------
+function openD(html){$("dlg").innerHTML=html;$("ov").hidden=false;$("dlg").scrollTop=0;}
+function closeD(){$("ov").hidden=true;}
+$("ov").addEventListener("pointerdown",e=>{if(e.target.id==="ov")closeD()});
+function incDlg(i){i.seen=true;const c=i.c,u=U[c.u];if(c.dil)return dilDlg(i);
+ const who=WHO[c.id],m=MEAS[c.id];const ops=i.ops||(i.ops=c.opts.map((o,k)=>({o,k})).sort(()=>rnd()-.5));
+ let tools="";if(m)tools=`<div class="mut" style="margin-top:8px">🔍 Investiga antes de decidir (cada medición consume tiempo):</div><div class="tbs">${Object.keys(TOOLS).map(k=>`<button class="tb${(i.tried||[]).includes(k)?" on":""}${S.up&&S.up.pred&&m[0]===k?" sug":""}" data-t="${k}">${TOOLS[k].n}${S.up&&S.up.pred&&m[0]===k?" 📡":""}</button>`).join("")}</div>`;
+ const res=(i.found||[]).map(x=>`<div class="data">${x}</div>`).join("");
+ const wait=i.labAt&&!i.labDone?`<div class="data mut">🧪 Esperando resultados del laboratorio… (${Math.max(1,Math.ceil(i.labAt-S.t))} min de juego)</div>`:"";
+ const tip=!S.tut&&m?`<p class="mut">💡 Consejo: un buen ingeniero mide antes de decidir. Prueba una herramienta.</p>`:"";
+ openD(`<span class="tag">${u.ic} ${u.nm} · ${c.tag}</span><h2>${c.t}</h2>${who?bubble(who,SAY[c.id]):""}<div class="data">${c.data()}</div>${tools}${res}${wait}${tip}<p style="margin:6px 0">¿Qué haces, ingeniero?</p>${ops.map(x=>`<button class="opt" data-k="${x.k}">${x.o[0]}</button>`).join("")}
+ <p class="mut">Tiempo para actuar: ${Math.max(0,Math.round((i.dl-(S.t-i.t0)/60)*10)/10)} h de juego.</p><button class="btn o" onclick="closeD()">Después</button>`);
+ document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>resolve(i,+b.dataset.k));
+ document.querySelectorAll(".tb").forEach(b=>b.onclick=()=>useTool(i,b.dataset.t));}
+function useTool(i,k){const m=MEAS[i.c.id];i.tried=i.tried||[];if(i.tried.includes(k))return;i.tried.push(k);const tl=TOOLS[k];
+ if(k==="lab"){i.labAt=S.t+(S.up&&S.up.ana?10:tl.t);i.labOk=m[0]==="lab";toast(S.up&&S.up.ana?"🧪 Analizador en línea: resultados en 10 minutos de juego.":"🧪 Muestra enviada al laboratorio. Resultados en 1 h de juego.");beep(700,.06);closeD();return;}
+ i.t0-=tl.t;i.found=i.found||[];if(m[0]===k){i.meas=true;i.found.push("✅ <b>"+tl.n+":</b> "+m[1]);beep(1100,.06)}else{i.found.push("➖ <b>"+tl.n+":</b> "+tl.no);beep(400,.06)}
+ incDlg(i);}
+function labCheck(){for(const i of INC)if(i.labAt&&!i.labDone&&S.t>=i.labAt){i.labDone=1;i.found=i.found||[];const m=MEAS[i.c.id];
+  if(i.labOk){i.meas=true;i.found.push("✅ <b>🧪 Laboratorio:</b> "+m[1])}else i.found.push("➖ <b>🧪 Laboratorio:</b> "+TOOLS.lab.no);toast(`🧪 Resultados del laboratorio listos: <b>${i.c.t}</b>`);beep(990,.08)}}
+function chips(m,seg,conf){const f=(v,ic)=>v?`<span style="display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:8px;background:${v>0?"#1f3a22":"#3a1f1a"};color:${v>0?"#9be08f":"#ff8a70"}">${ic} ${v>0?"+":""}${ic==="💲"?fmt(v):v}</span>`:"";return `<div>${f(m,"💲")}${f(seg,"⛑️")}${f(conf,"🤝")}</div>`;}
+function resolve(i,k){const ix=INC.indexOf(i);if(ix>=0)INC.splice(ix,1);updInc();
+ if(i.c.dil)return resolveDil(i,k);
+ if(k==null){if(!i.c.esc){toast(`⏱️ Se venció: ${i.c.t}`)}if(i.c.fix&&i.c.id!=="ppe")i.c.fix();meter("seg",i.c.safety?-8:-3);meter("conf",-4);S.shiftLog.push({c:i.c,ok:null});logDec(i,"vencido");return;}
+ const o=i.c.opts[k],ok=o[1]===1,who=WHO[i.c.id];S.firstDone=true;let dm,ds,dc;
+ if(ok){S.ss.ok++;if(i.meas)S.ss.meas++;i.c.fix&&i.c.fix();dm=i.meas?8000:4000;ds=i.c.safety?6:2;dc=i.meas?4:2;S.res.ok++;beep(990,.1);setTimeout(()=>beep(1320,.12),110)}
+ else{dm=-15000;ds=i.c.safety?-12:-4;dc=-4;S.res.bad++;beep(220,.25);if(i.c.safety&&rnd()<.5){S.safeH=0;S.ss.acc++}}
+ S.money+=dm;S.shiftMoney+=dm;meter("seg",ds);meter("conf",dc);if(who){S.trust=S.trust||{};S.trust[who]=(S.trust[who]||0)+(ok?1:-1)}
+ S.shiftLog.push({c:i.c,ok});logDec(i,ok?"bien":"mal",o[0]);
+ const good=i.c.opts.find(x=>x[1]===1);const hasM=!!MEAS[i.c.id];
+ const sof=ok&&i.meas?"¡Medir primero y decidir después! Lo anoto en mi libreta.":ok&&hasM?"Acertó… pero sin medir. ¿Y si hubiera sido otra cosa?":!ok&&hasM?"Ingeniero, ¿y si la próxima vez medimos antes de decidir?":ok?"¡Qué bueno ver cómo se razona esto en una planta real!":"Uy… ¿me explica por qué lo otro era mejor?";
+ openD(`<span class="tag">${U[i.c.u].ic} ${U[i.c.u].nm}</span><h2 class="${ok?"ok":"bad"}">${ok?"✅ ¡Bien resuelto!":"❌ No era lo mejor"}</h2><p>${o[2]}</p>${ok?"":`<div class="data"><b>Lo correcto:</b> ${good[0]}<br><span class="mut">${good[2]}</span></div>`}
+ ${chips(dm,ds,dc)}${ok&&hasM&&!i.meas?`<p class="mut">Solo +$4 000: acertaste sin medir. Con datos habría sido +$8 000.</p>`:""}${bubble("sofia",sof)}
+ ${U[i.c.u].sim?`<a class="btn o" href="${U[i.c.u].sim}" target="_blank" rel="noopener">🧪 Practicar en el simulador</a>`:""}<button class="btn" onclick="closeD();tutNext()">Seguir</button>`);}
+function dilDlg(i){const d=i.c;openD(`<span class="tag">💬 ${d.tag}</span><h2>${d.t}</h2>${bubble(d.who,d.say)}<div class="data">${d.data()}</div>
+ <p class="mut">Aquí no hay una sola respuesta correcta: cada opción mueve el 💲 margen, la ⛑️ seguridad y la 🤝 confianza de tu equipo y la comunidad.</p>
+ ${d.opts.map((o,k)=>`<button class="opt" data-k="${k}">${o[0]}</button>`).join("")}<button class="btn o" onclick="closeD()">Pensarlo</button>`);
+ document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>resolve(i,+b.dataset.k));}
+function resolveDil(i,k){const d=i.c;if(k==null){meter("conf",-3);toast(`⏱️ No le respondiste a ${CHARS[d.who].n}: baja la confianza.`);S.shiftLog.push({c:d,ok:"dil"});return;}
+ const o=d.opts[k],e=o[1];S.money+=e.m;S.shiftMoney+=e.m;meter("seg",e.seg);meter("conf",e.conf);if(o[3])o[3]();(S.dilDone=S.dilDone||[]).push(d.id);S.shiftLog.push({c:d,ok:"dil"});logDec(i,"dilema",o[0]);beep(880,.08);
+ openD(`<span class="tag">💬 ${d.tag}</span><h2>Decidiste: ${o[0]}</h2><p>${o[2]}</p>${chips(e.m,e.seg,e.conf)}<button class="btn" onclick="closeD()">Seguir</button>`);}
+
+function tutNext(){if(!S.tut&&S.firstDone){S.tut=1;save();setTimeout(()=>toast("Bien. Ahora la planta es tuya: usa 🎛️ Sala de control para ajustar la carga, el horno y el reflujo. Los ❗ irán apareciendo."),400)}}
+function unitDlg(id){const u=U[id];let extra="";
+ const vals={bomba:`Carga: <b>${Math.round(rates().F)} kbbl/d</b> · Nivel succión: <b>${Math.round(S.crudeLvl*100)} %</b>`,pre:`Salida del tren: <b>${Math.round(preheatT())} °C</b> · Ensuciamiento: <b>${Math.round(S.foul*100)} %</b>`,horno:`Salida: <b>${S.Tf} °C</b> · O₂: <b>${S.o2} %</b> · Eficiencia: <b>${Math.round(furnEff()*100)} %</b> · Combustible: <b>$${fuelCost().toFixed(2)}/bbl</b>`,torre:`Reflujo: <b>${S.R.toFixed(1)}</b> · Diésel: <b>${S.dieOff?"⚠️ fuera de especificación":"en especificación"}</b>`,tkc1:`Inventario: <b>${Math.round(S.crudeLvl*100)} %</b> · Crudo: <b>${S.crude}</b>`,desal:`Sal residual: <b>${Math.round(S.salt*15)} PTB</b>`,tkp:Object.keys(S.tk).filter(k=>k!=="gas").map(k=>`${NAMES[k]}: <b>${Math.round(S.tk[k]*100)} %</b>`).join(" · ")};
+ const inc=INC.filter(i=>i.c.u===id);
+ openD(`<span class="tag">Operación unitaria</span><h2>${u.ic} ${u.nm}</h2><p>${u.info}</p>${vals[id]?`<div class="data">${vals[id]}</div>`:""}
+ ${inc.map(i=>`<div class="li" onclick="incDlg(INC.find(x=>x.id==${i.id}))">❗ <b>${i.c.t}</b></div>`).join("")}
+ ${u.sim?`<a class="btn o" href="${u.sim}" target="_blank" rel="noopener">🧪 Simulador</a>`:""}${u.art?`<a class="btn o" href="../index.html#leer-${u.art}" target="_blank" rel="noopener">📖 Teoría</a>`:""}<button class="btn" onclick="closeD()">Cerrar</button>`);}
+function ctrlDlg(){const sl=(k,lab,mn,mx,st,u)=>`<div class="sl"><label>${lab}<b id="v_${k}">${S[k]}${u}</b></label><input type="range" min="${mn}" max="${mx}" step="${st}" value="${S[k]}" oninput="S['${k}']=+this.value;$('v_${k}').textContent=(+this.value)+'${u}';ctrlInfo()"></div>`;
+ openD(`<span class="tag">🎛️ Sala de control · DCS</span><h2>Ajustes de la unidad de crudo</h2>
+ ${sl("F","Carga de crudo ",60,(campCur()&&S.camp.n===9?70:110),1," kbbl/d")}${sl("Tf","Temperatura de salida del horno ",340,380,1," °C")}${sl("R","Relación de reflujo ",1,3,.1,"")}
+ <div class="data" id="ci"></div><button class="btn" onclick="closeD()">Listo</button>`);ctrlInfo();}
+function ctrlInfo(){const e=$("ci");if(!e)return;const r=rates();
+ let w=[];if(S.Tf>370)w.push("⚠️ Arriba de 370 °C el crudo empieza a craquearse y coquiza los tubos del horno.");if(S.Tf>366)w.push("⚠️ Con el horno tan caliente, el diésel puede salir pesado (fuera de especificación).");if(S.R<1.3)w.push("⚠️ Reflujo bajo: los cortes se mezclan.");if(S.F>104&&S.R>2.2)w.push("⚠️ Carga y reflujo altos: riesgo de inundar la torre.");if(S.F>100)w.push("Carga alta: más margen, pero los equipos trabajan al límite.");
+ e.innerHTML=`Margen ahora: <b>${fmt(r.m)}/h</b><br>Rendimientos: nafta ${r.y.naf.toFixed(0)} % · queroseno ${r.y.ker.toFixed(0)} % · diésel ${r.y.die.toFixed(0)} % · residuo ${r.y.res.toFixed(0)} %<br>Combustible del horno: $${fuelCost().toFixed(2)}/bbl${w.length?"<br><br>"+w.join("<br>"):""}`;}
+function listDlg(){openD(`<h2>❗ Problemas activos</h2>${INC.length?INC.map(i=>`<div class="li" onclick="goUnit('${i.c.u}');incDlg(INC.find(x=>x.id==${i.id}))">${i.c.dil?"💬":U[i.c.u].ic} <div><b>${i.c.t}</b><br><span class="mut">${U[i.c.u].nm} · quedan ${Math.max(0,((i.dl||i.c.dl)-(S.t-i.t0)/60)).toFixed(1)} h</span></div></div>`).join(""):"<p>Todo en orden. La planta trabaja sola… por ahora. 😌</p>"}<button class="btn" onclick="closeD()">Cerrar</button>`);}
+const ZONES=[["🟫 Campo petrolero","Perforadora, balancines, separadores y planta de gas",-19,12,.8],["🌊 Mar y plataforma","Plataforma marina, helicóptero y barco de crudo",-12,29,.85],["🛤️ Oleoducto","Estación de bombeo y chanchos de limpieza",-3,16,.95],["🟥 Refinería de crudo","Desaladora, horno, torre atmosférica y de vacío",14,12,.8],["⚙️ Conversión","FCC, reformadora, hidrotratamiento, azufre, calderas y mezclas",38,11,.8],["🏘️ Pueblo y tren","La comunidad, la gasolinera y el despacho por tren",30,30,.85],["🏭 Planta Norte","Terminal de envasado de GLP en la ciudad vecina",10,-10,.85],["🗺️ Vista completa","Todo el universo de la planta",7,14,.3]];
+function mapDlg(){const st=(u,lab)=>`${S.down[u]?"⚠️":"✅"} ${lab}`;openD(`<h2>🗺️ Zonas de la planta</h2>${ZONES.map((z,i)=>`<div class="li" onclick="goZone(${i})"><div><b>${z[0]}</b><br><span class="mut">${z[1]}</span></div></div>`).join("")}
+ <div class="data">Pozos activos: <b>${S.wells.reduce((a,b)=>a+b,0)+S.newWells}/${13+S.newWells}</b> · Crudo propio: <b>${fieldRate().toFixed(0)} kbbl/d</b> · Oleoducto: <b>${Math.round(S.pipe*100)} %</b><br>${st("fcc","FCC")} · ${st("refo","Reformadora")} · ${st("hdt","Hidrotratamiento")} · ${st("claus","Azufre")} · ${st("boiler","Vapor")}</div><button class="btn" onclick="closeD()">Cerrar</button>`);}
+function goZone(i){const z=ZONES[i];closeD();camTo(z[2],z[3],z[4]*(W<700?.85:Math.min(1.2,Math.max(.6,W/1500))));}
+function helpDlg(){openD(`<h2>🛢️ Refinería PES</h2><p>Eres el <b>ingeniero de procesos de turno</b> de una refinería. La planta funciona sola: barcos, camiones, operadores y equipos. Tu trabajo es atender lo que se sale de control.</p>
+ <ul><li><b>❗ Toca los signos</b> sobre los equipos: cada uno es un problema real de planta. Elige qué hacer y aprende por qué.</li><li>Si no atiendes un problema a tiempo (el anillo blanco), se agrava.</li><li><b>Toca cualquier equipo</b> para ver qué operación unitaria hace.</li><li><b>🎛️ Sala de control:</b> ajusta la carga, el horno y el reflujo. Más carga y más temperatura dan más margen… hasta que algo se rompe.</li><li><b>🎯 Misiones:</b> tu personaje («TÚ») sale de la sala de control: maneja, vuela en helicóptero, toma muestras y audita otra planta.</li><li><b>🗺️ Zonas:</b> viaja al campo petrolero, la plataforma, el oleoducto, la conversión o el pueblo. Arrastra para moverte y usa la rueda o pellizca para acercarte.</li><li>Todo está conectado: si el oleoducto se tapa o fallan los pozos, la refinería se queda sin crudo propio.</li><li>Cada turno dura 12 h de juego y termina con un resumen.</li></ul>
+ <h3 style="color:#ffc56b;font-size:16px">Tu equipo</h3>${Object.keys(CHARS).map(k=>`<div style="display:flex;gap:10px;align-items:center;margin:6px 0">${face(k,44)}<div><b>${CHARS[k].n}</b><br><span class="mut">${CHARS[k].r}</span></div></div>`).join("")}
+ <p><b>⛑️ Seguridad</b> y <b>🤝 confianza</b> suben o bajan con tus decisiones. Con mucha confianza, tu equipo te avisa antes y hasta resuelve cosas solo. Con poca seguridad, los accidentes llegan. Las <b>🔍 herramientas</b> te dan datos antes de decidir, y los <b>💬 dilemas</b> no tienen una sola respuesta.</p>
+ <p class="mut">Datos genéricos e ilustrativos con fines educativos. Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · PES Labs · CC BY-NC 4.0.</p><button class="btn" onclick="closeD()">Entendido</button> <a class="btn o" href="../index.html#procesos">Volver a PES Labs</a>`);}
+// ---------- sala del profesor ----------
+const apiOn=()=>window.PES_API&&!/PEGAR/.test(PES_API);
+async function checkRoom(rc){if(!apiOn()){toast("ℹ️ La sala de profesores todavía no está activa en este sitio: tus resultados se guardarán y se enviarán cuando lo esté.");return}
+ try{const r=await fetch(PES_API,{method:"POST",body:JSON.stringify({a:"check",code:rc})});const j=await r.json();
+  if(j.ok){S.player.curso=j.curso;toast(`🏫 Conectado a la sala <b>${rc}</b> · ${j.curso}`);flushOut()}else toast(`⚠️ No encontramos la sala <b>${rc}</b>. Revisa el código con tu profesor (botón ❓ → Jugador).`)}catch(e){toast("⚠️ Sin conexión con la sala: tus resultados se enviarán cuando haya internet.")}}
+function logDec(i,res,op){S.decBuf=S.decBuf||[];S.decBuf.push({caso:i.c.id,titulo:i.c.t,tema:i.c.tag,res,midio:!!i.meas,opcion:op||""});}
+function sendRes(kind,r,dec){if(!S.player||!S.player.room)return;S.outbox=S.outbox||[];S.outbox.push({a:"submit",code:S.player.room,nick:S.player.nick,kind,r,dec:dec||[]});save();flushOut();}
+let FLUSH=false;async function flushOut(){if(FLUSH||!S.outbox||!S.outbox.length||!apiOn())return;FLUSH=true;
+ try{while(S.outbox.length){const b=S.outbox[0];const res=await fetch(PES_API,{method:"POST",body:JSON.stringify(b)});const j=await res.json();if(!j.ok&&!/no encontrada/i.test(j.err||""))break;S.outbox.shift();save();if(j.ok)toast(`📤 Resultados enviados a tu profesor (sala ${b.code}).`);}}catch(e){}FLUSH=false;}
+setInterval(flushOut,30000);
+function playerDlg(){openD(`<h2>👤 Jugador</h2><label for="nk">Tu nickname</label><input id="nk" maxlength="24" value="${S.player?S.player.nick:""}"><label for="rc">Código de sala</label><input id="rc" maxlength="12" style="text-transform:uppercase" value="${S.player?S.player.room:""}"><p id="perr" class="bad"></p>
+ <p class="mut">${S.outbox&&S.outbox.length?`Hay ${S.outbox.length} envío(s) pendiente(s).`:"No hay envíos pendientes."}</p><button class="btn" onclick="const nk=$('nk').value.trim().slice(0,24),rc=$('rc').value.trim().toUpperCase().slice(0,12);if(rc&&!nk){$('perr').textContent='Escribe tu nickname.';return}S.player={nick:nk||'Ingeniero',room:rc};if(rc)checkRoom(rc);save();closeD()">Guardar</button><button class="btn o" onclick="closeD()">Cancelar</button>`);}
+// ---------- toasts y sonido ----------
+function toast(m){const d=document.createElement("div");d.innerHTML=m;$("toast").appendChild(d);setTimeout(()=>d.remove(),4800);while($("toast").children.length>3)$("toast").firstChild.remove();}
+let AC=null,muted=true,hum=null;
+function toggleSnd(){muted=!muted;$("snd").textContent=muted?"🔇":"🔊";if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),n=AC.createBiquadFilter(),g=AC.createGain();o.type="sawtooth";o.frequency.value=48;n.type="lowpass";n.frequency.value=180;g.gain.value=0;o.connect(n);n.connect(g);g.connect(AC.destination);o.start();hum=g;}catch(e){}}
+ if(hum)hum.gain.value=muted?0:.035;}
+function beep(f,d){if(!AC||muted)return;const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=.06;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d);}
+// ---------- velocidad ----------
+function setSpd(s){SPD=s;document.querySelectorAll(".spd button").forEach(b=>b.classList.toggle("on",+b.dataset.s===s));}
+document.querySelectorAll(".spd button").forEach(b=>b.onclick=()=>setSpd(+b.dataset.s));
+// ---------- entrada: arrastrar, zoom y toques ----------
+const PTR=new Map();let drag=null,pinch=null,moved=0;
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);PTR.set(e.pointerId,[e.clientX,e.clientY]);moved=0;
+ CT=null;if(PTR.size===1)drag={x:e.clientX,y:e.clientY,cx:CAM.x,cy:CAM.y};else if(PTR.size===2){const [a,b]=[...PTR.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),z:CAM.z};drag=null;}});
+cv.addEventListener("pointermove",e=>{if(!PTR.has(e.pointerId))return;PTR.set(e.pointerId,[e.clientX,e.clientY]);
+ if(pinch&&PTR.size===2){const [a,b]=[...PTR.values()];CAM.z=clamp(pinch.z*Math.hypot(a[0]-b[0],a[1]-b[1])/pinch.d,.25,2.6);moved=99;}
+ else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;moved=Math.max(moved,Math.hypot(dx,dy));CAM.x=drag.cx-dx/CAM.z;CAM.y=drag.cy-dy/CAM.z;clampCam();}});
+function endPtr(e){const was=PTR.size;PTR.delete(e.pointerId);if(PTR.size<2)pinch=null;if(was===1&&moved<7)tap(e.clientX,e.clientY);if(!PTR.size)drag=null;}
+cv.addEventListener("pointerup",endPtr);cv.addEventListener("pointercancel",e=>{PTR.delete(e.pointerId);drag=null;pinch=null});
+cv.addEventListener("wheel",e=>{e.preventDefault();CT=null;CAM.z=clamp(CAM.z*(e.deltaY<0?1.12:.89),.25,2.6)},{passive:false});
+function clampCam(){CAM.x=clamp(CAM.x,(X0-Y1)*TW,(X1-Y0)*TW);CAM.y=clamp(CAM.y,(X0+Y0)*TH-150,(X1+Y1)*TH+50);}
+let CT=null;function camTo(x,y,z){const c=P(x,y);CT={x:c[0],y:c[1]-40,z:z||CAM.z}}
+function goUnit(u){const q=U[u];if(q)camTo(q.x,q.y,Math.max(CAM.z,W<700?.75:.85))}
+function tap(px,py){const [wx,wy]=s2w(px,py);
+ for(const i of INC){if(i.bx!=null&&Math.hypot(wx-i.bx,wy-i.by)<24){incDlg(i);return}}
+ let best=null;for(const h of HIT){if(wx>=h.x&&wx<=h.x+h.w&&wy>=h.y&&wy<=h.y+h.h){best=h}}
+ if(best)unitDlg(best.u);}
+// ---------- guardar ----------
+const SK="pes-refineria-v4";
+function save(){try{localStorage.setItem(SK,JSON.stringify({S:Object.assign({},S,{started:true}),t:Date.now()}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(SK)||"null");if(d&&d.S){Object.assign(S,d.S);S.shiftLog=S.shiftLog||[];return true}}catch(e){}return false}
+setInterval(()=>{if(S.started)save()},15000);
+// ---------- inicio ----------
+buildGround();
+const had=load();
+function start(){const nk=($("nk")?$("nk").value:"").trim().replace(/[<>"'`]/g,"").slice(0,24),rc=($("rc")?$("rc").value:"").trim().toUpperCase().slice(0,12);if(rc&&!nk){$("perr").textContent="Escribe tu nickname para que tu profesor te reconozca.";return}
+ S.player={nick:nk||"Ingeniero",room:rc};if(rc)checkRoom(rc);S.started=true;closeD();if(!S.tut){S.nextInc=4;}if(!S.camp)S.camp={n:1,stars:[],done:false};S.ss=S.ss||{acc:0,ign:0,meas:0,ok:0};S.up=S.up||{};if(S.gm>0||S.camp.done){setSpd(1)}else shiftIntro();}
+openD(`<span class="tag">PES Labs · Ingeniería de procesos</span><h2>🛢️ Refinería PES</h2>
+<p>Bienvenido al turno. Esto es una <b>mini ciudad petrolera</b>: un campo con perforadora y balancines, una plataforma en el mar, un oleoducto, una refinería de <b>90 000 barriles al día</b> con sus unidades de conversión, un tren y el pueblo vecino. Todo funciona solo.</p>
+<p>Tú eres el <b>ingeniero de procesos</b>. Tu trabajo es ver lo que otros no ven y decidir bien cuando algo se sale de control: cavitación, ensuciamiento, combustión, destilación, logística y, sobre todo, <b>seguridad</b>.</p>
+<p class="mut">Toca los ❗, toca cualquier equipo para aprender qué hace, usa 🗺️ Zonas para viajar por la planta y 🎛️ Sala de control para ajustarla. Datos genéricos con fines educativos.</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${Object.keys(CHARS).map(k=>face(k,40)).join("")}</div><p class="mut">Tu equipo te va a buscar con problemas y dilemas. Mide antes de decidir, cuida la seguridad y gánate su confianza.</p><p class="mut">💻 Se disfruta más en computadora: el mundo es grande y tiene mucho movimiento.</p>
+<div class="data"><b>👤 Jugador</b><br><label for="nk">Tu nickname</label><input id="nk" maxlength="24" placeholder="Ej.: JR-07" value="${S.player?S.player.nick:""}"><label for="rc">Código de sala (solo si tu profesor te dio uno)</label><input id="rc" maxlength="12" placeholder="Ej.: QUIM-4821" style="text-transform:uppercase" value="${S.player?S.player.room:""}"><span class="mut">Si escribes un código, tus resultados de cada turno y misión le llegan a tu profesor. Solo se envía tu nickname.</span></div><p id="perr" class="bad" style="margin:4px 0"></p><button class="btn" onclick="start()">${had&&S.tut?"Continuar ▶":"Comenzar ▶"}</button>${had?` <button class="btn o" onclick="localStorage.removeItem(SK);location.reload()">Empezar de cero</button>`:""}`);
+if(W<700)$('kp').classList.add('min');
+hud();requestAnimationFrame(loop);
+</script>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>
