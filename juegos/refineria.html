@@ -584,7 +584,17 @@ const MEAS={cav:["vib","Ruido de alta frecuencia en la succión y vibración de 
  fcc:["trend","Las pérdidas de catalizador subieron cuando se aumentó el aire al regenerador hace 2 días."],
  olor:["gas","Lecturas en el perímetro norte de <b>0,02 ppm de H₂S</b>, junto al separador de aguas aceitosas. Se huele a niveles muy bajos."],
  rod:["vib","La carga en la varilla cayó a cero en la carrera ascendente: <b>varilla rota</b>."],
- refo:["lab","Octanaje del reformado: <b>91</b>. Cloruro en el catalizador por debajo de lo recomendado."]};
+ refo:["lab","Octanaje del reformado: <b>91</b>. Cloruro en el catalizador por debajo de lo recomendado."],
+ heavy:["lab","Ensayo del crudo nuevo: <b>26 °API</b>, sal <b>45 PTB</b> (el anterior traía 15) y residuo estimado <b>48 %</b> (antes 35 %). Más carga para la desaladora y menos destilados."],
+ flare:["trend","El caudal a la antorcha subió a las 05:42, justo cuando abrió la válvula de alivio <b>PSV-214</b> del acumulador del tope tras un pico de presión de la torre."],
+ ppe:["gas","0 % LEL en este momento, pero es una zona clasificada: una chispa del celular o de una herramienta puede encender cualquier fuga pequeña."],
+ truck:["trend","El tanque de nafta sube <b>1 % cada 40 minutos</b>. Al ritmo actual llega a 97 % en unas 2 horas."],
+ ship:["trend","A 90 kbbl/d el inventario baja <b>1,5 % por hora</b> y no alcanza. A 75 kbbl/d baja 0,9 % por hora y sí llega al barco."],
+ kick:["trend","Tanques de lodo <b>+12 bbl en 5 min</b> y retorno 20 % mayor que lo bombeado: el pozo está aportando fluido."],
+ loss:["trend","Retorno de apenas <b>60 %</b> del caudal bombeado desde que se entró en una formación fracturada a 2 150 m."],
+ hammer:["trend","Pico de <b>62 bar</b> en 0,8 s al cerrar la válvula XV-07 en 2 segundos. El procedimiento recomienda cerrarla en 30 segundos."],
+ plat:["trend","El helicóptero puede volar con vientos de hasta 60 km/h, que se alcanzan en <b>6 horas</b>. La tormenta fuerte llega en 10 horas."],
+ claus:["lab","Gas de cola: relación H₂S/SO₂ de <b>1,2</b> (la ideal es 2): sobra aire. Además llega <b>25 % más gas ácido</b> que la capacidad de la planta."]};
 // ---------- dilemas ----------
 const DILS=[
  {id:"d_carga",who:"lucia",u:"ofi",t:"Pedido urgente: subir la carga al 105 %",tag:"Dilema · Producción",say:"Comercial cerró un pedido grande. Necesito la planta al 105 % toda la semana. ¿Se puede?",data:()=>`El intercambiador E-3 está sucio (${Math.round(S.foul*100)} %) y la torre ya trabaja cerca de su límite hidráulico.`,
