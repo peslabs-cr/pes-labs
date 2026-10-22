@@ -373,6 +373,164 @@ CASES.push(
   fix:()=>{},pen:1000,dl:4}
 );
 
+// ---------- opciones v2: [texto, valor (1 mejor · .5 aceptable · 0 error), explicación] y datos ambiguos del nivel Experto ----------
+const OPT2={
+cav:{x:"Ruido fuerte y vibración en la bomba de carga desde esta mañana. La presión de descarga oscila un poco.",o:[
+ ["Bajar un poco la carga y subir el nivel del tanque para recuperar presión en la succión",1,"Correcto. Es cavitación: la presión en la succión bajó cerca de la presión de vapor. Más nivel en el tanque y menos caudal (menos pérdidas en la succión) devuelven margen de NPSH."],
+ ["Pasar a la bomba de respaldo y sacar esta de servicio para inspeccionarla",.5,"Protege el equipo, pero la bomba de respaldo comparte la misma succión: también va a cavitar si no recuperas presión en la succión."],
+ ["Programar el cambio de rodamientos, que suelen causar ruido y vibración",0,"Los rodamientos dañados también vibran, pero el ruido «a grava» con la succión cerca de la presión de vapor es cavitación. Cambiar rodamientos no lo corrige."],
+ ["Revisar y corregir la alineación entre el motor y la bomba",0,"El desalineamiento da vibración, pero no ruido de grava ni presión oscilante. La causa está en la succión."]]},
+foul:{x:"El horno gasta un 8 % más de combustible que hace dos meses para la misma carga y la misma temperatura de salida.",o:[
+ ["Aislar el intercambiador E-3 con su bypass y programar su limpieza",1,"Correcto. Es ensuciamiento: la capa de depósitos agrega resistencia térmica y el crudo llega más frío al horno. Limpiar el intercambiador más sucio recupera el calor sin parar la planta."],
+ ["Dosificar antiincrustante en línea a todo el tren de precalentamiento",.5,"Frena el ensuciamiento futuro, pero no quita los depósitos que ya tiene E-3. Sirve como complemento de la limpieza."],
+ ["Revisar los quemadores y el exceso de aire del horno",0,"El horno quema más porque el crudo le llega más frío, no por la combustión: el O₂ y la llama están normales."],
+ ["Recalibrar el transmisor de temperatura a la entrada del horno",0,"Un instrumento descalibrado no explica el mayor consumo real de combustible."]]},
+salt:{x:"El pH del agua del acumulador del tope bajó a 4,8 y aumentó el hierro disuelto (señal de corrosión).",o:[
+ ["Aumentar el agua de lavado y revisar la válvula de mezcla y el campo eléctrico de la desaladora",1,"Correcto. La sal está pasando la desaladora y forma HCl en el tope. Más agua de lavado, buena mezcla y un campo eléctrico sano separan la salmuera."],
+ ["Aumentar la inyección de neutralizante en el tope de la torre",.5,"Controla el síntoma (el pH) mientras se corrige la desaladora, pero si la sal sigue pasando el problema continúa."],
+ ["Cambiar el inhibidor de corrosión por uno más concentrado",0,"Protege un poco el metal, pero no ataca la causa: la sal que forma ácido."],
+ ["Bajar la temperatura de la desaladora para mejorar la separación",0,"Al contrario: la desaladora necesita temperatura para bajar la viscosidad del crudo y separar el agua."]]},
+o2low:{x:"La chimenea del horno echa humo oscuro desde que se subió la carga.",o:[
+ ["Abrir el registro de aire hasta tener 2–3 % de O₂ en los gases",1,"Correcto. Falta aire: la combustión es incompleta, hay CO y hollín. Con 2–3 % de O₂ hay aire suficiente sin calentar aire de más."],
+ ["Bajar el combustible hasta que desaparezca el humo",.5,"Quita el humo bajando el calor, pero el crudo no llega a temperatura. Lo correcto es darle al horno el aire que le falta."],
+ ["Limpiar las boquillas de los quemadores, que pueden estar sucias",0,"Unas boquillas sucias dan mala llama, pero el dato clave es el O₂ bajo: falta aire."],
+ ["Cambiar a un gas combustible más liviano para quemar más limpio",0,"Con el mismo aire insuficiente, cualquier combustible hace humo."]]},
+o2hi:{x:"La temperatura de chimenea del horno subió a 410 °C y la eficiencia bajó, sin cambios en la carga.",o:[
+ ["Cerrar el registro de aire hasta tener 2–3 % de O₂",1,"Correcto. Todo el aire de más entra frío y sale caliente por la chimenea: es energía tirada. Ajustar el exceso de aire es de las mejoras más rentables en un horno."],
+ ["Programar la limpieza de la zona de convección del horno",.5,"Una convección sucia también sube la temperatura de chimenea y vale revisarla, pero aquí la causa principal es el exceso de aire."],
+ ["Subir el combustible para que el crudo llegue a temperatura",0,"Más combustible con tanto aire de más solo calienta más aire."],
+ ["Instalar un precalentador de aire para recuperar ese calor",0,"Es una buena inversión, pero no corrige el exceso de aire, que se arregla hoy con un ajuste."]]},
+dieoff:{x:"Calidad rechazó el último lote de diésel: sale más oscuro de lo normal.",o:[
+ ["Bajar la extracción de diésel (corte más liviano) y revisar la temperatura del plato",1,"Correcto. Si se saca demasiado diésel, se arrastran pesados del residuo. Bajar la extracción sube el reflujo interno y limpia el corte."],
+ ["Subir el reflujo del tope para mejorar el fraccionamiento",.5,"Mejora la separación, pero cuesta energía y no corrige la causa: estás extrayendo demasiado diésel."],
+ ["Subir el vapor de despojamiento del diésel",0,"El vapor de despojamiento quita los livianos (mejora el punto de inflamación), no los pesados que oscurecen el diésel."],
+ ["Mezclarlo con queroseno para aclarar el color y recertificar",0,"Diluir esconde el problema, cambia otras propiedades y no corrige el corte."]]},
+flood:{x:"Los cortes de la torre se están mezclando y la presión diferencial subió.",o:[
+ ["Reducir la carga y el reflujo hasta que baje la presión diferencial",1,"Correcto. Es inundación: hay demasiado líquido y vapor para la capacidad de los platos. Al bajar el tráfico, la torre se recupera."],
+ ["Reducir solo la carga y mantener el reflujo",.5,"Ayuda, pero el reflujo alto sigue cargando de líquido los platos."],
+ ["Subir el reflujo para recuperar la separación",0,"Más reflujo es más líquido bajando: la inundación empeora."],
+ ["Subir el vapor de despojamiento del fondo para limpiar los cortes",0,"Más vapor subiendo también aumenta la carga hidráulica."]]},
+cool:{x:"Sube la presión del tope de la torre y el condensador no da abasto.",o:[
+ ["Arrancar el ventilador de respaldo de la torre de enfriamiento y bajar un poco la carga",1,"Correcto. Con el agua de enfriamiento más caliente, el condensador pierde capacidad. Más tiro de aire y menos vapores devuelven el control."],
+ ["Bajar la carga hasta que la presión se normalice",.5,"Funciona, pero pierdes producción sin corregir la causa: falta enfriamiento."],
+ ["Bajar el reflujo para que suba menos vapor al tope",0,"Empeora la separación y no aumenta la capacidad del condensador."],
+ ["Aliviar manualmente a la antorcha para bajar la presión",0,"Quemar producto es una medida de emergencia, no de operación."]]},
+flare:{o:[
+ ["Buscar qué válvula de alivio abrió y agregar vapor a la antorcha para quemar sin humo",1,"Correcto. El vapor mejora la mezcla con aire y elimina el humo, y lo importante es encontrar la causa: una válvula de alivio no abre sin razón."],
+ ["Agregar vapor a la antorcha para eliminar el humo",.5,"Quita el humo, pero no averigua qué está aliviando en la planta."],
+ ["Bajar la carga de la unidad de crudo hasta que baje la llama",0,"Puede que no sea esa unidad la que alivia: primero hay que encontrar la fuente."],
+ ["Aumentar el gas de purga de la antorcha",0,"El gas de purga evita entrada de aire al cabezal; no corrige el humo ni la causa."]]},
+leak:{x:"Un operador reporta olor a diésel y una mancha húmeda cerca de una brida, junto a un pasillo.",o:[
+ ["Aislar la zona, contener el derrame y reparar con la línea despresurizada y permiso de trabajo",1,"Correcto. Primero la seguridad: señalizar, contener el producto y reparar con el equipo aislado y sin presión."],
+ ["Señalizar, poner bandeja de contención y vigilar el goteo hasta el paro programado",.5,"Controla el riesgo por ahora, pero un hidrocarburo caliente junto a un pasillo merece reparación pronta."],
+ ["Apretar los pernos de la brida en caliente con la línea en servicio",0,"Puede romper el empaque o el perno y convertir el goteo en un chorro."],
+ ["Inyectar un sellador en la brida con la línea en servicio",0,"Existe, pero lo hace personal especializado con procedimiento; no es la primera respuesta."]]},
+ppe:{o:[
+ ["Detener el trabajo, hablar con respeto, explicar el riesgo y que vuelva con EPP y permiso",1,"Correcto. Detener el trabajo inseguro es responsabilidad de todos, con respeto: el objetivo es que entienda el riesgo."],
+ ["Prestarle casco y lentes de la caseta y dejarlo continuar",.5,"Resuelve el EPP, pero ¿tiene permiso para trabajar en la zona de GLP? ¿Y el celular, posible fuente de ignición?"],
+ ["Reportarlo por correo a su supervisor al final del turno",0,"El riesgo es ahora: hay que detener el trabajo en el momento."],
+ ["Tomarle una foto como evidencia y seguir con el recorrido",0,"La evidencia no protege a nadie. Primero se detiene el acto inseguro."]]},
+truck:{o:[
+ ["Reparar el brazo, priorizar camiones de nafta y bajar la carga si el tanque llega a 97 %",1,"Correcto. La logística también limita la planta. Se prioriza el producto que se acumula y se protege el tanque de un rebalse."],
+ ["Bajar la carga de la planta de inmediato",.5,"Protege el tanque, pero pierdes producción sin atacar la causa: el brazo dañado."],
+ ["Pasar la nafta a un tanque de otro producto mientras tanto",0,"Mezclar productos los contamina a los dos."],
+ ["Seguir igual: el tanque todavía tiene margen",0,"Un rebalse de nafta es un incidente grave; con 94 % y camiones detenidos, el margen se acaba rápido."]]},
+ship:{o:[
+ ["Bajar la carga a unos 75 kbbl/d para estirar el inventario",1,"Correcto. Es mejor producir menos unos días que vaciar los tanques y parar: un arranque de planta es caro y riesgoso."],
+ ["Pedir más crudo del campo por el oleoducto y mantener la carga",.5,"Ayuda, pero el campo ya produce cerca de su máximo: no alcanza para cubrir dos días de barco."],
+ ["Seguir a carga máxima y parar la planta solo si el tanque se vacía",0,"Si el tanque se vacía, la bomba cavita y la planta se para sin control."],
+ ["Procesar el agua del fondo de los tanques para tener más volumen",0,"El agua daña la desaladora y causa golpes de presión en el horno y la torre."]]},
+heavy:{o:[
+ ["Revisar la desaladora, subir un poco la temperatura del horno y vigilar los cortes",1,"Correcto. Un crudo pesado trae más sal y más residuo. Se ajusta la desaladora y el horno para recuperar destilados sin coquizar."],
+ ["Mezclar el crudo pesado con el liviano que queda para suavizar el cambio",.5,"Mezclar crudos es práctica común y suaviza la transición, pero igual hay que ajustar la desaladora y el horno."],
+ ["Mantener las mismas condiciones y ver cómo responde la planta",0,"Cada crudo es distinto: cambian los rendimientos, la sal y la carga de los equipos."],
+ ["Subir el horno a 385 °C para sacar todo el diésel posible",0,"Por encima de ~370 °C el crudo empieza a craquearse y coquiza los tubos del horno."]]},
+kick:{o:[
+ ["Cerrar el pozo con el BOP, medir presiones y circular con lodo más pesado",1,"Correcto. Es una patada: la presión del yacimiento superó el peso del lodo. Se cierra el pozo, se miden presiones y se circula con lodo de mayor densidad."],
+ ["Detener la perforación y observar el pozo con las bombas apagadas",.5,"Es el primer paso (prueba de flujo), pero con el nivel subiendo así hay que cerrar el pozo de inmediato."],
+ ["Sacar la tubería rápido para revisar la broca",0,"Sacar tubería rápido «chupa» más fluido del yacimiento y puede convertir la patada en un reventón."],
+ ["Subir el caudal de las bombas para empujar el gas hacia afuera",0,"Más caudal no controla la presión del yacimiento; hay que cerrar el pozo y densificar el lodo."]]},
+loss:{o:[
+ ["Bombear material obturante y bajar un poco la densidad del lodo",1,"Correcto. El lodo entra a fracturas de la formación. El material obturante las sella y una densidad algo menor reduce la presión sobre la roca."],
+ ["Bombear material obturante y seguir con la misma densidad",.5,"El material obturante ayuda, pero con la misma densidad la presión sobre la formación sigue alta."],
+ ["Subir el caudal de las bombas para que regrese más lodo",0,"Más caudal aumenta la presión en el fondo y abre más las fracturas."],
+ ["Seguir perforando sin retorno hasta pasar la zona",0,"Sin retorno no se ve el pozo: si baja el nivel de lodo, puede ocurrir una patada."]]},
+bit:{x:"La velocidad de perforación bajó a casi la mitad.",o:[
+ ["Sacar la sarta y cambiar la broca desgastada",1,"Correcto. Una broca gastada perfora lento y castiga el equipo. Cambiarla cuesta un viaje de tubería, pero recupera la velocidad."],
+ ["Ajustar el peso sobre la broca y las RPM para recuperar velocidad",.5,"Optimizar parámetros es lo primero que se prueba, pero con 140 h de broca y torque errático, el desgaste es la causa."],
+ ["Poner todo el peso posible sobre la broca",0,"Exceso de peso sobre una broca gastada puede romperla y dejar piezas en el fondo."],
+ ["Cambiar a un lodo más liviano para perforar más rápido",0,"Arriesga el control del pozo y no corrige la broca gastada."]]},
+rod:{x:()=>`El pozo <b>P-${(S.wellOff??0)+1}</b> dejó de producir.`,o:[
+ ["Parar el balancín, bloquear la energía con candado y tarjeta y programar el reacondicionamiento",1,"Correcto. Con la energía bloqueada nadie puede arrancarlo mientras se trabaja, y el equipo de reacondicionamiento cambia la varilla."],
+ ["Parar el balancín y dejarlo para la próxima visita del equipo de pozos",.5,"Es seguro, pero sin bloqueo de energía alguien podría arrancarlo, y el pozo pierde producción más tiempo."],
+ ["Bajar la velocidad del balancín para que la varilla trabaje menos",0,"Una varilla rota no levanta nada a ninguna velocidad."],
+ ["Reiniciarlo varias veces para ver si recupera la carga",0,"Arrancar repetidamente sin diagnosticar daña el motor y la caja de engranajes."]]},
+sep:{x:"El crudo que sale del campo trae más agua de lo normal.",o:[
+ ["Revisar el control de nivel de interfaz y dosificar desemulsificante",1,"Correcto. La emulsión no deja que el agua se separe. El desemulsificante rompe la película entre gotas y el control de interfaz evita que el agua salga con el crudo."],
+ ["Calentar más el crudo antes del separador para romper la emulsión",.5,"El calor sí ayuda a romper emulsiones, pero también hay que revisar el químico y el control de interfaz."],
+ ["Subir la presión del separador",0,"La presión no rompe la emulsión; la separación depende del tiempo, la temperatura y la química."],
+ ["Mandarlo así: la desaladora de la refinería quitará el agua",0,"El agua extra sobrecarga la desaladora y trae sal: corrosión aguas abajo."]]},
+h2s:{x:"Un detector de gas dio alarma cerca de los compresores. Un operador no responde por radio.",o:[
+ ["Evacuar contra el viento y que solo entre el rescate con equipo de respiración autónoma",1,"Correcto. El H₂S paraliza el olfato y mata en minutos. Nunca se entra a rescatar sin equipo de respiración: así ocurren las víctimas múltiples."],
+ ["Activar la alarma general y llamar a la brigada antes de cualquier rescate",.5,"Correcto pero incompleto: también hay que evacuar a la gente en dirección contraria al viento."],
+ ["Correr a rescatar al operador cubriéndose la boca con un trapo",0,"Un trapo no protege del H₂S. Es el error que más muertes causa."],
+ ["Ir al punto de reunión más cercano, aunque quede a favor del viento",0,"Llevaría a la gente directo hacia la nube. Por eso hay mangas de viento."]]},
+wax:{x:"Llega menos crudo a la refinería y la presión de bombeo del oleoducto está más alta.",o:[
+ ["Lanzar un chancho (pig) de limpieza por el oleoducto",1,"Correcto. Es parafina depositada: reduce el diámetro y aumenta la fricción. El chancho la arrastra y recupera la capacidad."],
+ ["Inyectar un inhibidor de parafina en la línea",.5,"Previene nuevos depósitos, pero no quita los que ya están."],
+ ["Subir la presión de bombeo al máximo permitido",0,"Se acerca al límite del tubo y la parafina sigue ahí."],
+ ["Bajar el caudal para que la presión vuelva a lo normal",0,"Llega aún menos crudo y, a baja velocidad, la parafina se deposita más."]]},
+hammer:{o:[
+ ["Revisar la línea y cambiar el procedimiento: cerrar las válvulas lentamente",1,"Correcto. Es golpe de ariete: frenar de golpe una columna de líquido produce un pico de presión. Cerrar despacio lo evita."],
+ ["Instalar un amortiguador de pulsaciones en la llegada",.5,"Ayuda a absorber picos, pero la causa es el cierre rápido."],
+ ["Cerrar las válvulas más rápido para que el golpe dure menos",0,"Mientras más rápido el cierre, más alto el pico de presión."],
+ ["Subir el ajuste de las válvulas de alivio para que no abran",0,"Las válvulas de alivio protegen la línea: subir su ajuste quita esa protección."]]},
+plat:{o:[
+ ["Evacuar a tiempo al personal no esencial y cerrar los pozos de forma controlada",1,"Correcto. Se reduce la gente expuesta mientras el helicóptero puede volar, y los pozos quedan seguros antes de la tormenta."],
+ ["Cerrar los pozos de forma controlada y mantener a todo el personal a bordo",.5,"Asegura los pozos, pero deja expuestas a 80 personas cuando todavía se podían evacuar."],
+ ["Seguir operando y evacuar solo si el pronóstico empeora",0,"Cuando empeore, quizá el helicóptero ya no pueda volar."],
+ ["Evacuar a todos en bote cuando empiecen las olas",0,"Transferir personas a un bote con mar alta es extremadamente peligroso."]]},
+fcc:{x:"La opacidad de la chimenea del FCC subió y Ambiente ya preguntó.",o:[
+ ["Bajar el aire y el vapor del regenerador y programar la inspección de los ciclones",1,"Correcto. Si la velocidad en los ciclones es muy alta o uno está dañado, el catalizador escapa. Se baja la velocidad mientras se inspecciona."],
+ ["Agregar catalizador fresco para compensar las pérdidas",.5,"Mantiene la unidad operando, pero no corrige la emisión."],
+ ["Subir el aire para quemar mejor el coque",0,"Más aire es más velocidad en los ciclones: se pierde todavía más catalizador."],
+ ["Subir la carga del FCC para aprovechar el catalizador",0,"Más carga aumenta el tráfico de gases y empeora las pérdidas."]]},
+hdt:{x:"Calidad dice que el diésel no cumple la especificación.",o:[
+ ["Subir poco a poco la temperatura del reactor, mejorar la pureza del hidrógeno y planificar el cambio de catalizador",1,"Correcto. Un catalizador envejecido necesita más temperatura, y el hidrógeno puro ayuda. Se sube despacio porque la reacción es exotérmica."],
+ ["Bajar la carga del hidrotratamiento para dar más tiempo de contacto",.5,"Más tiempo de residencia baja el azufre, pero se produce menos diésel. Sirve mientras se planifica."],
+ ["Subir 40 °C de golpe la temperatura del reactor",0,"La reacción es exotérmica: un aumento brusco puede descontrolar la temperatura del reactor."],
+ ["Mezclarlo con diésel en especificación sin analizar",0,"Mezclar sin análisis es apostar con todo el tanque."]]},
+refo:{x:"La calidad del reformado viene bajando toda la semana.",o:[
+ ["Subir la temperatura de entrada a los reactores y revisar el cloruro del catalizador",1,"Correcto. El reformado necesita temperatura, y el catalizador necesita su balance de cloruro para mantener la actividad."],
+ ["Bajar la carga de la reformadora",.5,"Más tiempo de residencia sube el octanaje, pero se produce menos."],
+ ["Bajar la temperatura para cuidar el catalizador",0,"Con menos temperatura el octanaje baja todavía más."],
+ ["Subir la presión del reformador",0,"Más presión favorece el hidrocraqueo y baja el rendimiento de reformado de alto octanaje."]]},
+claus:{o:[
+ ["Ajustar la relación aire/H₂S (se quema un tercio) y reducir la carga de crudo agrio",1,"Correcto. La reacción de Claus necesita la proporción exacta: 1/3 del H₂S se quema a SO₂ y reacciona con los 2/3 restantes."],
+ ["Reducir la carga de crudo agrio hasta que la planta alcance",.5,"Baja el gas ácido, pero sin ajustar la relación de aire la planta sigue rindiendo mal."],
+ ["Mandar el gas ácido a la antorcha mientras se ajusta todo",0,"Libera SO₂ y viola el permiso ambiental."],
+ ["Aumentar el aire al horno de Claus para quemar más H₂S",0,"Si se quema más de un tercio sobra SO₂ y la reacción se desbalancea."]]},
+boiler:{x:"Se disparó la caldera B-2 y baja la presión del cabezal de vapor.",o:[
+ ["Arrancar la caldera de respaldo y desconectar consumidores de vapor no esenciales",1,"Correcto. Se protege el vapor para las unidades críticas mientras se investiga el disparo antes de rearrancar B-2."],
+ ["Bajar la carga de las unidades hasta que el vapor alcance",.5,"Funciona, pero pierdes producción si tienes una caldera de respaldo disponible."],
+ ["Subir la otra caldera por encima de su límite",0,"Operar una caldera sobre su límite es arriesgar una falla grave."],
+ ["Rearrancar B-2 de inmediato sin revisar",0,"Si se disparó por bajo nivel de agua, arrancarla sin revisar puede dañar los tubos o algo peor."]]},
+blend:{x:"Un lote de gasolina súper no pasó el control de calidad y hay camiones esperando.",o:[
+ ["Ajustar la receta con más reformado y verificar con laboratorio antes de despachar",1,"Correcto. La mezcla se corrige con componentes de alto octanaje, y ningún lote sale sin certificado."],
+ ["Reclasificar el lote como gasolina regular si cumple esa especificación",.5,"Válido si cumple como regular, pero no resuelve la súper que esperan los camiones."],
+ ["Despacharlo: el octanaje real suele salir más alto que en el laboratorio",0,"Un producto fuera de especificación daña motores y es ilegal."],
+ ["Subir la proporción de nafta de destilación directa",0,"Esa nafta tiene octanaje bajo: empeora la mezcla."]]},
+olor:{o:[
+ ["Medir en el perímetro, buscar la fuente e informar a la comunidad",1,"Correcto. El olor a huevo podrido es H₂S o mercaptanos. Se mide, se corrige la fuente y se comunica con transparencia."],
+ ["Revisar la fuente más probable y corregirla sin avisar a nadie",.5,"Corrige el problema, pero la comunidad sigue sin saber qué pasó y la confianza no mejora."],
+ ["Explicar a los vecinos que el olor no es peligroso",0,"Sin medir no lo sabes, y el H₂S sí es peligroso en concentraciones altas."],
+ ["Esperar a que cambie el viento y ver si siguen las quejas",0,"El problema sigue ahí, solo cambia hacia dónde va."]]}};
+for(const c of CASES){const n=OPT2[c.id];if(!n)continue;c.opts=n.o;if(n.x)c.dataX=typeof n.x==="function"?n.x:()=>n.x;}
+function LVL(){const c=S.camp;if(c&&!c.done)return c.n<=3?1:c.n<=7?2:3;return 3;}
+const LVLN=["","🟢 Aprendiz","🟡 Ingeniero","🔴 Experto"];
+function optsFor(c,lv){const all=c.opts.map((o,k)=>({o,k}));const best=all.filter(x=>x.o[1]===1),acc=all.filter(x=>x.o[1]===.5),bad=all.filter(x=>x.o[1]===0);
+ const sel=lv===1?best.concat(bad.slice(0,2)):lv===2?best.concat(acc,bad.slice(0,1)):all;return sel.sort(()=>rnd()-.5);}
+
 function caseById(id){return CASES.find(c=>c.id===id)}
 function spawn(id){const c=caseById(id);if(!c||INC.find(i=>i.c.id===id))return;
  if(S.tut&&!c.safety&&S.conf>=80&&rnd()<.2){meter("conf",1);toast(`👵 <b>Doña Marta</b> detectó a tiempo «${c.t}» y lo corrigió con su equipo. ¡La confianza paga!`);return;}
@@ -404,6 +562,7 @@ function face(id,sz=56){const c=CHARS[id];let s=`<svg width="${sz}" height="${sz
 function bubble(id,txt){const c=CHARS[id];return `<div style="display:flex;gap:10px;align-items:flex-start;margin:8px 0">${face(id)}<div><b style="color:#ffc56b">${c.n}</b> <span class="mut">· ${c.r}</span><div style="background:#2a241e;border-radius:4px 12px 12px 12px;padding:7px 10px;margin-top:3px">«${txt}»</div></div></div>`;}
 const WHO={cav:"marta",foul:"marta",salt:"marta",o2low:"marta",o2hi:"marta",dieoff:"marta",flood:"marta",cool:"marta",flare:"jorge",leak:"andres",ppe:"jorge",truck:"lucia",ship:"lucia",heavy:"lucia",kick:"beto",loss:"beto",bit:"beto",rod:"andres",sep:"beto",h2s:"jorge",wax:"beto",hammer:"andres",plat:"jorge",fcc:"marta",hdt:"marta",refo:"marta",claus:"marta",boiler:"andres",blend:"lucia",olor:"rafa"};
 const SAY={cav:"Ingeniero, esa bomba no suena así nunca. Suena como si tuviera piedras adentro.",foul:"Cada mes le meto más gas al horno para llegar a la misma temperatura. Algo no cuadra.",salt:"El laboratorio mandó la sal de la desaladora en rojo. Y el agua del tope está ácida.",o2low:"¡Mire la chimenea del horno! Está saliendo humo negro.",o2hi:"El horno está estable, pero la chimenea está muy caliente. ¿Será normal?",dieoff:"Calidad me rechazó el diésel. Dicen que sale oscuro.",flood:"La torre se puso rara: la presión diferencial se disparó y los cortes se están mezclando.",cool:"Con este calor, el tope de la torre no aguanta. La presión sigue subiendo.",flare:"La antorcha está echando humo negro y ya están llamando del pueblo.",leak:"Gotea una brida en la línea de diésel. Si quiere, la aprieto ya mismo, son dos minutos.",ppe:"Hay un contratista en la zona de esferas sin casco ni lentes, y con el celular en la mano.",truck:"Los camiones se están acumulando y el tanque de nafta casi lleno. Comercial me está llamando.",ship:"Me avisan que el barco viene atrasado dos días. ¿Cómo estamos de crudo?",heavy:"Compramos un crudo más barato. Es más pesado, pero la diferencia de precio vale la pena… ¿o no?",kick:"¡Ingeniero! Los tanques de lodo están subiendo solos. ¡El pozo está fluyendo!",loss:"Bombeamos y el lodo no regresa. La formación se lo está tragando.",bit:"Vamos lento. A este paso no terminamos el pozo este mes.",rod:"El balancín se mueve, pero no levanta nada. Me huele a varilla rota.",sep:"El crudo sale con mucha agua del campo. En el separador hay una nata espesa.",h2s:"¡Alarma de H₂S en compresores! Y Toño no contesta el radio.",wax:"El oleoducto viene pesado: la presión sube y llega menos crudo.",hammer:"Se escuchó un golpazo en la tubería cuando cerramos la válvula de llegada.",plat:"Viene una tormenta fuerte hacia la plataforma. Hay 80 personas a bordo.",fcc:"La chimenea del FCC está echando polvo. Ambiente ya preguntó.",hdt:"El diésel no está cumpliendo el azufre. El catalizador ya está viejito.",refo:"El octanaje del reformado viene bajando toda la semana.",claus:"La planta de azufre no da abasto y está mandando gas ácido a la antorcha.",boiler:"¡Se disparó la caldera B-2! ¡Se nos cae el vapor!",blend:"El lote de súper salió bajo de octanaje y hay camiones esperando. ¿Lo despachamos?",olor:"Buenas, ingeniero. Anoche todo el barrio olía a huevo podrido. Los chiquitos no podían dormir."};
+const SAYX={cav:"Ingeniero, la bomba de carga está haciendo un ruido raro desde esta mañana.",salt:"El agua del tope está saliendo ácida otra vez. Algo está pasando.",h2s:"¡Sonó una alarma de gas en los compresores! Y Toño no contesta el radio.",hdt:"El diésel no está cumpliendo. Calidad no me dijo qué parámetro.",refo:"El reformado no está saliendo bien esta semana.",blend:"El lote de súper no pasó calidad y hay camiones esperando.",rod:"El balancín se mueve raro y el pozo no está produciendo.",o2hi:"La chimenea del horno está más caliente que de costumbre.",dieoff:"Calidad me rechazó el diésel."};
 // ---------- herramientas de medición ----------
 const TOOLS={gas:{n:"📟 Detector de gases",t:15,no:"Sin gases fuera de lo normal en la zona."},term:{n:"🌡️ Cámara termográfica",t:15,no:"Temperaturas normales en el equipo."},vib:{n:"🩺 Analizador de vibraciones",t:15,no:"Vibraciones y ruido dentro de lo normal."},trend:{n:"📈 Tendencias del DCS",t:10,no:"Las tendencias no muestran nada raro."},lab:{n:"🧪 Muestra al laboratorio",t:60,no:"La muestra salió dentro de especificación."}};
 const MEAS={cav:["vib","Ruido de alta frecuencia en la succión y vibración de 7 mm/s (normal &lt; 3). La presión de succión está apenas 0,4 bar sobre la presión de vapor: <b>cavitación</b>."],
@@ -491,7 +650,7 @@ const CAMP=[
   goals:[{t:"Margen del turno ≥ $380 000",f:()=>S.shiftMoney>=380000},{t:"Seguridad ≥ 75",f:()=>S.seg>=75},{t:"Confianza ≥ 70",f:()=>S.conf>=70}]}];
 function campCur(){return S.camp&&!S.camp.done?CAMP[S.camp.n-1]:null}
 function shiftIntro(){const c=campCur();if(!c){SPD=1;setSpd(1);return}SPD=0;setSpd(0);
- openD(`<span class="tag">Campaña · Turno ${S.camp.n} de 10</span><h2>${c.t}</h2>${bubble(c.who,c.say)}<div class="data"><b>🎯 Metas del turno</b> (una ⭐ por cada una):<br>${c.goals.map(g=>"⬜ "+g.t).join("<br>")}</div>
+ openD(`<span class="tag">Campaña · Turno ${S.camp.n} de 10</span><h2>${c.t}</h2>${bubble(c.who,c.say)}<p style="margin:4px 0">Nivel de los problemas: <b>${LVLN[S.camp.n<=3?1:S.camp.n<=7?2:3]}</b>${S.camp.n===4?" · <span class='mut'>desde aquí las opciones se parecen más entre sí</span>":S.camp.n===8?" · <span class='mut'>datos ambiguos: mide antes de decidir</span>":""}</p><div class="data"><b>🎯 Metas del turno</b> (una ⭐ por cada una):<br>${c.goals.map(g=>"⬜ "+g.t).join("<br>")}</div>
  <p class="mut">Estrellas acumuladas: ${S.camp.stars.reduce((a,b)=>a+b,0)} de ${(S.camp.n-1)*3}. Margen acumulado para mejoras: <b>${fmt(S.money)}</b>.</p>
  <button class="btn" onclick="closeD();beginShift()">Empezar turno ▶</button> <button class="btn o" onclick="shopDlg(true)">🏗️ Mejoras</button>`);}
 function beginShift(){S.shiftMoney=0;S.shiftLog=[];S.ss={acc:0,ign:0,meas:0,ok:0};S.gm=0;const c=campCur();if(c&&c.setup)c.setup();setSpd(1);save();if(c&&S.camp.n>=2&&!(S.misDone&&Object.keys(S.misDone).length))setTimeout(()=>toast("🎯 Tienes <b>misiones de campo</b> disponibles: plataforma marina, laboratorio y auditoría en Planta Norte."),2500);}
@@ -502,8 +661,8 @@ function shiftEnd(){SPD=0;setSpd(0);const L=S.shiftLog;const ok=L.filter(x=>x.ok
  if(!S.ss.sent){S.ss.sent=true;sendRes("turno",{turno:c?`${S.camp.n}/10 · ${c.t}`:"Modo libre",titulo:c?c.t:"Modo libre",estrellas:st,margen:Math.round(S.shiftMoney),seg:Math.round(S.seg),conf:Math.round(S.conf),ok,bad,ign,meas:S.ss.meas},S.decBuf);S.decBuf=[];}
  const last=c&&S.camp.n===10;
  openD(`<span class="tag">${c?`Campaña · Turno ${S.camp.n} de 10 · ${c.t}`:"Modo libre · Fin del turno"}</span><h2>${"⭐".repeat(st)}${"☆".repeat(3-st)} Resumen del turno</h2>${goalsHtml}
- <div class="data">Margen del turno: <b>${fmt(S.shiftMoney)}</b> · Acumulado: <b>${fmt(S.money)}</b><br>Bien resueltos: <b>${ok}</b> · Mal decididos: <b>${bad}</b> · Vencidos: <b>${ign}</b> · Midiendo primero: <b>${S.ss.meas}</b><br>⛑️ Seguridad: <b>${Math.round(S.seg)}</b> · 🤝 Confianza: <b>${Math.round(S.conf)}</b> · Horas sin accidentes: <b>${Math.floor(S.safeH)}</b></div>
- ${L.length?"<p><b>Lo que pasó:</b></p>"+L.map(x=>`<div class="mut">${x.ok==="dil"?"💬":x.ok===true?"✅":x.ok===false?"❌":"⏱️"} ${x.c.t} <i>(${x.c.tag})</i></div>`).join(""):""}
+ <div class="data">Margen del turno: <b>${fmt(S.shiftMoney)}</b> · Acumulado: <b>${fmt(S.money)}</b><br>Bien resueltos: <b>${ok}</b> · Aceptables: <b>${S.ss.part||0}</b> · Mal decididos: <b>${bad}</b> · Vencidos: <b>${ign}</b> · Midiendo primero: <b>${S.ss.meas}</b><br>⛑️ Seguridad: <b>${Math.round(S.seg)}</b> · 🤝 Confianza: <b>${Math.round(S.conf)}</b> · Horas sin accidentes: <b>${Math.floor(S.safeH)}</b></div>
+ ${L.length?"<p><b>Lo que pasó:</b></p>"+L.map(x=>`<div class="mut">${x.ok==="dil"?"💬":x.ok==="part"?"🟡":x.ok===true?"✅":x.ok===false?"❌":"⏱️"} ${x.c.t} <i>(${x.c.tag})</i></div>`).join(""):""}
  ${c&&st<3?`<p class="mut">Puedes repetir este turno para mejorar tus estrellas, o seguir adelante.</p>`:""}
  <button class="btn" onclick="nextShift()">${last?"Ver mi carrera 🏆":"Siguiente turno ▶"}</button>${c&&st<3?` <button class="btn o" onclick="closeD();shiftIntro()">↺ Repetir turno</button>`:""} <button class="btn o" onclick="shopDlg(false,true)">🏗️ Mejoras</button>`);save();}
 function nextShift(){closeD();if(campCur()){if(S.camp.n>=10){S.camp.done=true;save();return careerDlg()}S.camp.n++;save();shiftIntro();}else{beginShift();}}
@@ -1152,12 +1311,12 @@ function openD(html){$("dlg").innerHTML=html;$("ov").hidden=false;$("dlg").scrol
 function closeD(){$("ov").hidden=true;}
 $("ov").addEventListener("pointerdown",e=>{if(e.target.id==="ov")closeD()});
 function incDlg(i){i.seen=true;const c=i.c,u=U[c.u];if(c.dil)return dilDlg(i);
- const who=WHO[c.id],m=MEAS[c.id];const ops=i.ops||(i.ops=c.opts.map((o,k)=>({o,k})).sort(()=>rnd()-.5));
+ const who=WHO[c.id],m=MEAS[c.id];const lv=i.lv||(i.lv=LVL());const ops=i.ops||(i.ops=optsFor(c,lv));
  let tools="";if(m)tools=`<div class="mut" style="margin-top:8px">🔍 Investiga antes de decidir (cada medición consume tiempo):</div><div class="tbs">${Object.keys(TOOLS).map(k=>`<button class="tb${(i.tried||[]).includes(k)?" on":""}${S.up&&S.up.pred&&m[0]===k?" sug":""}" data-t="${k}">${TOOLS[k].n}${S.up&&S.up.pred&&m[0]===k?" 📡":""}</button>`).join("")}</div>`;
  const res=(i.found||[]).map(x=>`<div class="data">${x}</div>`).join("");
  const wait=i.labAt&&!i.labDone?`<div class="data mut">🧪 Esperando resultados del laboratorio… (${Math.max(1,Math.ceil(i.labAt-S.t))} min de juego)</div>`:"";
  const tip=!S.tut&&m?`<p class="mut">💡 Consejo: un buen ingeniero mide antes de decidir. Prueba una herramienta.</p>`:"";
- openD(`<span class="tag">${u.ic} ${u.nm} · ${c.tag}</span><h2>${c.t}</h2>${who?bubble(who,SAY[c.id]):""}<div class="data">${c.data()}</div>${tools}${res}${wait}${tip}<p style="margin:6px 0">¿Qué haces, ingeniero?</p>${ops.map(x=>`<button class="opt" data-k="${x.k}">${x.o[0]}</button>`).join("")}
+ openD(`<span class="tag">${u.ic} ${u.nm} · ${c.tag}</span> <span class="tag">${LVLN[lv]}</span><h2>${c.t}</h2>${who?bubble(who,(lv===3&&SAYX[c.id])||SAY[c.id]):""}<div class="data">${lv===3&&c.dataX?c.dataX()+(m?"<br><span class='mut'>Los datos no son concluyentes: mide antes de decidir.</span>":""):c.data()}</div>${tools}${res}${wait}${tip}<p style="margin:6px 0">¿Qué haces, ingeniero?</p>${ops.map(x=>`<button class="opt" data-k="${x.k}">${x.o[0]}</button>`).join("")}
  <p class="mut">Tiempo para actuar: ${Math.max(0,Math.round((i.dl-(S.t-i.t0)/60)*10)/10)} h de juego.</p><button class="btn o" onclick="closeD()">Después</button>`);
  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>resolve(i,+b.dataset.k));
  document.querySelectorAll(".tb").forEach(b=>b.onclick=()=>useTool(i,b.dataset.t));}
@@ -1171,15 +1330,16 @@ function chips(m,seg,conf){const f=(v,ic)=>v?`<span style="display:inline-block;
 function resolve(i,k){const ix=INC.indexOf(i);if(ix>=0)INC.splice(ix,1);updInc();
  if(i.c.dil)return resolveDil(i,k);
  if(k==null){if(!i.c.esc){toast(`⏱️ Se venció: ${i.c.t}`)}if(i.c.fix&&i.c.id!=="ppe")i.c.fix();meter("seg",i.c.safety?-8:-3);meter("conf",-4);S.shiftLog.push({c:i.c,ok:null});logDec(i,"vencido");return;}
- const o=i.c.opts[k],ok=o[1]===1,who=WHO[i.c.id];S.firstDone=true;let dm,ds,dc;
+ const o=i.c.opts[k],ok=o[1]===1,part=o[1]===.5,who=WHO[i.c.id];S.firstDone=true;let dm,ds,dc;
  if(ok){S.ss.ok++;if(i.meas)S.ss.meas++;i.c.fix&&i.c.fix();dm=i.meas?8000:4000;ds=i.c.safety?6:2;dc=i.meas?4:2;S.res.ok++;beep(990,.1);setTimeout(()=>beep(1320,.12),110)}
+ else if(part){if(i.meas)S.ss.meas++;S.ss.part=(S.ss.part||0)+1;i.c.fix&&i.c.fix();dm=i.meas?3000:1500;ds=1;dc=1;beep(760,.1)}
  else{dm=-15000;ds=i.c.safety?-12:-4;dc=-4;S.res.bad++;beep(220,.25);if(i.c.safety&&rnd()<.5){S.safeH=0;S.ss.acc++}}
  S.money+=dm;S.shiftMoney+=dm;meter("seg",ds);meter("conf",dc);if(who){S.trust=S.trust||{};S.trust[who]=(S.trust[who]||0)+(ok?1:-1)}
- S.shiftLog.push({c:i.c,ok});logDec(i,ok?"bien":"mal",o[0]);
+ S.shiftLog.push({c:i.c,ok:part?"part":ok});logDec(i,ok?"bien":part?"parcial":"mal",o[0]);
  const good=i.c.opts.find(x=>x[1]===1);const hasM=!!MEAS[i.c.id];
- const sof=ok&&i.meas?"¡Medir primero y decidir después! Lo anoto en mi libreta.":ok&&hasM?"Acertó… pero sin medir. ¿Y si hubiera sido otra cosa?":!ok&&hasM?"Ingeniero, ¿y si la próxima vez medimos antes de decidir?":ok?"¡Qué bueno ver cómo se razona esto en una planta real!":"Uy… ¿me explica por qué lo otro era mejor?";
- openD(`<span class="tag">${U[i.c.u].ic} ${U[i.c.u].nm}</span><h2 class="${ok?"ok":"bad"}">${ok?"✅ ¡Bien resuelto!":"❌ No era lo mejor"}</h2><p>${o[2]}</p>${ok?"":`<div class="data"><b>Lo correcto:</b> ${good[0]}<br><span class="mut">${good[2]}</span></div>`}
- ${chips(dm,ds,dc)}${ok&&hasM&&!i.meas?`<p class="mut">Solo +$4 000: acertaste sin medir. Con datos habría sido +$8 000.</p>`:""}${bubble("sofia",sof)}
+ const sof=part?"Funcionó… pero había una opción mejor. ¿La vemos?":ok&&i.meas?"¡Medir primero y decidir después! Lo anoto en mi libreta.":ok&&hasM?"Acertó… pero sin medir. ¿Y si hubiera sido otra cosa?":!ok&&hasM?"Ingeniero, ¿y si la próxima vez medimos antes de decidir?":ok?"¡Qué bueno ver cómo se razona esto en una planta real!":"Uy… ¿me explica por qué lo otro era mejor?";
+ openD(`<span class="tag">${U[i.c.u].ic} ${U[i.c.u].nm}</span><h2 class="${ok?"ok":part?"":"bad"}" style="${part?"color:#ffd27a":""}">${ok?"✅ ¡Bien resuelto!":part?"🟡 Aceptable, pero había algo mejor":"❌ No era lo mejor"}</h2><p>${o[2]}</p>${ok?"":`<div class="data"><b>Lo correcto:</b> ${good[0]}<br><span class="mut">${good[2]}</span></div>`}
+ ${chips(dm,ds,dc)}${ok&&hasM&&!i.meas&&i.lv===3?`<p class="mut">En nivel Experto, acertar sin medir es casi una apuesta.</p>`:""}${ok&&hasM&&!i.meas?`<p class="mut">Solo +$4 000: acertaste sin medir. Con datos habría sido +$8 000.</p>`:""}${bubble("sofia",sof)}
  ${U[i.c.u].sim?`<a class="btn o" href="${U[i.c.u].sim}" target="_blank" rel="noopener">🧪 Practicar en el simulador</a>`:""}<button class="btn" onclick="closeD();tutNext()">Seguir</button>`);}
 function dilDlg(i){const d=i.c;openD(`<span class="tag">💬 ${d.tag}</span><h2>${d.t}</h2>${bubble(d.who,d.say)}<div class="data">${d.data()}</div>
  <p class="mut">Aquí no hay una sola respuesta correcta: cada opción mueve el 💲 margen, la ⛑️ seguridad y la 🤝 confianza de tu equipo y la comunidad.</p>
