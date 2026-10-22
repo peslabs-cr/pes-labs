@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sala del profesor · PES Labs</title>
+<meta name="description" content="Sala privada para profesores: crea una sala, comparte el código y mira el desempeño de tus estudiantes en Refinería PES.">
+<meta property="og:title" content="Sala del profesor · PES Labs">
+<meta property="og:description" content="Tus estudiantes juegan a ser ingenieros de planta en Refinería PES y tú ves sus decisiones, aciertos y temas a reforzar.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👩‍🏫</text></svg>">
+<style>
+:root{--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--mut:#5b6573;--ac:#0a7d5a;--ac2:#0d5c8a;--bd:#dde1e6;--bad:#c0392b;--warn:#b7791f;--ok:#0a7d5a;--soft:#eef6f2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161a;--fg:#e8edf2;--card:#1b2127;--mut:#9aa6b2;--ac:#2fbf8a;--ac2:#5aa9e0;--bd:#2c343c;--bad:#ff8a70;--warn:#f0b54a;--ok:#2fbf8a;--soft:#1d2a25}}
+:root[data-theme="dark"]{--bg:#12161a;--fg:#e8edf2;--card:#1b2127;--mut:#9aa6b2;--ac:#2fbf8a;--ac2:#5aa9e0;--bd:#2c343c;--bad:#ff8a70;--warn:#f0b54a;--ok:#2fbf8a;--soft:#1d2a25}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--ac2)}
+.nav{position:sticky;top:0;z-index:5;display:flex;gap:14px;align-items:center;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.nav b{margin-right:auto}
+.nav button{background:none;border:1px solid var(--bd);border-radius:8px;color:var(--fg);padding:4px 8px;cursor:pointer}
+main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
+h1{font-size:28px;margin:6px 0 4px}h2{font-size:20px;margin:22px 0 8px}h3{font-size:16px;margin:0 0 6px}
+.mut{color:var(--mut)}.sm{font-size:13.5px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin:12px 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.tabs button{border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:999px;padding:7px 14px;cursor:pointer;font:inherit;font-size:14.5px}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+input{width:100%;max-width:360px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--fg);font:inherit}
+.btn{display:inline-block;padding:10px 16px;border-radius:10px;background:var(--ac);color:#fff;border:0;font:inherit;font-weight:600;cursor:pointer;margin:12px 8px 0 0;text-decoration:none}
+.btn.o{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.btn:disabled{opacity:.5;cursor:default}
+.err{color:var(--bad);font-weight:600;margin-top:8px}
+.code{font:700 34px/1.1 ui-monospace,Menlo,monospace;letter-spacing:2px;color:var(--ac);margin:6px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.kpi .n{font-size:24px;font-weight:700}.kpi .l{font-size:13px;color:var(--mut)}
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{cursor:pointer;user-select:none;font-size:13px;color:var(--mut);position:sticky;top:0;background:var(--card)}
+th.s::after{content:" ▾"}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--soft)}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12.5px;font-weight:600}
+.g{background:rgba(10,125,90,.14);color:var(--ok)}.y{background:rgba(183,121,31,.16);color:var(--warn)}.r{background:rgba(192,57,43,.14);color:var(--bad)}
+.bars .row{display:grid;grid-template-columns:minmax(150px,2.2fr) 3fr 70px;gap:10px;align-items:center;margin:7px 0;font-size:14px}
+.bar{height:12px;border-radius:6px;background:var(--bd);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mut);margin:4px 0 8px}
+.leg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;background:var(--c)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}.bars .row{grid-template-columns:1fr 70px}.bars .row .bar{grid-column:1/-1;order:3}}
+#det{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9;display:flex;justify-content:center;align-items:flex-start;padding:20px 12px;overflow:auto}
+#det[hidden]{display:none}
+#det .card{max-width:760px;width:100%}
+.demo{background:#fff4d6;color:#7a5200;border:1px solid #f0c45a;border-radius:10px;padding:8px 12px;font-size:14px;margin:10px 0}
+.steps li{margin:6px 0}
+footer{color:var(--mut);font-size:13px;text-align:center;padding:20px}
+@media (max-width:640px){.nav{position:static}}
+</style></head><body>
+<header class="nav"><b>🧪 PES Labs · 👩‍🏫 Sala del profesor</b><a href="index.html#procesos">Volver a PES Labs</a><a href="juegos/refineria.html" target="_blank" rel="noopener">🛢️ Abrir Refinería PES</a><button id="th" aria-label="Cambiar tema">🌓</button></header>
+<main>
+<h1>Sala del profesor</h1>
+<p class="mut">Tus estudiantes juegan a ser ingenieros de planta en <b>Refinería PES</b>. Tú creas una sala privada, les das el código y aquí ves sus resultados: estrellas, seguridad, confianza, cuántas veces midieron antes de decidir y los temas donde el grupo más falla.</p>
+<div class="tabs" id="tabs"><button data-t="in" class="on">🔑 Entrar a mi sala</button><button data-t="new">➕ Crear sala nueva</button><button data-t="how">❓ Cómo funciona</button><button data-t="demo">👀 Ver sala de ejemplo</button></div>
+<div id="v_in" class="card">
+ <h3>Entrar a mi sala</h3>
+ <label for="ci">Código de sala</label><input id="ci" placeholder="Ej.: QUIM-4821" autocomplete="off" style="text-transform:uppercase">
+ <label for="pi">PIN del profesor</label><input id="pi" type="password" inputmode="numeric" placeholder="4 a 8 números">
+ <div><button class="btn" id="bin">Entrar</button></div><div id="ein" class="err"></div>
+</div>
+<div id="v_new" class="card" hidden>
+ <h3>Crear una sala nueva</h3>
+ <label for="nc">Nombre del curso o grupo</label><input id="nc" placeholder="Ej.: Química Industrial II · Grupo 2" maxlength="60">
+ <label for="np">Tu nombre o alias (opcional)</label><input id="np" placeholder="Ej.: Prof. Ramírez" maxlength="40">
+ <label for="nn">PIN privado (4 a 8 números)</label><input id="nn" type="password" inputmode="numeric" maxlength="8" placeholder="Solo tú lo sabes">
+ <p class="sm mut">Guarda bien tu PIN: con el código de sala y el PIN entras a ver los resultados. No hay forma de recuperarlo.</p>
+ <div><button class="btn" id="bnew">Crear sala</button></div><div id="enew" class="err"></div>
+ <div id="newok"></div>
+</div>
+<div id="v_how" class="card" hidden>
+ <h3>Cómo funciona</h3>
+ <ol class="steps">
+  <li><b>Crea tu sala</b> con el nombre del curso y un PIN privado. Recibes un <b>código de sala</b>.</li>
+  <li><b>Comparte con tus estudiantes</b> el enlace del juego y el código. Al empezar, cada uno escribe su <b>nickname</b> y el código.</li>
+  <li><b>Ellos juegan</b> la campaña (10 turnos) y las misiones de campo. Al terminar cada turno o misión, sus resultados llegan solos a tu sala.</li>
+  <li><b>Tú entras aquí</b> con el código y el PIN y ves: ranking, detalle por estudiante, temas a reforzar y lo que eligió el grupo en los dilemas. Puedes descargar todo para Excel.</li>
+ </ol>
+ <p class="sm mut"><b>Privacidad:</b> solo se guarda el nickname, sin correos ni nombres reales. Pide a tus estudiantes un nickname que tú reconozcas (por ejemplo, iniciales y número de lista). Recomendado a partir de nivel universitario o técnico.</p>
+ <p class="sm mut"><b>Ideas de uso en clase:</b> asigna 2 turnos por semana; usa los «temas a reforzar» para la siguiente clase; discute en grupo los dilemas donde las opiniones se dividieron; pide un reporte corto sobre la auditoría de Planta Norte.</p>
+</div>
+<div id="dash" hidden></div>
+</main>
+<div id="det" hidden><div class="card" id="detc"></div></div>
+<footer>PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · CC BY-NC 4.0 · Datos del juego genéricos e ilustrativos con fines educativos.</footer>
+<script src="pes-api.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=t=>String(t==null?"":t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=v=>(v<0?"−":"")+"$"+Math.abs(Math.round(+v||0)).toLocaleString("es-CR");
+const pct=v=>isFinite(v)?Math.round(v*100)+" %":"—";
+// tema
+(()=>{try{const t=localStorage.getItem("pes-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}
+ $("th").onclick=()=>{const r=document.documentElement,d=r.dataset.theme==="dark"||(!r.dataset.theme&&matchMedia("(prefers-color-scheme: dark)").matches);r.dataset.theme=d?"light":"dark";try{localStorage.setItem("pes-theme",r.dataset.theme)}catch(e){}}})();
+// pestañas
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(t==="demo"){demo();return}
+ document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));["in","new","how"].forEach(k=>$("v_"+k).hidden=k!==t);$("dash").hidden=true;});
+const apiOk=()=>window.PES_API&&!/PEGAR/.test(PES_API);
+async function api(body){if(!apiOk())throw new Error("La sala todavía no está conectada. El administrador de PES Labs debe configurar pes-api.js.");
+ const r=await fetch(PES_API,{method:"POST",body:JSON.stringify(body)});const j=await r.json();if(!j.ok)throw new Error(j.err||"Error");return j;}
+try{const c=localStorage.getItem("pes-sala-code");if(c)$("ci").value=c}catch(e){}
+$("bin").onclick=async()=>{const code=$("ci").value.trim().toUpperCase(),pin=$("pi").value.trim();$("ein").textContent="";if(!code||!pin){$("ein").textContent="Escribe el código y el PIN.";return}
+ $("bin").disabled=true;$("bin").textContent="Cargando…";try{const j=await api({a:"teacher",code,pin});try{localStorage.setItem("pes-sala-code",code)}catch(e){}SESS={code,pin};render(j,false);}catch(e){$("ein").textContent=e.message}finally{$("bin").disabled=false;$("bin").textContent="Entrar"}};
+$("bnew").onclick=async()=>{const curso=$("nc").value.trim(),profesor=$("np").value.trim(),pin=$("nn").value.trim();$("enew").textContent="";
+ if(!curso){$("enew").textContent="Escribe el nombre del curso.";return}if(!/^\d{4,8}$/.test(pin)){$("enew").textContent="El PIN debe tener de 4 a 8 números.";return}
+ $("bnew").disabled=true;try{const j=await api({a:"create",curso,profesor,pin});const link=location.href.replace(/sala-profesor\.html.*$/,"")+"juegos/refineria.html";
+  $("newok").innerHTML=`<div class="card" style="background:var(--soft)"><div class="mut sm">Código de tu sala</div><div class="code">${esc(j.code)}</div>
+  <p><b>Mensaje para tus estudiantes</b> (cópialo y envíalo):</p><textarea id="msg" style="width:100%;min-height:110px;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);font:inherit">Vamos a jugar a ser ingenieros de planta en Refinería PES.\n1) Entra a: ${link}\n2) Escribe tu nickname (usa tus iniciales y tu número de lista).\n3) En "Código de sala" escribe: ${j.code}\nSe juega mejor en computadora.</textarea>
+  <button class="btn o" onclick="navigator.clipboard&&navigator.clipboard.writeText($('msg').value);this.textContent='✔ Copiado'">📋 Copiar mensaje</button><button class="btn" onclick="$('ci').value='${esc(j.code)}';document.querySelector('#tabs button[data-t=in]').click()">Ir a mi sala</button></div>`;
+  try{localStorage.setItem("pes-sala-code",j.code)}catch(e){}}catch(e){$("enew").textContent=e.message}finally{$("bnew").disabled=false}};
+let SESS=null,DATA=null,SORT={k:"estrellas",d:-1},TIMER=null;
+// ---------- análisis ----------
+function analyze(j){const R=j.resultados||[],D=j.decisiones||[];const st={};
+ const get=n=>st[n]||(st[n]={nick:n,turnos:0,estrellas:0,margen:0,ok:0,bad:0,ign:0,meas:0,seg:null,conf:null,mis:{},ult:"",best:{} ,dec:[],res:[]});
+ for(const r of R){const s=get(r.nick);s.res.push(r);if(r.fecha>s.ult)s.ult=r.fecha;
+  if(r.tipo==="mision"){const k=r.titulo;s.mis[k]=Math.max(s.mis[k]||0,(+r.puntaje||0)/(+r.maximo||1));}
+  else{s.turnos++;s.margen+=+r.margen||0;s.ok+=+r.bien||0;s.bad+=+r.mal||0;s.ign+=+r.vencidos||0;s.meas+=+r.midio||0;
+   const key=r.turno;s.best[key]=Math.max(s.best[key]||0,+r.estrellas||0);}
+  if(r.seguridad!=="")s.seg=+r.seguridad;if(r.confianza!=="")s.conf=+r.confianza;}
+ for(const s of Object.values(st)){s.estrellas=Object.entries(s.best).filter(([k])=>!/libre/i.test(k)).reduce((a,[,v])=>a+v,0);const tot=s.ok+s.bad+s.ign;s.acierto=tot?s.ok/tot:NaN;s.medir=s.ok+s.bad?s.meas/(s.ok+s.bad):NaN;s.nmis=Object.keys(s.mis).length;s.campana=Object.keys(s.best).filter(k=>!/libre/i.test(k)).length;}
+ for(const d of D){get(d.nick).dec.push(d);}
+ const topics={},dils={};
+ for(const d of D){if(d.resultado==="dilema"){const t=d.titulo;dils[t]=dils[t]||{};dils[t][d.opcion]=(dils[t][d.opcion]||0)+1;continue}
+  const t=d.titulo;const o=topics[t]||(topics[t]={t,tema:d.tema,n:0,bien:0,mal:0,venc:0,midio:0});o.n++;o[d.resultado==="bien"?"bien":d.resultado==="mal"?"mal":"venc"]++;if(d.midio==="sí"||d.midio===true)o.midio++;}
+ return {st:Object.values(st),topics:Object.values(topics).sort((a,b)=>(b.mal+b.venc)/b.n-(a.mal+a.venc)/a.n||b.n-a.n),dils};}
+// ---------- render ----------
+function render(j,isDemo){DATA={j,isDemo};const A=analyze(j);document.querySelectorAll("#tabs button").forEach(x=>x.classList.remove("on"));["in","new","how"].forEach(k=>$("v_"+k).hidden=true);
+ const S=A.st,n=S.length;const avg=f=>{const v=S.map(f).filter(x=>isFinite(x));return v.length?v.reduce((a,b)=>a+b,0)/v.length:NaN};
+ const allDec=(j.decisiones||[]).filter(d=>d.resultado!=="dilema");const meas=allDec.filter(d=>d.midio==="sí"||d.midio===true).length;
+ const cols=[["nick","Estudiante"],["campana","Turnos de campaña"],["estrellas","⭐ Estrellas"],["acierto","Aciertos"],["medir","Midió antes"],["seg","⛑️ Seguridad"],["conf","🤝 Confianza"],["margen","💲 Margen"],["nmis","🎯 Misiones"],["ult","Última actividad"]];
+ S.sort((a,b)=>{const x=a[SORT.k],y=b[SORT.k];return (typeof x==="string"?String(x).localeCompare(y):((isFinite(x)?x:-1)-(isFinite(y)?y:-1)))*SORT.d});
+ const cls=(v,a,b)=>!isFinite(v)?"":v>=a?"g":v>=b?"y":"r";
+ $("dash").hidden=false;$("dash").innerHTML=`${isDemo?'<div class="demo">👀 <b>Sala de ejemplo</b> con estudiantes inventados, para que veas cómo se ve. Crea tu sala para usarla con tu grupo.</div>':""}
+ <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap"><div><div class="mut sm">Sala ${esc(isDemo?"DEMO-0000":SESS.code)}${j.profesor?" · "+esc(j.profesor):""}</div><h2 style="margin:2px 0">${esc(j.curso)}</h2></div>
+ <div>${isDemo?"":`<button class="btn o" id="brf">🔄 Actualizar</button>`}<button class="btn o" id="bcsv1">⬇️ Resumen (Excel)</button><button class="btn o" id="bcsv2">⬇️ Decisiones (Excel)</button></div></div>
+ <div class="kpis" style="margin-top:12px">
+  <div class="kpi"><div class="n">${n}</div><div class="l">Estudiantes</div></div>
+  <div class="kpi"><div class="n">${S.reduce((a,s)=>a+s.turnos,0)}</div><div class="l">Turnos jugados</div></div>
+  <div class="kpi"><div class="n">${isFinite(avg(s=>s.estrellas))?avg(s=>s.estrellas).toFixed(1):"—"}</div><div class="l">⭐ Promedio de estrellas (de 30)</div></div>
+  <div class="kpi"><div class="n">${pct(allDec.length?allDec.filter(d=>d.resultado==="bien").length/allDec.length:NaN)}</div><div class="l">Decisiones correctas</div></div>
+  <div class="kpi"><div class="n">${pct(allDec.length?meas/allDec.length:NaN)}</div><div class="l">Midieron antes de decidir</div></div>
+  <div class="kpi"><div class="n">${isFinite(avg(s=>s.seg))?Math.round(avg(s=>s.seg)):"—"}</div><div class="l">⛑️ Seguridad promedio</div></div>
+ </div>
+ <h2>👥 Estudiantes</h2><p class="mut sm">Toca un encabezado para ordenar y una fila para ver el detalle.</p>
+ ${n?`<div class="tw"><table><thead><tr>${cols.map(([k,l])=>`<th data-k="${k}" class="${SORT.k===k?"s":""}">${l}</th>`).join("")}</tr></thead><tbody>${S.map((s,i)=>`<tr data-i="${i}"><td><b>${esc(s.nick)}</b></td><td>${s.campana} / 10</td><td>${s.estrellas}</td><td><span class="pill ${cls(s.acierto,.75,.5)}">${pct(s.acierto)}</span></td><td><span class="pill ${cls(s.medir,.5,.25)}">${pct(s.medir)}</span></td><td><span class="pill ${cls(s.seg,70,45)}">${s.seg??"—"}</span></td><td><span class="pill ${cls(s.conf,65,40)}">${s.conf??"—"}</span></td><td>${fmt(s.margen)}</td><td>${s.nmis} / 3</td><td class="mut">${s.ult?new Date(s.ult).toLocaleString("es-CR",{dateStyle:"short",timeStyle:"short"}):""}</td></tr>`).join("")}</tbody></table></div>`:`<div class="card mut">Todavía no hay resultados. Comparte el código <b>${esc(isDemo?"":SESS.code)}</b> con tus estudiantes: los datos aparecen cuando terminan su primer turno o misión.</div>`}
+ <div class="grid2"><div><h2>📌 Temas a reforzar</h2><p class="mut sm">Problemas ordenados por porcentaje de error del grupo.</p><div class="card bars"><div class="leg"><span style="--c:var(--ok)">Bien</span><span style="--c:var(--bad)">Mal</span><span style="--c:var(--warn)">Vencido</span></div>
+  ${A.topics.length?A.topics.slice(0,12).map(t=>`<div class="row"><div><b>${esc(t.t)}</b><div class="mut sm">${esc(t.tema)} · midieron ${pct(t.midio/t.n)}</div></div><div class="bar"><i style="width:${t.bien/t.n*100}%;background:var(--ok)"></i><i style="width:${t.mal/t.n*100}%;background:var(--bad)"></i><i style="width:${t.venc/t.n*100}%;background:var(--warn)"></i></div><div class="sm"><b>${pct((t.mal+t.venc)/t.n)}</b> error<br><span class="mut">${t.n} intentos</span></div></div>`).join(""):'<p class="mut">Sin datos todavía.</p>'}</div></div>
+ <div><h2>💬 Dilemas: qué eligió el grupo</h2><p class="mut sm">No tienen una sola respuesta: úsalos para debatir en clase.</p><div class="card bars">
+  ${Object.keys(A.dils).length?Object.entries(A.dils).map(([t,o])=>{const tot=Object.values(o).reduce((a,b)=>a+b,0);return `<h3 style="margin-top:10px">${esc(t)}</h3>`+Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([op,c])=>`<div class="row"><div class="sm">${esc(op)}</div><div class="bar"><i style="width:${c/tot*100}%;background:var(--ac2)"></i></div><div class="sm"><b>${pct(c/tot)}</b></div></div>`).join("")}).join(""):'<p class="mut">Sin datos todavía.</p>'}</div></div></div>
+ <h2>🎯 Misiones de campo</h2><div class="card">${["Inspección de la plataforma marina","Laboratorio: agua en el Jet A-1","Auditoría en Planta Norte"].map(m=>{const v=S.map(s=>s.mis[m]).filter(x=>x!=null);return `<div class="bars"><div class="row"><div><b>${m}</b><div class="mut sm">${v.length} de ${n} estudiantes la completaron</div></div><div class="bar"><i style="width:${v.length?v.reduce((a,b)=>a+b,0)/v.length*100:0}%;background:var(--ac)"></i></div><div class="sm"><b>${v.length?pct(v.reduce((a,b)=>a+b,0)/v.length):"—"}</b><br><span class="mut">puntaje</span></div></div></div>`}).join("")}</div>`;
+ document.querySelectorAll("#dash th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;SORT=SORT.k===k?{k,d:-SORT.d}:{k,d:k==="nick"?1:-1};render(DATA.j,DATA.isDemo)});
+ document.querySelectorAll("#dash tbody tr").forEach(tr=>tr.onclick=()=>detail(S[+tr.dataset.i]));
+ if($("brf"))$("brf").onclick=refresh;$("bcsv1").onclick=()=>csv1(A);$("bcsv2").onclick=()=>csv2(j);
+ clearInterval(TIMER);if(!isDemo)TIMER=setInterval(refresh,60000);
+ $("dash").scrollIntoView({behavior:"smooth",block:"start"});}
+async function refresh(){if(!SESS)return;try{const j=await api({a:"teacher",code:SESS.code,pin:SESS.pin});const y=scrollY;render(j,false);scrollTo(0,y)}catch(e){}}
+function detail(s){const turns=s.res.filter(r=>r.tipo!=="mision").sort((a,b)=>a.fecha<b.fecha?-1:1),mis=s.res.filter(r=>r.tipo==="mision");
+ $("detc").innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px"><h2 style="margin:0">👤 ${esc(s.nick)}</h2><button class="btn o" style="margin:0" onclick="$('det').hidden=true">Cerrar ✕</button></div>
+ <p class="mut sm">⭐ ${s.estrellas} estrellas · aciertos ${pct(s.acierto)} · midió antes de decidir ${pct(s.medir)} · ⛑️ ${s.seg??"—"} · 🤝 ${s.conf??"—"}</p>
+ <h3>Turnos</h3><div class="tw"><table><thead><tr><th>Turno</th><th>⭐</th><th>Margen</th><th>Bien</th><th>Mal</th><th>Vencidos</th><th>Midió</th><th>⛑️</th><th>🤝</th></tr></thead><tbody>${turns.map(r=>`<tr><td>${esc(r.turno)}</td><td>${"⭐".repeat(+r.estrellas||0)}</td><td>${fmt(r.margen)}</td><td>${r.bien}</td><td>${r.mal}</td><td>${r.vencidos}</td><td>${r.midio}</td><td>${r.seguridad}</td><td>${r.confianza}</td></tr>`).join("")||'<tr><td colspan="9" class="mut">Sin turnos</td></tr>'}</tbody></table></div>
+ <h3 style="margin-top:14px">Misiones</h3>${mis.map(r=>`<div>🎯 ${esc(r.titulo)}: <b>${r.puntaje} de ${r.maximo}</b></div>`).join("")||'<p class="mut">Sin misiones.</p>'}
+ <h3 style="margin-top:14px">Decisiones</h3><div class="tw"><table><thead><tr><th>Turno</th><th>Problema</th><th>Resultado</th><th>Midió</th><th>Eligió</th></tr></thead><tbody>${s.dec.map(d=>`<tr><td class="mut">${esc(d.turno)}</td><td>${esc(d.titulo)}</td><td>${d.resultado==="bien"?'<span class="pill g">Bien</span>':d.resultado==="mal"?'<span class="pill r">Mal</span>':d.resultado==="dilema"?'<span class="pill y">Dilema</span>':'<span class="pill y">Vencido</span>'}</td><td>${esc(d.midio)}</td><td style="white-space:normal;min-width:240px">${esc(d.opcion)}</td></tr>`).join("")||'<tr><td colspan="5" class="mut">Sin decisiones</td></tr>'}</tbody></table></div>`;
+ $("det").hidden=false;$("det").scrollTop=0;}
+$("det").onclick=e=>{if(e.target.id==="det")$("det").hidden=true};
+function dl(name,rows){const s="﻿"+rows.map(r=>r.map(v=>{v=String(v==null?"":v);return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([s],{type:"text/csv;charset=utf-8"}));a.download=name;a.click();}
+function csv1(A){dl("sala-resumen.csv",[["Estudiante","Turnos de campaña","Estrellas","Aciertos %","Midió antes %","Seguridad","Confianza","Margen","Misiones","Última actividad"],...A.st.map(s=>[s.nick,s.campana,s.estrellas,isFinite(s.acierto)?Math.round(s.acierto*100):"",isFinite(s.medir)?Math.round(s.medir*100):"",s.seg??"",s.conf??"",Math.round(s.margen),s.nmis,s.ult])]);}
+function csv2(j){dl("sala-decisiones.csv",[["Fecha","Estudiante","Turno","Problema","Tema","Resultado","Midió","Opción elegida"],...(j.decisiones||[]).map(d=>[d.fecha,d.nick,d.turno,d.titulo,d.tema,d.resultado,d.midio,d.opcion])]);}
+// ---------- demo ----------
+function demo(){let sd=11;const r=()=>{sd=(sd*16807)%2147483647;return (sd-1)/2147483646};
+ const nicks=["JR-07","AnaM-12","Kevin_03","Sofi-21","LuisP-09","Majo-15","Dani-02","Pablo-18"];
+ const T=["1/10 · Primer día","2/10 · El campo llama","3/10 · Semana de la seguridad","4/10 · Crudo nuevo","5/10 · Ola de calor","6/10 · Auditoría ambiental"];
+ const C=[["La bomba de carga suena a grava","Mecánica de fluidos",.55],["El horno quema cada vez más combustible","Transferencia de calor",.7],["¡Patada de pozo en la perforadora!","Perforación · Control de pozo",.6],["¡Alarma de H₂S en la planta de gas!","Seguridad · Gas tóxico",.45],["La presión diferencial de la torre se disparó","Hidráulica de torres",.4],["El diésel sale fuera de especificación","Destilación",.65],["Sal alta en el crudo desalado","Separación · Corrosión",.75],["La planta de azufre no da abasto","Ambiente · Azufre",.5]];
+ const DL=[["Pedido urgente: subir la carga al 105 %",["Subir al 105 % ya","Subir solo al 98 % y programar la limpieza del E-3 para ganar capacidad","No subir: la planta no está lista"]],["Un reporte de casi accidente",["Agradecer el reporte e investigar la causa con el equipo, sin buscar culpables","Sancionar al operador por estar en el cruce","Archivarlo, no pasó nada"]]];
+ const R=[],D=[];const now=Date.now();
+ nicks.forEach((nk,ni)=>{const sk=.45+r()*.5,nt=2+Math.floor(r()*5);let seg=70,conf=60;
+  for(let t=0;t<nt;t++){let ok=0,bad=0,ign=0,meas=0;const f=new Date(now-(nt-t)*86400000*r()-ni*3600000).toISOString();
+   for(let k=0;k<7;k++){const c=C[Math.floor(r()*C.length)];const m=r()<sk*.8;const p=c[2]*(.6+sk*.6)+(m?.15:0);const x=r();const res=x<p?"bien":x<p+.25?"mal":"vencido";
+    if(res==="bien")ok++;else if(res==="mal")bad++;else ign++;if(m)meas++;D.push({fecha:f,sala:"DEMO",nick:nk,turno:T[t],caso:"x",titulo:c[0],tema:c[1],resultado:res,midio:m?"sí":"no",opcion:res==="bien"?"(opción correcta)":"(otra opción)"});}
+   const d=DL[Math.floor(r()*2)];D.push({fecha:f,sala:"DEMO",nick:nk,turno:T[t],caso:"d",titulo:d[0],tema:"Dilema",resultado:"dilema",midio:"no",opcion:d[1][r()<.55?1:r()<.6?0:2]});
+   seg=Math.round(Math.min(95,Math.max(30,seg+(ok-bad*2)*1.5)));conf=Math.round(Math.min(95,Math.max(30,conf+(ok-bad)*1.2)));
+   R.push({fecha:f,sala:"DEMO",nick:nk,tipo:"turno",turno:T[t],titulo:T[t],estrellas:Math.min(3,Math.max(0,Math.round(sk*3.4-bad*.3))),margen:Math.round(180000+sk*260000-bad*20000),seguridad:seg,confianza:conf,bien:ok,mal:bad,vencidos:ign,midio:meas,puntaje:"",maximo:""});}
+  ["Inspección de la plataforma marina","Laboratorio: agua en el Jet A-1","Auditoría en Planta Norte"].forEach((m,mi)=>{if(r()<.65){const mx=[5,5,8][mi];R.push({fecha:new Date(now-r()*86400000*3).toISOString(),sala:"DEMO",nick:nk,tipo:"mision",turno:"",titulo:m,estrellas:"",margen:"",seguridad:seg,confianza:conf,bien:"",mal:"",vencidos:"",midio:"",puntaje:Math.round(mx*(.4+sk*.6)),maximo:mx})}});});
+ SESS=null;render({curso:"Ingeniería Química · Operaciones Unitarias (ejemplo)",profesor:"Prof. Ejemplo",resultados:R,decisiones:D},true);}
+</script>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>
