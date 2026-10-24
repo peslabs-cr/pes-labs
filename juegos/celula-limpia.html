@@ -77,6 +77,7 @@ input[type=text],input:not([type]){width:100%;box-sizing:border-box;padding:9px;
 <div id="insp" class="pn" hidden></div>
 <div id="bar" class="hud">
  <button id="brun" onclick="toggleRun()">🏃<span class="hide"> Correr</span></button>
+ <button onclick="hireDlg()">👷<span class="hide"> Equipo</span></button>
  <button onclick="sopDlg()">📋<span class="hide"> Instrucciones</span></button>
  <button onclick="helpDlg()">❓</button>
  <button id="snd" onclick="toggleSnd()">🔇</button>
@@ -118,7 +119,7 @@ const SEALW={T:[140,160],P:[40,60],d:[1,1.5]};
 let G;function newGame(lv){lv=lv||1;loadLevel(lv);G={lv,phase:"menu",t:0,LEN:LV.LEN,takt:LV.takt,pl:{x:7,y:MODE==="line"?6.6:6.4,path:[],tx:null,ty:null,goal:null,hold:null,run:false,dir:1,walk:0},
  seal:{T:128,P:50,d:1.2,ok:false,drift:0},calOk:true,stop:0,P:12,pBase:0,gownErr:0,clutter:[],served:0,missed:0,total:0,docs:[],stock:[],
  nc:[],scrap:0,scrapGood:0,alarms:0,dist:0,trail:[],busy:{},working:null,sopSeen:{},ev:{},nextDoc:LV.first||30,docN:0,dec:[],contained:0,rep:false,pts:0,cd:0,shake:0,
- coat:0,spc:[],spcAl:false,ovenRuns:0,ovenLoad:0,boss:null,
+ crew:[],coat:0,spc:[],spcAl:false,ovenRuns:0,ovenLoad:0,boss:null,
  line:{u:Array(LV.LINE?LV.LINE.length:0).fill(null),feed:{rollo:10,spike:10,camara:10,regul:10,bolsa:10},jam:{},rej:0,boxes:[],pack:[],tc:0,on:false,run:0,down:0,why:{},made:0,good:0,bad:0,ph:0}};
  for(const k in ST){const s=ST[k];s.p=null;s.prog=0;s.done=false;s.lock=0;s.wait=false;s.q=[];s.run=false;if(s.in||s.line)G.busy[k]=0;}
  setSlots(SCRAMBLE);G.clutter=CLUT.map(c=>({...c,on:true}));FX.length=0;}
@@ -318,7 +319,7 @@ function draw(){cx.save();if(G.shake>0){cx.translate((rnd()-.5)*G.shake*16,(rnd(
  if(MODE==="line")drawBelt();if(ENV.night){cx.fillStyle="rgba(30,25,80,.10)";cx.fillRect(0,0,W,H);}
  const L=[];for(const k in ST)L.push([depth(ST[k].x,ST[k].y)+(TR?ST[k].ex:ST[k].ey),()=>drawStation(ST[k],G.pl.goal===k||SEL===k)]);
  for(const c of G.clutter)if(c.on)L.push([depth(c.x,c.y),()=>{const [x,y]=S(c.x,c.y);ell(x,y,TS*.25,TS*.08,"rgba(30,60,80,.2)");cx.font=`${TS*.5}px system-ui`;cx.textAlign="center";cx.fillStyle="#000";cx.fillText(c.ic,x,y-TS*.05);if(G.phase==="5s"){cx.strokeStyle=`rgba(224,73,60,${.6+.35*Math.sin(AT*6)})`;cx.lineWidth=TS*.05;cx.beginPath();cx.ellipse(x,y-TS*.2,TS*.38,TS*.34,0,0,7);cx.stroke();ell(x+TS*.3,y-TS*.5,TS*.12,TS*.12,"#e0493c",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.14}px system-ui`;cx.fillText("!",x+TS*.3,y-TS*.45);}}]);
- if(G.phase!=="menu")L.push([depth(G.pl.x,G.pl.y)+.01,drawPlayer]);
+ if(G.phase!=="menu")L.push([depth(G.pl.x,G.pl.y)+.01,drawPlayer]);for(const w of G.crew)L.push([depth(w.x,w.y)+.005,()=>drawCrew(w)]);
  L.sort((a,b)=>a[0]-b[0]);for(const [,f] of L)f();
  if(G.phase==="5s"){cx.strokeStyle="rgba(224,73,60,.75)";cx.lineWidth=TS*.06;cx.setLineDash([TS*.16,TS*.12]);cx.beginPath();if(MODE==="line"){for(const k of PROC){const a=ap(ST[k]),b=ap(ST[LV.SHFOR[k]]);cx.moveTo(...S(a[0],a[1]));cx.lineTo(...S(b[0],b[1]));}}else{const seq=["rack",...PROC,"win"].map(k=>ap(ST[k]));seq.forEach((q,i)=>i?cx.lineTo(...S(q[0],q[1])):cx.moveTo(...S(q[0],q[1])));}cx.stroke();cx.setLineDash([]);
   ORDER.forEach((k,i)=>{const s=ST[k],q=S(s.x-s.ex+.1,s.y-s.ey+.05,SH+.15);ell(q[0],q[1],TS*.16,TS*.16,"#0f9d8a",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.18}px system-ui`;cx.textAlign="center";cx.fillText(i+1,q[0],q[1]+TS*.06);});}
@@ -612,10 +613,11 @@ function step(dt){if(G.phase!=="prod")return;if(G.cd>0){const o=Math.ceil(G.cd-.
  if(G.t>=G.nextDoc&&G.nextDoc<G.LEN-8){if(!(E.boss&&G.t>E.boss-12&&G.t<E.boss+20))spawnDoc(false);G.nextDoc+=G.takt;}
  if(G.stop>0)G.stop-=dt;
  for(const k of ORDER){const s=ST[k];if(s.lock>0){s.lock-=dt;if(s.lock<=0&&k==="fuga")toast("🫧 Probador de fuga calibrado y listo.");}
-  if(!s.p||s.done||s.wait||G.stop>0||s.lock>0)continue;let go=s.mach;if(s.man){const a=ap(s);go=G.working===k&&Math.hypot(p.x-a[0],p.y-a[1])<.35&&p.tx==null;}
+  if(!s.p||s.done||s.wait||G.stop>0||s.lock>0)continue;let go=s.mach;if(s.man){const a=ap(s);go=(G.working===k&&Math.hypot(p.x-a[0],p.y-a[1])<.35&&p.tx==null)||G.crew.some(c=>c.type==="st"&&c.st===k&&!c.path.length);}
   if(go){s.prog+=dt;G.busy[k]+=dt;if(s.prog>=s.tm)complete(s);}}
  if(ST.horno){const s=ST.horno;if(s.run&&G.stop<=0){s.prog+=dt;G.busy.horno+=dt;if(s.prog>=s.tm){s.run=false;s.done=true;s.prog=0;for(const q of s.q)if(q.st===s.in)q.st=s.out;beep(1200,.1);floatTxt(s.x,s.y,"✓ lote","#3ec46d");}}}
  if(MODE==="line"){stepLine(dt);for(const k of LV.LINE){const s=ST[k];if(G.line.jam[k]){const a=ap(s);if(G.working===k&&Math.hypot(p.x-a[0],p.y-a[1])<.35&&!p.path.length){s.prog+=dt;if(s.prog>=2.5){G.line.jam[k]=0;s.prog=0;G.working=null;beep(1000,.08);floatTxt(s.x,s.y,"✓","#3ec46d");}}}else s.prog=0;}}
+ stepCrew(dt);
  // movimiento
  let vx=(KEYS.ArrowRight||KEYS.d?1:0)-(KEYS.ArrowLeft||KEYS.a?1:0),vy=(KEYS.ArrowDown||KEYS.s?1:0)-(KEYS.ArrowUp||KEYS.w?1:0);if(TR)[vx,vy]=[vy,vx];const run=p.run||KEYS.Shift;const sp=(run?6:4.2)*(G.stop>0?.5:1);let moved=0;
  if(vx||vy){p.tx=null;p.goal=null;p.path=[];G.working=null;const n=Math.hypot(vx,vy);const nx=p.x+vx/n*sp*dt,ny=p.y+vy/n*sp*dt;const ox=p.x,oy=p.y;if(!blocked(nx,ny,.2)){p.x=nx;p.y=ny}else if(!blocked(nx,p.y,.2))p.x=nx;else if(!blocked(p.x,ny,.2))p.y=ny;moved=Math.hypot(p.x-ox,p.y-oy);const sd=TR?vy:vx;if(sd)p.dir=Math.sign(sd);}
@@ -647,6 +649,63 @@ addEventListener("keydown",e=>{if(!$("ov").hidden)return;const k=e.key.length===
  if(k.startsWith("Arrow"))e.preventDefault();});
 addEventListener("keyup",e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;KEYS[k]=false;if(k==="Shift")KEYS.Shift=false;});
 addEventListener("blur",()=>{KEYS={}});
+// ---------- equipo: contratar operadores ----------
+const CREW={st:{n:"Operador de estación",ic:"🧑‍🏭",cost:40,sal:1,col:"#3fae62",d:"Se queda en una estación manual y la trabaja solo. Ponlo donde más se te acumula el trabajo."},
+ ws:{n:"Surtidor de materiales",ic:"🧺",cost:60,sal:1,col:"#e0a51c",d:"Mueve las piezas terminadas a la siguiente estación libre, trae material y lleva lo listo a entrega."},
+ mt:{n:"Técnico de mantenimiento",ic:"🔧",cost:50,sal:1,col:"#3a7fd0",d:"Destraba los atascos de la línea apenas aparecen."}};
+const CREWN=["Ana","Beto","Kendall","Sofi","Mauro","Yami"];
+function crewOpts(){return MODE==="line"?["ws","mt"]:["st","ws"]}
+function hireDlg(){if(G.phase!=="prod"){toast("👷 Podrás contratar ayuda cuando empiece la producción.");return}const max=2;
+ const L=crewOpts().map(t=>{const c=CREW[t],n=G.crew.filter(x=>x.type===t).length,ok=G.pts>=c.cost&&G.crew.length<max&&!(t!=="st"&&n);
+  return `<button class="opt" ${ok?`onclick="hire('${t}')"`:"disabled style='opacity:.5'"}>${c.ic} <b>${c.n}</b> · ⭐ ${c.cost} <span class="mut">+ ${c.sal} ⭐ cada 15 s de salario</span><br><span class="mut">${MODE==="line"&&t==="ws"?"Surte los alimentadores de la línea desde el supermercado antes de que se vacíen.":c.d}</span></button>`}).join("");
+ openD(`<span class="tag">👷 Tu equipo</span><h2>Contratar ayuda</h2><p>Con los ⭐ que ganas atendiendo doctores puedes sumar gente a la ${MODE==="line"?"línea":"célula"}. Cada persona cuesta al contratarla y cobra un salario mientras trabaja. Si los ⭐ no alcanzan para pagar, se va.</p>
+ <div class="data">⭐ Tienes <b>${G.pts}</b> · Equipo: <b>${G.crew.length} de ${max}</b>${G.crew.length?"<br>"+G.crew.map(c=>`${CREW[c.type].ic} ${c.name}${c.st?" en "+ST[c.st].n:""}`).join(" · "):""}</div>
+ ${L}<p class="mut">Ojo: más personas en el área limpia también levantan más partículas, y un equipo grande cuesta. La pregunta es dónde rinde más una persona extra.</p>
+ ${G.crew.length?`<button class="btn o" onclick="fireLast()">Liberar a ${G.crew[G.crew.length-1].name}</button> `:""}<button class="btn" onclick="closeD()">Listo</button>`);}
+function hire(t){const c=CREW[t];if(t==="st"){const free=PROC.filter(k=>ST[k].man&&!G.crew.some(x=>x.st===k));
+  return openD(`<span class="tag">👷 ${c.ic} ${c.n}</span><h2>¿En qué estación lo pones?</h2><p class="mut">Pista: mira cuál estación te hace perder más tiempo (al final del turno verás el tiempo de trabajo por estación).</p>${free.map(k=>`<button class="opt" onclick="hireAt('st','${k}')">${ST[k].ic} ${ST[k].n} <span class="mut">(${ST[k].tm} s por pieza)</span></button>`).join("")}<button class="btn o" onclick="hireDlg()">Volver</button>`);}
+ hireAt(t,null);}
+function hireAt(t,k){const c=CREW[t];if(G.pts<c.cost)return;G.pts-=c.cost;const name=CREWN[G.crewN=(G.crewN||0)+1,(G.crewN-1)%CREWN.length];const a=k?ap(ST[k]):[.9,MH-.8];
+ G.crew.push({type:t,st:k,name,x:.9,y:MH-.8,path:[],hold:null,task:null,dir:1,walk:0,pay:0,work:0});G.hired=(G.hired||0)+1;G.crewCost=(G.crewCost||0)+c.cost;
+ const w=G.crew[G.crew.length-1];w.path=findPath([w.x,w.y],[a[0],a[1]]);beep(880,.08);toast(`👷 <b>${name}</b> (${c.n.toLowerCase()}) entra por la esclusa. −${c.cost} ⭐`);closeD();hud();}
+function fireLast(){const w=G.crew.pop();if(!w)return;if(w.hold){if(w.hold.st==="listo"&&G.stock.length<3)G.stock.push(w.hold);else if(w.task&&w.task.from&&w.task.from!=="rack"&&ST[w.task.from]&&!ST[w.task.from].p){const s=ST[w.task.from];s.p=w.hold;s.done=true;}}toast(`👋 ${w.name} sale de la ${MODE==="line"?"línea":"célula"}.`);hireDlg();}
+function crewGo(w,x,y){w.path=findPath([w.x,w.y],[x,y]);}
+function crewFree(n,stg){const s=ST[n];if(!s)return false;if(s.batch)return !s.run&&s.q.length<s.cap&&!s.q.some(q=>q.st===s.out);return !s.p&&!(s.lock>0)}
+function stepCrew(dt){const L=G.line;
+ for(const w of G.crew.slice()){
+  // salario
+  w.pay+=dt;if(w.pay>=15){w.pay=0;if(G.pts>=CREW[w.type].sal){G.pts-=CREW[w.type].sal;G.crewSal=(G.crewSal||0)+CREW[w.type].sal}else{G.crew.splice(G.crew.indexOf(w),1);toast(`💸 No alcanzan los ⭐ para pagarle a <b>${w.name}</b>: se va de la ${MODE==="line"?"línea":"célula"}.`);continue}}
+  // caminar
+  if(w.path.length){let m=3.2*dt*(G.stop>0?.5:1);while(m>0&&w.path.length){const t=w.path[0],dx=t[0]-w.x,dy=t[1]-w.y,d=Math.hypot(dx,dy);const sd=TR?dy:dx;if(Math.abs(sd)>.02)w.dir=Math.sign(sd);if(d<=m){w.x=t[0];w.y=t[1];w.path.shift();m-=d}else{w.x+=dx/d*m;w.y+=dy/d*m;m=0}}w.walk+=dt;G.P+=dt*.35;continue}
+  if(G.stop>0)continue;
+  if(w.type==="st"){const s=ST[w.st];if(s.wait&&s.p){w.work+=dt;if(w.work>1.2){w.work=0;if(s.id==="insp"){const ok=rnd()<.9?!s.p.vis:!!s.p.vis;inspDo(ok?1:0)}else if(s.id==="etiq")etqDo(0)}}continue}
+  if(w.type==="mt"){const j=LV.LINE.find(k=>L.jam[k]);if(!j){w.task=null;continue}const a=ap(ST[j]);if(Math.hypot(w.x-a[0],w.y-a[1])>.3){crewGo(w,a[0],a[1]);continue}w.work+=dt;ST[j].prog=w.work;if(w.work>=3){w.work=0;L.jam[j]=0;ST[j].prog=0;floatTxt(ST[j].x,ST[j].y,"🔧✓","#3a7fd0");}continue}
+  // surtidor
+  if(MODE==="line"){if(!w.task){let lo=null,lv=.4;for(const c in CAPF){const f=L.feed[c]/CAPF[c];if(f<lv&&!G.crew.some(o=>o!==w&&o.task&&o.task.comp===c)){lv=f;lo=c}}if(lo)w.task={comp:lo,step:0};else continue}
+   const t=w.task,sh=ST["sh_"+t.comp],mk=Object.keys(ST).find(k=>ST[k].comp===t.comp);
+   if(t.step===0){const a=ap(sh);if(Math.hypot(w.x-a[0],w.y-a[1])>.3){crewGo(w,a[0],a[1]);continue}w.hold={st:"bandeja",comp:t.comp,prod:"tray"};t.step=1;continue}
+   const a=ap(ST[mk]);if(Math.hypot(w.x-a[0],w.y-a[1])>.3){crewGo(w,a[0],a[1]);continue}L.feed[t.comp]=CAPF[t.comp];w.hold=null;w.task=null;floatTxt(ST[mk].x,ST[mk].y,"+"+CAPF[t.comp],COMPC[t.comp]);continue}
+  if(!w.task){let task=null;
+   for(const k of PROC.slice().reverse()){const s=ST[k];if(s.batch||!s.p||!s.done||s.wait)continue;const p=s.p;if(G.working===k)continue;
+    if(p.st==="listo"){if(G.stock.length<3||G.docs.some(d=>d.st==="q"&&d.x>10.4)){task={from:k,to:"win"};break}continue}
+    if(p.st==="rechazado"){task={from:k,to:"scrap"};break}
+    const n=nextFor(p.st);if(n&&crewFree(n)&&!G.crew.some(o=>o!==w&&o.task&&o.task.to===n)){task={from:k,to:n};break}}
+   if(!task&&!ST[PROC[0]].p&&!G.crew.some(o=>o!==w&&o.task&&o.task.to===PROC[0])&&!(G.pl.hold&&G.pl.hold.st===ST[PROC[0]].in))task={from:"rack",to:PROC[0]};
+   if(!task)continue;w.task=task;w.step=0;}
+  const t=w.task;
+  if(w.step===0){const s=ST[t.from],a=ap(s);if(Math.hypot(w.x-a[0],w.y-a[1])>.3){crewGo(w,a[0],a[1]);continue}
+   if(t.from==="rack"){w.hold={st:s.give,prod:LV.prod};G.tubes=(G.tubes||0)+1}else{if(!s.p||!s.done){w.task=null;continue}w.hold=s.p;s.p=null;s.done=false;s.prog=0;}w.step=1;continue}
+  const d=ST[t.to],a=ap(d);if(Math.hypot(w.x-a[0],w.y-a[1])>.3){crewGo(w,a[0],a[1]);continue}
+  if(t.to==="win"){const doc=G.docs.find(q=>q.st==="q"&&q.x>10.4);if(doc)serve(doc,w.hold);else if(G.stock.length<3)G.stock.push(w.hold);else continue;w.hold=null;w.task=null;continue}
+  if(t.to==="scrap"){G.scrap++;w.hold=null;w.task=null;continue}
+  if(d.batch){if(crewFree(t.to)){d.q.push(w.hold);w.hold=null;w.task=null}continue}
+  if(!d.p&&w.hold.st===d.in){d.p=w.hold;d.prog=0;d.done=false;w.hold=null;w.task=null;continue}
+  // destino ocupado: esperar
+ }}
+function drawCrew(w){const [x,y]=S(w.x,w.y),mv=w.path.length;const c=CREW[w.type];const b=mv?-Math.abs(Math.sin(w.walk*12))*TS*.05:0;
+ const [hx,hy]=person(x,y,{sc:.9,body:"#f6fbf7",sleeve:"#f6fbf7",shoe:c.col,skin:["#e8c09a","#c99a74","#f1c9a5"][w.name.length%3],cap:c.col,puff:1,mask:"#d8f0e0",dir:w.dir,walk:mv?w.walk:0,bob:b,arms:w.hold?"fwd":"",coat:1});
+ if(w.hold)drawPiece(x+w.dir*TS*.1,y-TS*.56+b,w.hold,TS*.32);
+ cx.fillStyle="#000";cx.font=`${TS*.22}px system-ui`;cx.textAlign="center";cx.fillText(c.ic,hx,hy-TS*.42);cx.fillStyle="rgba(34,52,62,.85)";cx.font=`800 ${Math.max(9,TS*.13)}px system-ui`;cx.fillText(w.name,hx,hy-TS*.62);}
 // ---------- cierre del lote (DHR) ----------
 let DQ=[],DI=0;
 function dhrDlg(){G.working=null;const sus=[];const nc=G.nc.length;
@@ -673,6 +732,7 @@ function results(){G.phase="end";const sr=G.total?G.served/G.total:0,nc=G.nc.len
  if(G.r5&&G.r5.left)L.push(`🏷️ <b>5S:</b> dejaste ${G.r5.left} objeto(s) que no van en el área limpia y sumaron partículas todo el turno.`);
  if(LV.prod==="guia"){const avg=G.ovenRuns?G.ovenLoad/G.ovenRuns:0;L.push(`🔥 <b>Horno por lotes:</b> ${G.ovenRuns} ciclos con ${avg.toFixed(1)} guías en promedio (capacidad 4). ${avg<3?"Muchos ciclos a medias: rápido para cada pieza, pero el horno se vuelve el cuello de botella.":"Buenas cargas: cada ciclo aprovechó el horno."} Esperar a llenar un lote frena el flujo; arrancar vacío desperdicia capacidad.`);
   if(G.medFake)L.push("📈 <b>SPC:</b> ajustaste el medidor en vez del proceso. El gráfico se veía bien mientras el recubrimiento se salía. Se corrige la causa, nunca el instrumento.");else if(G.spcIgn)L.push("📈 <b>SPC:</b> ignoraste una tendencia. El gráfico de control avisa <b>antes</b> de que haya rechazos: es la ventaja de controlar el proceso y no solo inspeccionar.");}
+ if(G.hired)L.push(`👷 <b>Equipo:</b> contrataste ${G.hired} persona(s) por ⭐ ${(G.crewCost||0)+(G.crewSal||0)} entre contratación y salarios. Atendiste ${G.served} doctores: ${(G.served/(1+G.crew.length)).toFixed(1)} por persona al cierre. Más gente ayuda si va donde está el cuello de botella; si no, solo sube el costo (y las partículas).`);
  if(G.quarUsed)L.push("📦 <b>Materiales:</b> usaste un lote en cuarentena. Lo que no está liberado no entra a la línea, aunque se vea igual.");
  if(G.alarms)L.push(`🌫️ <b>Partículas:</b> ${G.alarms} alarma(s). Correr levanta partículas: en un cuarto limpio se camina.`);
  if(G.sealsOut)L.push(`♨️ <b>Selladora:</b> ${G.sealsOut} bolsa(s) se sellaron fuera de la ventana validada. Vigila la temperatura de la selladora (arriba en la barra): una deriva no avisa dos veces.`);
@@ -713,7 +773,7 @@ function sopDlg(){if(MODE==="line")return openD(`<span class="tag">📋 Trabajo 
  <h3>Reglas del cuarto limpio</h3><p>🚶 Se camina, no se corre · 🗑️ Lo rechazado y lo que cae al piso va a scrap · 📄 Solo documentos controlados · ♨️ Ningún parámetro fuera de la ventana validada · 🫧 Ningún equipo con calibración vencida</p><button class="btn" onclick="closeD()">Entendido</button>`);}
 function helpDlg(){openD(`<h2>🩺 Célula Limpia</h2><p>Fabricas dispositivos médicos en un área limpia. Afuera, los doctores llevan 30 horas de guardia y llegan como zombies: cada uno necesita su dispositivo para atender a un paciente. Cuando se lo das, despierta y corre al quirófano. Al final de cada nivel llega el 🧌 <b>Dr. Ogro</b>, jefe de cirugía, que pide 3 a la vez.</p>
  <ul style="font-size:14px;line-height:1.5"><li><b>Moverte:</b> toca una estación y caminas hasta ella. En computadora también puedes usar las flechas o WASD y la barra espaciadora (o E) para usar la estación más cercana.</li>
- <li><b>Manos:</b> llevas una cosa a la vez. En las <b>celdas</b>, las estaciones manuales avanzan solo si te quedas en ellas (al terminar, la pieza pasa sola a tus manos) y las máquinas trabajan solas. Si una máquina terminó y traes la pieza que sigue, se <b>intercambian</b> en un solo toque. El 🔥 <b>horno</b> trabaja por lotes: lo cargas y lo arrancas tocándolo con las manos libres.</li><li><b>Línea:</b> la banda no para mientras tenga material. Tú surtes los alimentadores, destrabas ⚠️ atascos, vacías rechazos y llevas las cajas.</li>
+ <li><b>Manos:</b> llevas una cosa a la vez. En las <b>celdas</b>, las estaciones manuales avanzan solo si te quedas en ellas (al terminar, la pieza pasa sola a tus manos) y las máquinas trabajan solas. Si una máquina terminó y traes la pieza que sigue, se <b>intercambian</b> en un solo toque. El 🔥 <b>horno</b> trabaja por lotes: lo cargas y lo arrancas tocándolo con las manos libres.</li><li><b>👷 Equipo:</b> con tus ⭐ puedes contratar un operador para una estación, un surtidor de materiales o, en la línea, un técnico de mantenimiento. Cada uno cobra salario.</li><li><b>Línea:</b> la banda no para mientras tenga material. Tú surtes los alimentadores, destrabas ⚠️ atascos, vacías rechazos y llevas las cajas.</li>
  <li><b>🎯 Takt:</b> llega un doctor cada ${G.takt} s y su paciencia se agota. Puedes dejar hasta 3 en espera en la ventanilla.</li>
  <li><b>🌫️ Partículas:</b> suben al caminar, mucho más al 🏃 correr, y con lo que no sacaste en 5S. Si llegan al límite, la célula se detiene.</li>
  <li><b>♨️ Selladora:</b> vigila su temperatura en la barra de arriba; tócala para ajustarla dentro de la ventana validada.</li></ul>
