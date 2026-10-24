@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Célula Limpia · Juego de manufactura de dispositivos médicos</title>
+<meta name="description" content="Arma tu célula de manufactura en un cuarto limpio, sigue el estándar, controla la selladora y produce catéteres al ritmo del takt para los doctores zombies que necesitan atender a sus pacientes.">
+<meta property="og:title" content="Célula Limpia: catéteres, cuarto limpio y doctores zombies">
+<meta property="og:description" content="Juego gratis de PES Labs: 5S, trabajo estándar, takt time y selladoras en una célula de dispositivos médicos.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+<style>
+:root{--ink:#16323d;--mut:#5d7581;--tl:#0f9d8a;--tl2:#0b7a6b;--bg:#e9f1f4;--pn:#ffffff;--bd:#cfdee5;--bad:#d64532;--ok:#1f9a55;--warn:#d98a00}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);touch-action:none;-webkit-user-select:none;user-select:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;z-index:5}
+.pn{background:rgba(255,255,255,.94);border:1px solid var(--bd);border-radius:10px;box-shadow:0 3px 14px rgba(20,60,80,.12)}
+#top{top:calc(6px + env(safe-area-inset-top,0px));left:6px;right:6px;display:flex;gap:5px;justify-content:center;flex-wrap:wrap;pointer-events:none}
+#top .pn{padding:5px 9px;font-size:12.5px;white-space:nowrap;pointer-events:auto;display:flex;align-items:center;gap:5px}
+#top b{font-size:14px;color:var(--tl2)}
+#pbar{width:70px;height:7px;background:#e3ecef;border-radius:4px;overflow:hidden}#pbar i{display:block;height:100%;background:var(--ok);transition:width .3s}
+#sealhud{cursor:pointer}#sealhud.al{background:#ffe7e2;border-color:#f3a191;animation:bl 1s infinite}@keyframes bl{50%{background:#fff}}
+#bar{bottom:calc(8px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:6px}
+#bar button{background:rgba(255,255,255,.95);color:var(--ink);border:1px solid var(--bd);border-radius:9px;padding:8px 12px;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(20,60,80,.1)}
+#bar button.on{background:var(--warn);color:#fff;border-color:var(--warn)}
+#ov{position:fixed;inset:0;z-index:20;background:rgba(15,40,50,.35);display:flex;align-items:center;justify-content:center;padding:12px}
+#ov[hidden]{display:none}
+#dlg{max-width:620px;width:100%;max-height:calc(100% - 20px);overflow:auto;padding:16px 18px;-webkit-user-select:text;user-select:text}
+#dlg h2{margin:4px 0 8px;font-size:20px;color:var(--tl2)}#dlg h3{margin:12px 0 6px;font-size:15px;color:var(--tl2)}
+#dlg p{margin:6px 0;line-height:1.45;font-size:14.5px}
+.mut{color:var(--mut);font-size:13px}.ok{color:var(--ok)}.bad{color:var(--bad)}
+.tag{display:inline-block;background:#e2f4f1;color:var(--tl2);border-radius:7px;padding:2px 8px;font-size:12px;font-weight:600;margin:0 4px 4px 0}
+.btn{display:inline-block;margin:8px 6px 0 0;padding:10px 16px;border-radius:9px;border:1px solid var(--tl);background:var(--tl);color:#fff;font-weight:700;font-size:14.5px;cursor:pointer;text-decoration:none}
+.btn.o{background:#fff;color:var(--tl2)}.btn:disabled{opacity:.45;cursor:default}
+.opt{display:block;width:100%;text-align:left;margin:7px 0;padding:10px 12px;background:#f4f9fa;border:1px solid var(--bd);color:var(--ink);border-radius:9px;cursor:pointer;font-size:14px}
+.opt:hover{background:#e6f3f2}.opt.done{background:#e3f5e8;border-color:#9fd8b2;color:#1d6b3c}.opt.err{animation:sh .3s;background:#fde8e4}
+@keyframes sh{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.data{background:#f4f9fa;border-left:3px solid var(--tl);border-radius:7px;padding:8px 10px;margin:8px 0;font-size:13.5px;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+label{display:block;font-size:13px;margin:8px 0 3px;color:var(--mut)}
+input[type=text],input:not([type]){width:100%;box-sizing:border-box;padding:9px;border-radius:8px;border:1px solid var(--bd);font-size:15px}
+.sl{margin:8px 0}.sl label{display:flex;justify-content:space-between;color:var(--ink);font-size:14px}.sl input{width:100%}
+#toast{position:fixed;left:10px;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;flex-direction:column;gap:5px;align-items:flex-start;pointer-events:none;width:min(94vw,360px)}#toast div{font-size:12.5px}@media (max-width:640px){#toast{left:50%;transform:translateX(-50%);align-items:center}}
+#toast div{background:rgba(22,50,61,.94);color:#fff;padding:7px 12px;border-radius:9px;font-size:13.5px;line-height:1.35;box-shadow:0 3px 12px rgba(0,0,0,.2);animation:tin .25s}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+#insp{position:fixed;z-index:12;left:50%;transform:translateX(-50%);bottom:calc(64px + env(safe-area-inset-bottom,0px));width:min(94vw,440px);padding:10px 12px}
+#insp[hidden]{display:none}#insp p{margin:4px 0 8px;font-size:14px}
+#insp .row{display:flex;gap:6px}#insp .row .btn{flex:1;margin:0;padding:9px 6px;font-size:13.5px}
+#ban{top:calc(48px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(94vw,560px);padding:9px 12px;font-size:13.5px;line-height:1.4}
+#ban[hidden]{display:none}#ban .btn{margin:6px 0 0;padding:8px 14px;font-size:13.5px}
+.chip{display:inline-block;padding:2px 8px;border-radius:8px;margin:2px 4px 2px 0;font-size:12.5px;background:#eef4f6}
+.hb{height:9px;background:#e3ecef;border-radius:5px;overflow:hidden;margin:2px 0 6px}.hb i{display:block;height:100%}
+@media (max-width:640px){#toast div{font-size:12px;padding:5px 9px}#ban{font-size:12px;padding:7px 10px}#ban .btn{padding:6px 10px;font-size:12.5px;margin-top:4px}#top .pn{font-size:11.5px;padding:4px 7px}#top b{font-size:12.5px}.hide{display:none}#bar button{padding:8px 10px;font-size:12.5px}#pbar{width:46px}#ban{top:calc(78px + env(safe-area-inset-top,0px))}}
+
+#dlg{border:3px solid #22343e;border-radius:18px;box-shadow:0 7px 0 #22343e,0 14px 30px rgba(0,0,0,.25)}
+#dlg h2{font-weight:900;letter-spacing:-.3px}
+.btn{border:2.5px solid #22343e;box-shadow:0 4px 0 #22343e;border-radius:12px;transition:transform .08s}.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #22343e}
+.btn.o{background:#fff;color:#22343e}
+.opt{border:2px solid #b9cdd6;border-radius:12px;font-weight:600}.opt:hover{border-color:#22343e}
+.tag{background:#ffd23f;color:#22343e;border:2px solid #22343e;font-weight:800}
+#top .pn,#bar button{border:2.5px solid #22343e;box-shadow:0 3px 0 #22343e;border-radius:12px}
+#top b{color:#22343e}
+#insp,#ban{border:3px solid #22343e;border-radius:14px;box-shadow:0 5px 0 #22343e}
+#toast div{border:2px solid #fff3;border-radius:12px}
+</style></head><body>
+<canvas id="cv"></canvas>
+<div id="top" class="hud">
+ <div class="pn">⏱️ <b id="clk">5:00</b></div>
+ <div class="pn">🩺 <b id="srv">0/0</b><span class="hide mut">doctores</span></div>
+ <div class="pn" title="Puntos">⭐ <b id="pts">0</b></div>
+ <div class="pn" title="Takt time: cada cuánto llega un doctor">🎯 <span class="hide mut">Takt</span> <b id="tk">35 s</b></div>
+ <div class="pn" title="Partículas en el aire (ISO 7)">🌫️ <div id="pbar"><i></i></div></div>
+ <div class="pn" id="sealhud" onclick="sealDlg()" title="Selladora: toca para ver o ajustar">♨️ <b id="sealT">—</b></div>
+</div>
+<div id="ban" class="hud pn" hidden></div>
+<div id="insp" class="pn" hidden></div>
+<div id="bar" class="hud">
+ <button id="brun" onclick="toggleRun()">🏃<span class="hide"> Correr</span></button>
+ <button onclick="sopDlg()">📋<span class="hide"> Instrucciones</span></button>
+ <button onclick="helpDlg()">❓</button>
+ <button id="snd" onclick="toggleSnd()">🔇</button>
+</div>
+<div id="toast"></div>
+<div id="ov" hidden><div id="dlg" class="pn"></div></div>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#3d5864;background:rgba(255,255,255,.7);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.8">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script src="../pes-api.js"></script>
+<script>
+// ================= Célula Limpia · PES Labs =================
+const $=id=>document.getElementById(id);const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));const rnd=Math.random;const SK="pes-celula-v1";
+const cv=$("cv"),cx=cv.getContext("2d");let W=0,H=0,DPR=1,TS=40,OX=0,OY=0,TR=false;const MW=14,MH=9.4,K=.78,GL=1.95,FW=1.3,FD=1.02;
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0);
+ TR=H>W*1.15;if(window.__lv)sizeSt();const top=W<640?78:50,bot=54;const mw=TR?MH:MW,mh=TR?MW:MH;TS=Math.min(W/(mw+.15),(H-top-bot)/(mh*K+.95));OX=(W-mw*TS)/2;OY=top+(H-top-bot-(mh*K+.95)*TS)/2+.95*TS;}
+addEventListener("resize",resize);resize();
+function S(x,y,z){const u=TR?y:x,v=TR?x:y;return [OX+u*TS,OY+v*TS*K-(z||0)*TS]}
+function MR(x,y,w,h,z){const a=S(x,y,z),b=S(x+w,y+h,z);return [Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1])]}
+function toMap(sx,sy){const u=(sx-OX)/TS,v=(sy-OY)/(TS*K);return TR?[v,u]:[u,v]}
+function depth(x,y){return TR?x:y}
+// ---------- geometría de estaciones ----------
+const SH=.42,BELT={y:4.9,x0:1.45,x1:13.65,b0:6.35,b1:7.45};
+function blocked(x,y,pad){pad=pad==null?.3:pad;if(x<.45||x>MW-.45||y<GL+.3||y>MH-.35)return true;
+ if(MODE==="line"&&Math.abs(y-BELT.y)<.4+pad&&x>BELT.x0-pad&&!(x>BELT.b0+pad&&x<BELT.b1-pad))return true;
+ for(const k in ST){const s=ST[k];if(Math.abs(x-s.x)<s.ex+pad&&Math.abs(y-s.y)<s.ey+pad)return true}return false}
+function ap(s){const key=s.x+","+s.y+TR;if(s._ap&&s._ap[2]===key)return s._ap;const C=LV.center||[7,6.2];const dx=s.apd?s.apd[0]:C[0]-s.x,dy=s.apd?s.apd[1]:C[1]-s.y,d=Math.hypot(dx,dy)||1;let p=[s.x,s.y];
+ for(let t=Math.min(s.ex,s.ey);t<4;t+=.04){const q=[s.x+dx/d*t,s.y+dy/d*t];if(!blocked(q[0],q[1],.32)){p=q;break}}s._ap=[p[0],p[1],key];return s._ap;}
+function setSlots(arr){arr.forEach((k,i)=>{ST[k].x=SLOTS[i][0];ST[k].y=SLOTS[i][1];ST[k].slot=i});}
+function routeLen(){if(MODE==="line"){let d=0;for(const k of PROC){const a=ap(ST[k]),b=ap(ST[LV.SHFOR[k]]);d+=Math.hypot(a[0]-b[0],a[1]-b[1])}return d*1.2}
+ const seq=["rack",...PROC,"win"].map(k=>ap(ST[k]));let d=0;for(let i=1;i<seq.length;i++)d+=Math.hypot(seq[i][0]-seq[i-1][0],seq[i][1]-seq[i-1][1]);return d*1.2;}
+// camino (BFS en una rejilla de 0,25)
+const GS=.25;function los(a,b){const d=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.ceil(d/.08);for(let i=1;i<=n;i++){const t=i/n;if(blocked(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,.22))return false}return true}
+function findPath(a,b){if(los(a,b))return [b];const nx=Math.ceil(MW/GS),ny=Math.ceil(MH/GS);const id=(i,j)=>j*nx+i;const ci=x=>clamp(Math.round(x/GS),0,nx-1),cj=y=>clamp(Math.round(y/GS),0,ny-1);
+ const s=id(ci(a[0]),cj(a[1])),g=id(ci(b[0]),cj(b[1]));const prev=new Int32Array(nx*ny).fill(-1);const q=[s];prev[s]=s;let h=0;
+ while(h<q.length){const c=q[h++];if(c===g)break;const i=c%nx,j=(c-i)/nx;for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){const I=i+di,J=j+dj;if(I<0||J<0||I>=nx||J>=ny)continue;const n=id(I,J);if(prev[n]>=0)continue;if(n!==g&&blocked(I*GS,J*GS,.22))continue;if(di&&dj&&(blocked((i+di)*GS,j*GS,.22)||blocked(i*GS,(j+dj)*GS,.22)))continue;prev[n]=c;q.push(n)}}
+ if(prev[g]<0)return [b];const pts=[];for(let c=g;c!==s;c=prev[c]){const i=c%nx;pts.push([i*GS,(c-i)/nx*GS])}pts.reverse();pts[pts.length-1]=b;
+ const out=[];let cur=a;let k=0;while(k<pts.length){let far=k;for(let m=pts.length-1;m>k;m--)if(los(cur,pts[m])){far=m;break}out.push(pts[far]);cur=pts[far];k=far+1}return out;}
+// ---------- estado ----------
+const SEALW={T:[140,160],P:[40,60],d:[1,1.5]};
+let G;function newGame(lv){lv=lv||1;loadLevel(lv);G={lv,phase:"menu",t:0,LEN:LV.LEN,takt:LV.takt,pl:{x:7,y:MODE==="line"?6.6:6.4,path:[],tx:null,ty:null,goal:null,hold:null,run:false,dir:1,walk:0},
+ seal:{T:128,P:50,d:1.2,ok:false,drift:0},calOk:true,stop:0,P:12,pBase:0,gownErr:0,clutter:[],served:0,missed:0,total:0,docs:[],stock:[],
+ nc:[],scrap:0,scrapGood:0,alarms:0,dist:0,trail:[],busy:{},working:null,sopSeen:{},ev:{},nextDoc:22,docN:0,dec:[],contained:0,rep:false,pts:0,cd:0,shake:0,
+ coat:0,spc:[],spcAl:false,ovenRuns:0,ovenLoad:0,boss:null,
+ line:{u:Array(LV.LINE?LV.LINE.length:0).fill(null),feed:{rollo:10,spike:10,camara:10,regul:10,bolsa:10},jam:{},rej:0,boxes:[],pack:[],tc:0,on:false,run:0,down:0,why:{},made:0,good:0,bad:0,ph:0}};
+ for(const k in ST){const s=ST[k];s.p=null;s.prog=0;s.done=false;s.lock=0;s.wait=false;s.q=[];s.run=false;if(s.in||s.line)G.busy[k]=0;}
+ setSlots(SCRAMBLE);G.clutter=CLUT.map(c=>({...c,on:true}));FX.length=0;}
+// ---------- efectos ----------
+const FX=[];
+function fx(k,x,y,z,o){FX.push(Object.assign({k,x,y,z,vx:0,vy:0,vz:0,t:0,L:1},o||{}));if(FX.length>260)FX.shift();}
+function floatTxt(x,y,txt,col){fx("txt",x,y,1.4,{txt,col,vz:.9,L:1.4});}
+function confetti(x,y){const C=["#ff5a5f","#ffd23f","#3ec46d","#3a9be0","#b06ae0","#ff9f1c"];for(let i=0;i<26;i++)fx("conf",x,y,1.2,{vx:(rnd()-.5)*3,vy:(rnd()-.5)*1.5,vz:1.5+rnd()*2.2,col:C[i%C.length],L:1.3+rnd()*.6,r:rnd()*6});}
+function fxStep(dt){for(let i=FX.length-1;i>=0;i--){const f=FX[i];f.t+=dt;if(f.t>f.L){FX.splice(i,1);continue}f.x+=f.vx*dt;f.y+=f.vy*dt;f.z+=f.vz*dt;if(f.k==="conf")f.vz-=5*dt;if(f.k==="conf"&&f.z<0){f.z=0;f.vx*=.5;f.vy*=.5;f.vz=0}}}
+// ---------- dibujo: primitivas ----------
+const OUT="#22343e";
+function rr(x,y,w,h,r,c){c=c||cx;r=Math.max(0,Math.min(r,w/2,h/2));c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function shade(c,f){const n=parseInt(c.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;if(f<0){r*=1+f;g*=1+f;b*=1+f}else{r+=(255-r)*f;g+=(255-g)*f;b+=(255-b)*f}return `rgb(${r|0},${g|0},${b|0})`}
+function lw(m){return Math.max(1.5,TS*(m||.035))}
+function box(x,y,fw,fd,h,top,front,z0){const [rx,ry,rw,rh]=MR(x-fw/2,y-fd/2,fw,fd);const zz=(z0||0)*TS,hh=h*TS,r=TS*.1;
+ cx.fillStyle=front;cx.strokeStyle=OUT;cx.lineWidth=lw();rr(rx,ry+rh-hh-zz-r,rw,hh+r,r);cx.fill();cx.stroke();
+ cx.fillStyle=top;rr(rx,ry-hh-zz,rw,rh,r);cx.fill();cx.stroke();return [rx,ry-hh-zz,rw,rh];}
+function ell(x,y,rx,ry,f,s){cx.beginPath();cx.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,7);if(f){cx.fillStyle=f;cx.fill()}if(s){cx.strokeStyle=s;cx.lineWidth=lw();cx.stroke()}}
+function bar(x,y,w,f,col){const h=TS*.15;cx.fillStyle="#fff";cx.strokeStyle=OUT;cx.lineWidth=lw(.03);rr(x-w/2,y,w,h,h/2);cx.fill();cx.stroke();cx.fillStyle=col;rr(x-w/2+2,y+2,Math.max(0,(w-4)*clamp(f,0,1)),h-4,(h-4)/2);cx.fill();}
+// ---------- pieza ----------
+function drawPiece(x,y,p,s){if(!p)return;s=s||TS*.42;if(p.prod&&p.prod!=="cat")return drawPiece2(x,y,p,s);const st=p.st;cx.save();cx.translate(x,y);cx.lineJoin="round";
+ if(["sellado","listo"].includes(st)){cx.fillStyle="#f3f8fb";cx.strokeStyle=OUT;cx.lineWidth=Math.max(1.5,s*.07);rr(-s*.7,-s*.48,s*1.4,s*.96,s*.12);cx.fill();cx.stroke();cx.fillStyle="#f1e6cc";rr(-s*.7,-s*.48,s*1.4,s*.22,s*.1);cx.fill();cx.strokeStyle="rgba(120,140,160,.6)";cx.lineWidth=1;cx.setLineDash([3,2]);cx.strokeRect(-s*.6,-s*.38,s*1.2,s*.78);cx.setLineDash([]);}
+ const L=st==="tubo"?s*1.15:s*.9;cx.lineCap="round";cx.strokeStyle=OUT;cx.lineWidth=Math.max(3.5,s*.24);cx.beginPath();cx.moveTo(-L/2,s*.08);cx.quadraticCurveTo(0,-s*.3,L/2,s*.08);cx.stroke();
+ cx.strokeStyle=st==="rechazado"?"#c9a0a0":"#5ab4ec";cx.lineWidth=Math.max(2,s*.15);cx.stroke();
+ if(!["tubo","cortado"].includes(st)){ell(L/2,s*.08,s*.1,s*.1,"#1f5f8a",OUT);}
+ if(!["tubo","cortado","punta"].includes(st)){cx.fillStyle="#ffad2e";cx.strokeStyle=OUT;cx.lineWidth=Math.max(1.5,s*.06);rr(-L/2-s*.22,-s*.08,s*.3,s*.3,s*.06);cx.fill();cx.stroke();}
+ if(p.vis&&!["sellado","listo"].includes(st)){ell(L/2+s*.08,-s*.06,s*.07,s*.07,"#ff3030");}
+ if(st==="listo"){cx.fillStyle="#fff";cx.strokeStyle=OUT;cx.lineWidth=Math.max(1.2,s*.05);rr(-s*.28,s*.04,s*.56,s*.32,s*.05);cx.fill();cx.stroke();cx.fillStyle="#222";for(let i=0;i<8;i++)cx.fillRect(-s*.22+i*s*.055,s*.09,s*.028,s*.2);}
+ if(st==="rechazado"){cx.strokeStyle="#e33";cx.lineWidth=Math.max(3,s*.14);cx.beginPath();cx.moveTo(-s*.32,-s*.32);cx.lineTo(s*.32,s*.32);cx.moveTo(s*.32,-s*.32);cx.lineTo(-s*.32,s*.32);cx.stroke();}
+ cx.restore();}
+function pouch(s){cx.fillStyle="#f3f8fb";cx.strokeStyle=OUT;cx.lineWidth=Math.max(1.5,s*.07);rr(-s*.7,-s*.48,s*1.4,s*.96,s*.12);cx.fill();cx.stroke();cx.fillStyle="#f1e6cc";rr(-s*.7,-s*.48,s*1.4,s*.22,s*.1);cx.fill();}
+function udi(s,y){cx.fillStyle="#fff";cx.strokeStyle=OUT;cx.lineWidth=Math.max(1.2,s*.05);rr(-s*.28,y,s*.56,s*.32,s*.05);cx.fill();cx.stroke();cx.fillStyle="#222";for(let i=0;i<8;i++)cx.fillRect(-s*.22+i*s*.055,y+s*.05,s*.028,s*.2);}
+const COMPC={rollo:"#3a9be0",spike:"#e8743f",camara:"#25a9c0",regul:"#8b5ad8",bolsa:"#e04a7c"};
+function drawPiece2(x,y,p,s){const st=p.st;cx.save();cx.translate(x,y);cx.lineJoin="round";cx.lineCap="round";cx.strokeStyle=OUT;cx.lineWidth=Math.max(1.5,s*.07);
+ if(st==="rechazado"&&p.bag){ell(0,0,s*.45,s*.4,"#e0493c",OUT);ell(0,-s*.42,s*.12,s*.08,"#b9352b",OUT);cx.fillStyle="#fff";cx.font=`900 ${s*.4}px system-ui`;cx.textAlign="center";cx.fillText("✗",0,s*.15);cx.restore();return}
+ if(st==="bandeja"){const c=COMPC[p.comp]||"#888";cx.fillStyle=shade(c,.55);rr(-s*.62,-s*.3,s*1.24,s*.6,s*.1);cx.fill();cx.stroke();for(let i=0;i<3;i++)ell(-s*.36+i*s*.36,0,s*.13,s*.13,c,OUT);cx.restore();return}
+ if(st==="caja"){cx.fillStyle="#fff";rr(-s*.62,-s*.46,s*1.24,s*.86,s*.08);cx.fill();cx.stroke();cx.fillStyle="#e0493c";cx.fillRect(-s*.62,-s*.3,s*1.24,s*.16);cx.fillStyle=OUT;cx.font=`900 ${s*.22}px system-ui`;cx.textAlign="center";cx.fillText("IV ×5",0,s*.08);udi(s*.8,s*.1);cx.restore();return}
+ if(p.prod==="guia"){if(["sellado","listo"].includes(st))pouch(s);
+  if(["enrollado","sellado","listo"].includes(st)){cx.lineWidth=Math.max(3.5,s*.2);cx.beginPath();cx.ellipse(0,-s*.04,s*.42,s*.28,0,0,7);cx.stroke();cx.strokeStyle="#2e9e78";cx.lineWidth=Math.max(1.8,s*.11);cx.stroke();}
+  else{const col=st==="alambre"?"#8a96a2":st==="recubierto"?"#7fe0bd":["curado","medido"].includes(st)?"#2e9e78":"#c9d4dc";const L=s*1.25;cx.lineWidth=Math.max(3.5,s*.19);cx.beginPath();cx.moveTo(-L/2,0);if(st==="alambre"){for(let i=1;i<=8;i++)cx.lineTo(-L/2+i*L/8,(i%2?-1:1)*s*.1)}else cx.lineTo(L/2,0);cx.stroke();cx.strokeStyle=col;cx.lineWidth=Math.max(1.8,s*.1);cx.stroke();
+   if(!["alambre","recto"].includes(st))ell(L/2,0,s*.07,s*.07,"#ffd23f",OUT);if(st==="medido")ell(0,-s*.22,s*.1,s*.1,"#3ec46d",OUT);}
+  if(st==="listo")udi(s,s*.04);if(st==="rechazado"){cx.strokeStyle="#e33";cx.lineWidth=Math.max(3,s*.14);cx.beginPath();cx.moveTo(-s*.32,-s*.32);cx.lineTo(s*.32,s*.32);cx.moveTo(s*.32,-s*.32);cx.lineTo(-s*.32,s*.32);cx.stroke();}}
+ cx.restore();}
+function drawSetUnit(x,y,s,bad){cx.save();cx.translate(x,y);cx.lineCap="round";cx.strokeStyle=OUT;cx.lineWidth=Math.max(3,s*.2);cx.beginPath();cx.moveTo(-s*.5,0);cx.quadraticCurveTo(0,-s*.25,s*.5,0);cx.stroke();cx.strokeStyle=bad?"#e88":"#cfeaf7";cx.lineWidth=Math.max(1.5,s*.11);cx.stroke();cx.restore();}
+// ---------- piso y paredes ----------
+let FLOOR=null,FKEY="";
+function floorCache(){const key=[W,H,TS,TR].join();if(FKEY===key&&FLOOR)return FLOOR;FKEY=key;FLOOR=document.createElement("canvas");FLOOR.width=W*DPR;FLOOR.height=H*DPR;const g=FLOOR.getContext("2d");g.setTransform(DPR,0,0,DPR,0,0);
+ g.fillStyle=ENV.bg;g.fillRect(0,0,W,H);
+ // pared del fondo del hospital
+ if(!TR){const a=S(0,0),b=S(MW,0);const hh=.9*TS;g.fillStyle=ENV.wall;g.fillRect(a[0],a[1]-hh,b[0]-a[0],hh);g.fillStyle=ENV.wall2;g.fillRect(a[0],a[1]-hh*.35,b[0]-a[0],hh*.35);
+  for(const dx of [2.5,7.5]){const p=S(dx,0);g.fillStyle="#9fbcd0";g.fillRect(p[0],a[1]-hh*.92,TS*1.1,hh*.92);g.fillStyle="#cfe2ee";g.fillRect(p[0]+TS*.12,a[1]-hh*.8,TS*.36,hh*.3);g.fillRect(p[0]+TS*.62,a[1]-hh*.8,TS*.36,hh*.3);g.strokeStyle=OUT;g.lineWidth=2;g.strokeRect(p[0],a[1]-hh*.92,TS*1.1,hh*.92);}
+  if(ENV.night){g.font=`${TS*.4}px system-ui`;g.textAlign="center";g.fillStyle="#000";g.fillText("🌙",S(5.2,0)[0],a[1]-hh*.45);}const sp=S(10.6,0);g.fillStyle=ENV.signCol;g.strokeStyle=OUT;rr(sp[0],a[1]-hh*.85,TS*2.4,hh*.32,6,g);g.fill();g.stroke();g.fillStyle="#fff";g.font=`900 ${TS*.17}px system-ui`;g.textAlign="center";g.fillText(ENV.sign,sp[0]+TS*1.2,a[1]-hh*.63);
+  g.strokeStyle=OUT;g.lineWidth=Math.max(2,TS*.05);g.strokeRect(a[0],a[1]-hh,b[0]-a[0],hh);}
+ // pasillo
+ let r=MR(0,0,MW,GL);g.fillStyle="#efe3cc";g.fillRect(...r);for(let i=0;i<MW;i++){const q=MR(i,0,1,GL);g.fillStyle=i%2?ENV.ca:ENV.cb;g.fillRect(...q)}
+ g.fillStyle="rgba(120,90,60,.12)";g.fillRect(...MR(0,GL-.12,MW,.12));
+ // piso del cuarto limpio
+ for(let i=0;i<MW;i++)for(let j=Math.floor(GL);j<MH;j++){const y0=Math.max(j,GL),q=MR(i,y0,1,Math.min(j+1,MH)-y0);g.fillStyle=(i+j)%2?ENV.fa:ENV.fb;g.fillRect(...q)}
+ g.strokeStyle="rgba(140,190,200,.25)";g.lineWidth=1;for(let i=0;i<=MW;i++){g.beginPath();g.moveTo(...S(i,GL));g.lineTo(...S(i,MH));g.stroke()}
+ // marcas amarillas del pasillo peatonal
+ g.strokeStyle="rgba(240,190,40,.6)";g.lineWidth=Math.max(2,TS*.05);g.setLineDash([TS*.3,TS*.2]);if(MODE==="line"){for(const yy of [4.15,5.75]){g.beginPath();g.moveTo(...S(.6,yy));g.lineTo(...S(13.6,yy));g.stroke()}g.setLineDash([]);g.fillStyle="rgba(240,190,40,.35)";for(let i=0;i<5;i++)g.fillRect(...MR(BELT.b0+.05,4.25+i*.32,BELT.b1-BELT.b0-.1,.16));}else{rr(...MR(3,3.7,8,3.6),TS*.3,g);g.stroke();}g.setLineDash([]);
+ // rejillas de retorno de aire
+ for(const [hx,hy] of [[.75,8.7],[13.25,8.7]]){g.fillStyle="#9fb7c2";rr(...MR(hx-.3,hy-.25,.6,.5),4,g);g.fill();g.strokeStyle="#7e98a4";for(let k=0;k<4;k++){const a=S(hx-.25,hy-.18+k*.12),b=S(hx+.25,hy-.18+k*.12);g.beginPath();g.moveTo(...a);g.lineTo(...b);g.stroke();}}
+ // pared frontal (labio inferior)
+ const FR=MR(0,0,MW,MH);g.fillStyle="#8fb0bf";g.fillRect(FR[0],FR[1]+FR[3],FR[2],TS*.28);g.fillStyle="#6f92a3";g.fillRect(FR[0],FR[1]+FR[3]+TS*.24,FR[2],TS*.06);g.strokeStyle=OUT;g.lineWidth=Math.max(2,TS*.05);g.strokeRect(FR[0],FR[1],FR[2],FR[3]+TS*.3);
+ // texto
+ g.fillStyle="rgba(60,90,100,.55)";g.font=`800 ${TS*.2}px system-ui`;g.textAlign="left";const tp=S(MODE==="line"?2:3.1,GL+.45);g.fillText(ENV.room,tp[0],tp[1]);
+ g.fillStyle="rgba(110,85,55,.6)";g.font=`700 ${TS*.18}px system-ui`;const cp=S(.25,.4);if(TR){g.save();g.translate(cp[0],cp[1]);g.rotate(Math.PI/2);g.fillText(ENV.hall,0,0);g.restore()}else g.fillText(ENV.hall,cp[0],cp[1]);
+return FLOOR;}
+function drawGlass(){// pared de vidrio entre pasillo y cuarto limpio
+ const h=TR?0:.6;const a=S(0,GL,0),b=S(MW,GL,0);
+ if(TR){const q=MR(0,GL-.08,MW,.16);cx.fillStyle="rgba(150,205,230,.7)";cx.fillRect(...q);cx.strokeStyle=OUT;cx.lineWidth=lw(.02);cx.strokeRect(...q);return}
+ const top=a[1]-h*TS;cx.fillStyle="rgba(175,220,240,.42)";cx.fillRect(a[0],top,b[0]-a[0],h*TS);
+ cx.fillStyle="rgba(255,255,255,.35)";for(let i=0;i<MW;i+=2.3){const p=S(i+.4,GL);cx.beginPath();cx.moveTo(p[0],top+h*TS*.85);cx.lineTo(p[0]+TS*.35,top+h*TS*.85);cx.lineTo(p[0]+TS*.75,top+h*TS*.1);cx.lineTo(p[0]+TS*.4,top+h*TS*.1);cx.fill();}
+ cx.fillStyle="#8fb0bf";cx.strokeStyle=OUT;cx.lineWidth=lw(.025);for(let i=0;i<=MW;i+=2){const p=S(Math.min(i,MW-.08),GL);cx.fillRect(p[0],top,TS*.08,h*TS);}
+ cx.fillRect(a[0],top-TS*.06,b[0]-a[0],TS*.1);cx.strokeRect(a[0],top-TS*.06,b[0]-a[0],h*TS+TS*.06);
+ // ventanilla abierta
+ const w0=S(ST.win.x-.55,GL),w1=S(ST.win.x+.55,GL);cx.fillStyle="rgba(239,227,204,.9)";cx.fillRect(w0[0],top+h*TS*.35,w1[0]-w0[0],h*TS*.65);cx.strokeRect(w0[0],top+h*TS*.35,w1[0]-w0[0],h*TS*.65);}
+// ---------- máquinas ----------
+function machine(s,t){const [rx,ry,rw,rh]=t;const c=[rx+rw/2,ry+rh/2];const u=TS,lr=MODE==="line"&&G.line.on&&G.stop<=0,run=s.line?lr&&!G.line.jam[s.id]:s.batch?s.run:s.p&&!s.done&&!s.wait&&G.stop<=0&&!(s.lock>0)&&(s.mach||G.working===s.id);
+ cx.lineJoin="round";cx.lineWidth=lw();cx.strokeStyle=OUT;
+ switch(s.id){
+ case"rack":for(let i=0;i<3;i++){ell(c[0]-u*.35+i*u*.35,c[1]-u*.12,u*.17,u*.13,LV.prod==="guia"?"#b8c4ce":"#7cc4f0",OUT);ell(c[0]-u*.35+i*u*.35,c[1]-u*.12,u*.07,u*.05,LV.prod==="guia"?"#5d6a75":"#2f6a95");}cx.fillStyle="#c8d6de";rr(c[0]-u*.6,c[1]+u*.08,u*1.2,u*.14,4);cx.fill();cx.stroke();break;
+ case"corte":cx.fillStyle="#5cc08a";rr(c[0]-u*.5,c[1]-u*.18,u*.8,u*.38,5);cx.fill();cx.stroke();cx.strokeStyle="rgba(255,255,255,.5)";cx.lineWidth=1;for(let i=1;i<4;i++){cx.beginPath();cx.moveTo(c[0]-u*.5+i*u*.2,c[1]-u*.18);cx.lineTo(c[0]-u*.5+i*u*.2,c[1]+u*.2);cx.stroke()}
+  {const ang=run?Math.sin(AT*14)*.35:-.4;cx.save();cx.translate(c[0]+u*.32,c[1]+u*.1);cx.rotate(ang-.6);cx.fillStyle="#d8e2e8";cx.strokeStyle=OUT;cx.lineWidth=lw();rr(-u*.05,-u*.5,u*.12,u*.5,3);cx.fill();cx.stroke();cx.fillStyle="#e04848";rr(-u*.07,-u*.68,u*.16,u*.2,4);cx.fill();cx.stroke();cx.restore();}break;
+ case"punta":if(LV.prod==="guia"){const a=run?AT*25:0;ell(c[0]-u*.15,c[1]-u*.1,u*.3,u*.28,"#9aa6b0",OUT);ell(c[0]-u*.15,c[1]-u*.1,u*.12,u*.11,"#5d6a75",OUT);cx.strokeStyle=OUT;cx.lineWidth=lw(.03);cx.beginPath();cx.moveTo(c[0]-u*.15+Math.cos(a)*u*.12,c[1]-u*.1+Math.sin(a)*u*.11);cx.lineTo(c[0]-u*.15+Math.cos(a)*u*.28,c[1]-u*.1+Math.sin(a)*u*.26);cx.stroke();
+  if(run&&rnd()<.5){const m=toMap(c[0]+u*.1,c[1]);for(let i=0;i<2;i++)fx("spark",m[0],m[1],s.h+.3,{vx:(rnd()-.2)*2,vy:(rnd()-.5),vz:rnd()*1.5,L:.35});}break;}
+  cx.fillStyle="#5a6670";rr(c[0]-u*.42,c[1]-u*.32,u*.62,u*.48,6);cx.fill();cx.stroke();{const g=cx.createRadialGradient(c[0]-u*.11,c[1]-u*.08,1,c[0]-u*.11,c[1]-u*.08,u*.22);g.addColorStop(0,run?"#fff3a0":"#ffb070");g.addColorStop(1,run?"rgba(255,90,20,.9)":"rgba(200,80,40,.6)");ell(c[0]-u*.11,c[1]-u*.08,u*.15,u*.12,g,OUT);}
+  if(run&&rnd()<.25){const m=toMap(c[0],c[1]);fx("steam",m[0],m[1],s.h+.6,{vz:.6,vx:(rnd()-.5)*.2,L:1});}break;
+ case"uv":cx.fillStyle="#6d6f86";rr(c[0]-u*.5,c[1]-u*.55,u*.75,u*.62,8);cx.fill();cx.stroke();cx.fillStyle=run?`rgba(${190+Math.sin(AT*30)*40|0},120,255,1)`:"#3b3550";rr(c[0]-u*.4,c[1]-u*.42,u*.55,u*.3,5);cx.fill();cx.stroke();
+  if(run){const g=cx.createRadialGradient(c[0]-u*.12,c[1]-u*.1,2,c[0]-u*.12,c[1]-u*.1,u*.9);g.addColorStop(0,"rgba(180,110,255,.45)");g.addColorStop(1,"rgba(180,110,255,0)");cx.fillStyle=g;cx.fillRect(c[0]-u,c[1]-u,u*2,u*2);}break;
+ case"fuga":{cx.fillStyle="rgba(150,215,235,.85)";rr(c[0]-u*.48,c[1]-u*.5,u*.5,u*.62,10);cx.fill();cx.stroke();if(run&&rnd()<.35){const m=toMap(c[0]-u*.23,c[1]);fx("bub",m[0]+(rnd()-.5)*.2,m[1],s.h+.1,{vz:.7,L:.8});}
+  ell(c[0]+u*.15,c[1]-u*.28,u*.17,u*.17,"#fff",OUT);const a=run?-2.2+Math.min(1,s.prog/s.tm)*2.6+Math.sin(AT*20)*.05:-2.2;cx.strokeStyle="#e33";cx.lineWidth=lw(.03);cx.beginPath();cx.moveTo(c[0]+u*.15,c[1]-u*.28);cx.lineTo(c[0]+u*.15+Math.cos(a)*u*.13,c[1]-u*.28+Math.sin(a)*u*.13);cx.stroke();break;}
+ case"insp":cx.strokeStyle=OUT;cx.lineWidth=lw(.05);cx.beginPath();cx.moveTo(c[0]+u*.35,c[1]+u*.05);cx.lineTo(c[0]+u*.35,c[1]-u*.55);cx.lineTo(c[0]-u*.05,c[1]-u*.62);cx.stroke();
+  {const g=cx.createRadialGradient(c[0]-u*.1,c[1]-u*.55,2,c[0]-u*.1,c[1]-u*.55,u*.3);g.addColorStop(0,"rgba(255,250,200,.95)");g.addColorStop(1,"rgba(255,230,120,.2)");ell(c[0]-u*.1,c[1]-u*.55,u*.24,u*.12,g,OUT);ell(c[0]-u*.1,c[1]-u*.55,u*.14,u*.06,"rgba(255,255,255,.8)");}break;
+ case"sell":{cx.fillStyle="#7a8790";rr(c[0]-u*.55,c[1]-u*.12,u*.85,u*.3,6);cx.fill();cx.stroke();const dn=run?Math.abs(Math.sin(s.prog/s.tm*Math.PI*3))*u*.18:0;const hot=G.seal.T>=140?clamp((G.seal.T-120)/60,0,1):0;
+  cx.fillStyle="#5d6a72";rr(c[0]-u*.6,c[1]-u*.62+dn,u*.95,u*.22,6);cx.fill();cx.stroke();cx.fillStyle=`rgba(255,${120-hot*80|0},60,${.3+hot*.6})`;rr(c[0]-u*.55,c[1]-u*.44+dn,u*.85,u*.06,3);cx.fill();
+  const ok=inWin()||G.phase!=="prod"&&G.phase!=="seal";cx.fillStyle="#111d22";rr(c[0]+u*.36,c[1]-u*.55,u*.34,u*.24,4);cx.fill();cx.stroke();cx.fillStyle=ok?"#4dff8a":(Math.sin(AT*10)>0?"#ff5040":"#ff9a88");cx.font=`800 ${u*.13}px monospace`;cx.textAlign="center";cx.fillText(G.phase==="prod"||G.phase==="seal"?Math.round(G.seal.T)+"°":"OFF",c[0]+u*.53,c[1]-u*.38);
+  cx.font=`${u*.26}px system-ui`;cx.fillStyle="#000";cx.fillText("⚙️",c[0]+u*.53,c[1]-u*.62);GEAR=[c[0]+u*.53,c[1]-u*.7];if(run&&rnd()<.2){const m=toMap(c[0],c[1]);fx("steam",m[0],m[1],s.h+.5,{vz:.5,L:.9});}break;}
+ case"etiq":cx.fillStyle="#e8eef2";rr(c[0]-u*.45,c[1]-u*.4,u*.6,u*.5,6);cx.fill();cx.stroke();ell(c[0]-u*.15,c[1]-u*.42,u*.18,u*.1,"#fff",OUT);cx.fillStyle="#fff";cx.strokeStyle=OUT;cx.lineWidth=lw(.025);rr(c[0]-u*.4,c[1]-u*.08,u*.5,u*.12,2);cx.fill();cx.stroke();cx.fillStyle="#222";for(let i=0;i<9;i++)cx.fillRect(c[0]-u*.36+i*u*.045,c[1]-u*.06,u*.02,u*.08);break;
+ case"scrap":{const bx=c[0],by=c[1];cx.fillStyle="#e0493c";rr(bx-u*.38,by-u*.5,u*.76,u*.7,8);cx.fill();cx.stroke();cx.fillStyle="#b9352b";rr(bx-u*.44,by-u*.6,u*.88,u*.16,6);cx.fill();cx.stroke();cx.fillStyle="#fff";cx.font=`900 ${u*.15}px system-ui`;cx.textAlign="center";cx.fillText("SCRAP",bx,by-u*.12);break;}
+ case"ender":for(let i=0;i<3;i++){const a=run?AT*12:0;for(const dy of [-.18,.06]){ell(c[0]-u*.4+i*u*.3,c[1]+u*dy,u*.12,u*.1,"#c8d4dc",OUT);cx.strokeStyle=OUT;cx.lineWidth=1.5;cx.beginPath();cx.moveTo(c[0]-u*.4+i*u*.3,c[1]+u*dy);cx.lineTo(c[0]-u*.4+i*u*.3+Math.cos(a+i)*u*.1,c[1]+u*dy+Math.sin(a+i)*u*.08);cx.stroke();}}break;
+ case"recub":{cx.fillStyle="#7d8b95";rr(c[0]-u*.5,c[1]-u*.3,u*.8,u*.5,8);cx.fill();cx.stroke();const lv=G.coat>0?"#4fd6a0":"#7fe0bd";ell(c[0]-u*.1,c[1]-u*.12,u*.33,u*.15,lv,OUT);const dy=run?Math.abs(Math.sin(AT*4))*u*.25:u*.25;cx.strokeStyle=OUT;cx.lineWidth=lw(.05);cx.beginPath();cx.moveTo(c[0]-u*.1,c[1]-u*.75);cx.lineTo(c[0]-u*.1,c[1]-u*.12-dy);cx.stroke();cx.strokeStyle="#c8d4dc";cx.lineWidth=lw(.025);cx.stroke();break;}
+ case"horno":{cx.fillStyle="#6b4a44";rr(c[0]-u*.95,c[1]-u*.62,u*1.9,u*.82,10);cx.fill();cx.stroke();const g2=s.run?`rgba(255,${140+Math.sin(AT*6)*30|0},40,1)`:"#3a2a28";cx.fillStyle=g2;rr(c[0]-u*.75,c[1]-u*.48,u*1.15,u*.5,6);cx.fill();cx.stroke();
+  for(let i=0;i<s.q.length;i++){cx.save();cx.translate(c[0]-u*.6+i*u*.28,c[1]-u*.22);drawPiece2(0,0,s.q[i],u*.22);cx.restore();}
+  if(s.run){const gg=cx.createRadialGradient(c[0]-u*.2,c[1]-u*.25,2,c[0]-u*.2,c[1]-u*.25,u*1.2);gg.addColorStop(0,"rgba(255,150,40,.35)");gg.addColorStop(1,"rgba(255,150,40,0)");cx.fillStyle=gg;cx.fillRect(c[0]-u*1.4,c[1]-u*1.4,u*2.8,u*2.8);if(rnd()<.15){const m=toMap(c[0]+u*.6,c[1]);fx("steam",m[0],m[1],s.h+.8,{vz:.5,L:1.2});}}
+  ell(c[0]+u*.65,c[1]-u*.3,u*.14,u*.14,"#fff",OUT);cx.fillStyle=s.run?"#e0493c":"#3ec46d";ell(c[0]+u*.65,c[1]-u*.3,u*.06,u*.06,cx.fillStyle);break;}
+ case"medi":{cx.fillStyle="#e8eef2";rr(c[0]-u*.5,c[1]-u*.35,u*.55,u*.45,6);cx.fill();cx.stroke();ell(c[0]-u*.23,c[1]-u*.13,u*.13,u*.13,"#fff",OUT);
+  // mini gráfico de control
+  const gx=c[0]+u*.1,gy=c[1]-u*.72,gw=u*.62,gh=u*.5;cx.fillStyle="#fff";cx.strokeStyle=OUT;cx.lineWidth=lw(.025);rr(gx-u*.04,gy-u*.04,gw+u*.08,gh+u*.08,5);cx.fill();cx.stroke();
+  const Y=v=>gy+gh-(v-8)/(16-8)*gh;cx.strokeStyle="rgba(224,73,60,.7)";cx.lineWidth=1;cx.setLineDash([3,2]);for(const v of [9,15]){cx.beginPath();cx.moveTo(gx,Y(v));cx.lineTo(gx+gw,Y(v));cx.stroke()}cx.strokeStyle="rgba(240,160,30,.8)";for(const v of [10.2,13.8]){cx.beginPath();cx.moveTo(gx,Y(v));cx.lineTo(gx+gw,Y(v));cx.stroke()}cx.setLineDash([]);cx.strokeStyle="rgba(60,180,110,.8)";cx.beginPath();cx.moveTo(gx,Y(12));cx.lineTo(gx+gw,Y(12));cx.stroke();
+  const pts=G.spc.slice(-12);cx.strokeStyle="#2f6a95";cx.lineWidth=1.6;cx.beginPath();pts.forEach((v,i)=>{const X=gx+i*gw/11;i?cx.lineTo(X,Y(v)):cx.moveTo(X,Y(v))});cx.stroke();pts.forEach((v,i)=>ell(gx+i*gw/11,Y(clamp(v,8,16)),2.2,2.2,v<9||v>15?"#e0493c":v<10.2||v>13.8?"#ffb020":"#2f6a95"));
+  if(G.spcAl){cx.fillStyle="#000";cx.font=`${u*.3}px system-ui`;cx.textAlign="center";cx.fillText("⚠️",gx+gw+u*.05,gy+Math.sin(AT*8)*3);}break;}
+ case"enroll":{const a=run?AT*8:0;ell(c[0]-u*.1,c[1]-u*.15,u*.36,u*.24,"#d8c8f0",OUT);ell(c[0]-u*.1,c[1]-u*.15,u*.12,u*.08,"#8b5ad8",OUT);cx.strokeStyle=OUT;cx.lineWidth=1.5;cx.beginPath();cx.moveTo(c[0]-u*.1+Math.cos(a)*u*.14,c[1]-u*.15+Math.sin(a)*u*.09);cx.lineTo(c[0]-u*.1+Math.cos(a)*u*.34,c[1]-u*.15+Math.sin(a)*u*.22);cx.stroke();break;}
+ case"m1":case"m2":case"m3":case"m4":case"m5":case"m6":case"pack":{const arm=run?Math.abs(Math.sin(G.line.ph*Math.PI))*u*.16:0;const L=G.line;
+  cx.fillStyle=shade(s.col,.25);rr(c[0]-u*.42,c[1]-u*.7,u*.84,u*.28,6);cx.fill();cx.stroke();cx.fillStyle="#9aa6b0";rr(c[0]-u*.08,c[1]-u*.44+arm*0,u*.16,u*.16+arm,3);cx.fill();cx.stroke();
+  cx.fillStyle="#000";cx.font=`${u*.3}px system-ui`;cx.textAlign="center";cx.fillText(s.ic,c[0],c[1]-u*.48);
+  const jam=L.jam[s.id];ell(c[0]+u*.45,c[1]-u*.6,u*.08,u*.08,jam?(Math.sin(AT*10)>0?"#ff3b2f":"#7a1a14"):!G.line.on?"#ffb020":"#3ec46d",OUT);
+  if(s.comp){const f=L.feed[s.comp]/10;const bx2=c[0]-u*.62,by2=c[1]-u*.3;cx.fillStyle=shade(COMPC[s.comp],.6);rr(bx2-u*.04,by2-u*.3,u*.2,u*.42,4);cx.fill();cx.stroke();cx.fillStyle=f<.25?"#e0493c":COMPC[s.comp];rr(bx2,by2+u*.08-u*.34*f,u*.12,u*.34*f,2);cx.fill();}
+  if(s.id==="m5"&&L.rej){cx.fillStyle="#e0493c";cx.font=`900 ${u*.16}px system-ui`;cx.textAlign="center";cx.fillText(`✗ ${L.rej}/6`,c[0]+u*.35,c[1]-u*.08);}
+  if(s.id==="m6"){const ok=inWin();cx.fillStyle="#111d22";rr(c[0]+u*.18,c[1]-u*.3,u*.32,u*.2,4);cx.fill();cx.stroke();cx.fillStyle=ok?"#4dff8a":(Math.sin(AT*10)>0?"#ff5040":"#ff9a88");cx.font=`800 ${u*.12}px monospace`;cx.textAlign="center";cx.fillText(G.phase==="prod"||G.phase==="seal"?Math.round(G.seal.T)+"°":"OFF",c[0]+u*.34,c[1]-u*.16);cx.fillStyle="#000";cx.font=`${u*.24}px system-ui`;cx.fillText("⚙️",c[0]+u*.34,c[1]-u*.4);GEAR=[c[0]+u*.34,c[1]-u*.48];}
+  if(s.id==="pack")for(let i=0;i<L.boxes.length;i++)drawPiece2(c[0]+u*.05,c[1]-u*.1-i*u*.18,{st:"caja"},u*.3);
+  if(s.id==="m1"&&run&&rnd()<.1){const m=toMap(c[0],c[1]);fx("spark",m[0],m[1],s.h+.5,{vz:1,vx:(rnd()-.5),L:.3});}break;}
+ case"sh_rollo":case"sh_spike":case"sh_camara":case"sh_regul":case"sh_bolsa":{const col=COMPC[s.shelf];for(let i=0;i<3;i++){cx.fillStyle=shade(col,.55);rr(c[0]-u*.58+i*u*.4,c[1]-u*.28,u*.34,u*.3,5);cx.fill();cx.stroke();ell(c[0]-u*.41+i*u*.4,c[1]-u*.15,u*.08,u*.06,col,OUT);}cx.fillStyle="#000";cx.font=`${u*.26}px system-ui`;cx.textAlign="center";cx.fillText(s.ic,c[0],c[1]-u*.38);break;}
+ case"win":{cx.fillStyle="#f5c542";ell(c[0]-u*.2,c[1]-u*.08,u*.2,u*.06,"#c99a1c",OUT);cx.beginPath();cx.ellipse(c[0]-u*.2,c[1]-u*.1,u*.17,u*.17,0,Math.PI,0);cx.fillStyle="#f8d55a";cx.fill();cx.stroke();ell(c[0]-u*.2,c[1]-u*.29,u*.04,u*.03,"#c99a1c",OUT);
+  if(G.stock.length)G.stock.forEach((p,i)=>drawPiece(c[0]+u*.2+i*u*.12,c[1]-u*.05-i*u*.05,p,u*.3));break;}}}
+function drawStation(s,hi){s.h=s.id==="scrap"?.25:s.shelf?.5:s.line?.3:SH;const front=s.id==="scrap"?"#bcc8cf":s.col,top=s.id==="win"?"#dcecf5":"#eef3f6";
+ const sh=MR(s.x-s.ex,s.y-s.ey,2*s.ex,2*s.ey);cx.fillStyle="rgba(30,60,80,.18)";rr(sh[0]+TS*.06,sh[1]+TS*.08,sh[2],sh[3],TS*.12);cx.fill();
+ if(hi){const a=MR(s.x-s.ex-.08,s.y-s.ey-.08,2*s.ex+.16,2*s.ey+.16);cx.strokeStyle=`rgba(255,210,40,${.6+.3*Math.sin(AT*8)})`;cx.lineWidth=TS*.07;rr(a[0],a[1]-s.h*TS,a[2],a[3]+s.h*TS,TS*.15);cx.stroke();}
+ const t=box(s.x,s.y,2*s.ex,2*s.ey,s.h,top,front);
+ // panel frontal con el nombre
+ const [rx,ry,rw,rh]=t;const fy=ry+rh;cx.fillStyle="rgba(255,255,255,.92)";cx.font=`900 ${Math.max(9,TS*.16)}px system-ui`;cx.textAlign="center";cx.textBaseline="middle";if(s.id!=="scrap"&&!(TR&&s.line)){cx.font=`900 ${Math.max(8,Math.min(TS*.16,rw/(s.n.length*.62)))}px system-ui`;cx.fillText(s.n.toUpperCase(),rx+rw/2,fy+s.h*TS*.5);}cx.textBaseline="alphabetic";
+ machine(s,t);
+ if(s.p){drawPiece(rx+rw*.68,ry+rh*.62,s.p,TS*.36);}
+ // barra de progreso / estados
+ const bx=s.batch?rx+rw/2:rx+rw*.78,by=s.batch?ry-TS*.45:ry-TS*.32;
+ if(s.batch){if(s.run)bar(bx,by,TS*1.2,s.prog/s.tm,"#ff8a3d");else if(s.done&&s.q.length){const b=Math.abs(Math.sin(AT*5))*TS*.08;ell(bx,by+TS*.05-b,TS*.2,TS*.2,"#3ec46d",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.2}px system-ui`;cx.textAlign="center";cx.fillText(s.q.length,bx,by+TS*.12-b)}else if(s.q.length){cx.fillStyle="#ffd23f";cx.strokeStyle=OUT;cx.lineWidth=lw();rr(bx-TS*.5,by-TS*.08,TS*1,TS*.34,TS*.15);cx.fill();cx.stroke();cx.fillStyle=OUT;cx.font=`900 ${TS*.17}px system-ui`;cx.textAlign="center";cx.fillText(`▶ ${s.q.length}/${s.cap}`,bx,by+TS*.15);}}
+ if(s.line&&G.line.jam[s.id]){const b=Math.sin(AT*8)*TS*.05;cx.fillStyle="#000";cx.font=`${TS*.42}px system-ui`;cx.textAlign="center";cx.fillText("⚠️",bx,by+TS*.18+b);if(s.prog>0)bar(bx,by-TS*.25,TS*.9,s.prog/2.5,"#3ec46d");}
+ if(ST[s.id].in&&s.p){if(s.wait){cx.font=`${TS*.42}px system-ui`;cx.textAlign="center";cx.fillStyle="#000";cx.fillText("❓",bx,by+TS*.2+Math.sin(AT*6)*3)}else if(s.done){cx.fillStyle="#3ec46d";cx.strokeStyle=OUT;cx.lineWidth=lw();const b=Math.abs(Math.sin(AT*5))*TS*.08;ell(bx,by+TS*.05-b,TS*.2,TS*.2,"#3ec46d",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.26}px system-ui`;cx.textAlign="center";cx.fillText("✓",bx,by+TS*.14-b)}else bar(bx,by,TS*.75,s.prog/s.tm,s.mach?"#9b6bf0":"#3ec46d");}
+ if(s.id==="fuga"&&(G.phase==="prod")){const ok=G.calOk&&!(G.ev.cal&&!G.ev.calDone);cx.fillStyle=ok?"#3ec46d":"#e0493c";cx.strokeStyle=OUT;cx.lineWidth=lw(.025);rr(rx+TS*.06,fy-TS*.02,TS*.42,TS*.2,4);cx.fill();cx.stroke();cx.fillStyle="#fff";cx.font=`900 ${TS*.12}px system-ui`;cx.textAlign="center";cx.fillText(ok?"CAL ✓":"CAL ✗",rx+TS*.27,fy+TS*.12);}
+ if(s.lock>0){cx.fillStyle="rgba(255,255,255,.7)";rr(rx,ry,rw,rh+s.h*TS,TS*.1);cx.fill();cx.font=`${TS*.4}px system-ui`;cx.textAlign="center";cx.fillStyle="#000";cx.fillText("🔒",rx+rw/2,ry+rh*.6);cx.fillStyle="#d64532";cx.font=`900 ${TS*.18}px system-ui`;cx.fillText(Math.ceil(s.lock)+" s",rx+rw/2,ry+rh*.95);}
+ // pista: la pieza en la mano va aquí
+ const ph=G.pl.hold;if(G.phase==="prod"&&ph&&((ST[s.id].in===ph.st&&(s.batch?!s.run&&!s.done&&s.q.length<s.cap:!s.p))||(s.id==="win"&&(ph.st==="listo"||ph.st==="caja"))||(s.id==="scrap"&&ph.st==="rechazado")||(ph.st==="bandeja"&&s.comp===ph.comp))){const yy=ry-TS*.55+Math.sin(AT*6)*TS*.06;cx.fillStyle="#ffd23f";cx.strokeStyle=OUT;cx.lineWidth=lw();cx.beginPath();cx.moveTo(bx-TS*.16,yy-TS*.1);cx.lineTo(bx+TS*.16,yy-TS*.1);cx.lineTo(bx,yy+TS*.12);cx.closePath();cx.fill();cx.stroke();}}
+// ---------- personajes ----------
+function person(x,y,o){const u=TS*(o.sc||1),b=o.bob||0,f=o.dir||1;cx.lineJoin="round";
+ ell(x,y,u*.3,u*.1,"rgba(30,60,80,.22)");
+ const st=o.walk?Math.sin(o.walk*12)*u*.06:0;cx.fillStyle=o.shoe;cx.strokeStyle=OUT;cx.lineWidth=lw();rr(x-u*.2,y-u*.1+st,u*.16,u*.12,u*.05);cx.fill();cx.stroke();rr(x+u*.04,y-u*.1-st,u*.16,u*.12,u*.05);cx.fill();cx.stroke();
+ cx.fillStyle=o.body;rr(x-u*.28,y-u*.62+b,u*.56,u*.56,u*.2);cx.fill();cx.stroke();
+ if(o.coat){cx.fillStyle=shade(o.body,-.12);cx.fillRect(x-u*.02,y-u*.55+b,u*.04,u*.45)}
+ // brazos
+ cx.strokeStyle=OUT;cx.lineWidth=u*.15;cx.lineCap="round";cx.beginPath();if(o.arms==="up"){cx.moveTo(x-u*.24,y-u*.45+b);cx.lineTo(x-u*.34,y-u*.78+b);cx.moveTo(x+u*.24,y-u*.45+b);cx.lineTo(x+u*.34,y-u*.78+b)}else if(o.arms==="fwd"){cx.moveTo(x-u*.22,y-u*.45+b);cx.lineTo(x-u*.12+f*u*.12,y-u*.58+b);cx.moveTo(x+u*.22,y-u*.45+b);cx.lineTo(x+u*.12+f*u*.12,y-u*.58+b)}else{cx.moveTo(x-u*.26,y-u*.48+b);cx.lineTo(x-u*.3,y-u*.22+b);cx.moveTo(x+u*.26,y-u*.48+b);cx.lineTo(x+u*.3,y-u*.22+b)}cx.stroke();
+ cx.strokeStyle=o.sleeve;cx.lineWidth=u*.09;cx.stroke();cx.lineCap="butt";
+ // cabeza
+ const hx=x,hy=y-u*.9+b;ell(hx,hy,u*.3,u*.28,o.skin,OUT);
+ if(o.cap){cx.fillStyle=o.cap;cx.strokeStyle=OUT;cx.lineWidth=lw();cx.beginPath();cx.ellipse(hx,hy-u*.08,u*.33,u*.24,0,Math.PI*1.02,Math.PI*1.98);cx.closePath();cx.fill();cx.stroke();
+  if(o.puff){for(let i=-2;i<=2;i++)ell(hx+i*u*.13,hy-u*.27+Math.abs(i)*u*.04,u*.08,u*.06,o.cap,OUT)}}
+ const ex=f*u*.06;
+ if(o.zombie){ell(hx-u*.1+ex,hy+u*.02,u*.085,u*.06,"rgba(80,40,90,.55)");ell(hx+u*.1+ex,hy+u*.02,u*.085,u*.06,"rgba(80,40,90,.55)");ell(hx-u*.1+ex,hy-u*.02,u*.065,u*.065,"#fff",OUT);ell(hx+u*.1+ex,hy-u*.02,u*.065,u*.065,"#fff",OUT);ell(hx-u*.1+ex+u*.015,hy-u*.01,u*.022,u*.022,"#222");ell(hx+u*.1+ex-u*.015,hy-u*.01,u*.022,u*.022,"#222");}
+ else{ell(hx-u*.1+ex,hy-u*.02,u*.04,u*.05,"#222");ell(hx+u*.1+ex,hy-u*.02,u*.04,u*.05,"#222");ell(hx-u*.19+ex,hy+u*.07,u*.05,u*.03,"rgba(255,120,120,.5)");ell(hx+u*.19+ex,hy+u*.07,u*.05,u*.03,"rgba(255,120,120,.5)");}
+ if(o.mask){cx.fillStyle=o.mask;cx.strokeStyle=OUT;cx.lineWidth=lw(.025);rr(hx-u*.2+ex*.5,hy+u*.04,u*.4,u*.17,u*.06);cx.fill();cx.stroke();}
+ else if(o.zombie){cx.strokeStyle=OUT;cx.lineWidth=lw(.03);cx.beginPath();cx.moveTo(hx-u*.08+ex,hy+u*.15);cx.lineTo(hx-u*.02+ex,hy+u*.12);cx.lineTo(hx+u*.04+ex,hy+u*.16);cx.lineTo(hx+u*.1+ex,hy+u*.13);cx.stroke();}
+ else{cx.strokeStyle=OUT;cx.lineWidth=lw(.03);cx.beginPath();cx.arc(hx+ex,hy+u*.07,u*.08,.3,Math.PI-.3);cx.stroke();}
+ return [hx,hy];}
+function drawPlayer(){const p=G.pl,[x,y]=S(p.x,p.y),mv=p.path.length||p.tx!=null;const b=mv?-Math.abs(Math.sin(p.walk*12))*TS*.05:Math.sin(AT*3)*TS*.01;
+ const [hx,hy]=person(x,y,{body:"#ffffff",sleeve:"#ffffff",shoe:"#5aa6e0",skin:"#f1c9a5",cap:"#7cc0f0",puff:1,mask:"#bfe3fb",dir:p.dir,walk:mv?p.walk:0,bob:b,arms:p.hold?"fwd":"",coat:1});
+ if(p.hold)drawPiece(x+p.dir*TS*.12,y-TS*.62+b,p.hold,TS*.38);
+ if(G.working){const s=ST[G.working];if(s.p&&!s.done&&!s.wait&&s.man){const sp=Math.sin(AT*18);cx.font=`${TS*.24}px system-ui`;cx.textAlign="center";cx.fillStyle="#000";cx.fillText(s.ic,hx+TS*.34,hy-TS*.25+sp*3);}}
+ if(p.run&&mv&&rnd()<.4)fx("dust",p.x-p.dir*.2,p.y+.05,0,{L:.6,vz:.2});}
+const DOCN=["Dra. Zombi Solís","Dr. Zombi Quesada","Dra. Zombi Vargas","Dr. Zombi Jiménez","Dra. Zombi Rojas","Dr. Zombi Alfaro","Dra. Zombi Brenes","Dr. Zombi Castro","Dra. Zombi Navarro","Dr. Zombi Araya","Dra. Zombi Chaves","Dr. Zombi Mora"];
+const GRR=["catéteeer…","mmmh… catéter…","¿ya…? grrr…","paciente… esperando…","30 horas… de guardia…","necesito… catéter…"];
+const YAY=["¡Gracias! ¡Me voy a sala!","¡Ya desperté!","¡A salvar al paciente!","¡Justo a tiempo!"];
+function drawDoc(d,qi){let [x,y]=S(d.x,1.05);const z=d.st==="q"||d.st==="mad";const sway=z?Math.sin(AT*2+d.ph)*TS*.04:0;const jump=d.st==="happy"?-Math.abs(Math.sin(AT*10))*TS*.12:0;
+ cx.save();cx.translate(sway,0);
+ const bc=d.boss?"#7b4fb8":d.vip?"#3a7fd0":"#3fae9a";const y0b=y+(d.boss?TS*.2:0);person(x,y0b,{sc:d.boss?1.45:1,body:bc,sleeve:bc,shoe:"#e8eef2",skin:z?(d.boss?"#8fb070":"#a8c98e"):"#f1c9a5",cap:bc,zombie:z,dir:-1,walk:d.st!=="q"||Math.abs(d.vx||0)>.01?AT:0,bob:jump,arms:z?"fwd":"up"});
+ if(d.boss){const u=TS*1.45;const y=y0b;cx.fillStyle="#f3e9d2";cx.strokeStyle=OUT;cx.lineWidth=lw();for(const sx of [-1,1]){cx.beginPath();cx.moveTo(x+sx*u*.2+sway,y-u*1.12);cx.lineTo(x+sx*u*.3+sway,y-u*1.32);cx.lineTo(x+sx*u*.1+sway,y-u*1.15);cx.closePath();cx.fill();cx.stroke();}}
+ cx.restore();
+ if(d.st==="q"){const f=clamp(1-(G.t-d.t0)/d.pat,0,1);const nn=d.need||1,tw2=TS*(.84+(nn-1)*.5);const tx=TR?x+TS*.8+(d.boss?TS*.3:0):x,ty=TR?y-TS*.9:y-TS*(d.boss?2.55:1.55);cx.fillStyle=d.boss?"#fff3c4":"#fff";cx.strokeStyle=OUT;cx.lineWidth=lw(.03);rr(tx-tw2/2,ty-TS*.3,tw2,TS*.5,TS*.1);cx.fill();cx.stroke();
+  for(let i=0;i<nn;i++){const px2=tx-tw2/2+TS*.42+i*TS*.5;drawPiece(px2,ty-TS*.1,MODE==="line"?{st:"caja",prod:"caja"}:{st:"listo",prod:LV.prod},TS*.26);if(i<(d.got||0)){ell(px2+TS*.12,ty-TS*.18,TS*.09,TS*.09,"#3ec46d",OUT)}}bar(tx,ty+TS*.06,tw2-TS*.14,f,f>.5?"#3ec46d":f>.25?"#ffb020":"#e0493c");if(d.vip){cx.font=`${TS*.24}px system-ui`;cx.textAlign="center";cx.fillStyle="#000";cx.fillText("🚨",tx-TS*.42,ty-TS*.24)}
+  if((qi===G.docs.filter(q=>q.st==="q").length-1||d.boss)&&!TR){const t=d.boss?`¡${nn} ${LV.units.toUpperCase()}… YA…!`:GRR[d.g%GRR.length].replace("catéter",LV.unit).replace("catéteeer",LV.unit+"…");cx.font=`700 ${Math.max(10,TS*.17)}px system-ui`;const tw=cx.measureText(t).width+12;const bx=x-TS*.45-tw,by=y-TS*1.0;cx.fillStyle="rgba(255,255,255,.95)";cx.strokeStyle=OUT;rr(bx,by,tw,TS*.3,TS*.12);cx.fill();cx.stroke();cx.fillStyle="#3a5a4a";cx.textAlign="left";cx.fillText(t,bx+6,by+TS*.21);}}
+ else if(d.say&&d.x<MW+.5){cx.font=`800 ${Math.max(10,TS*.17)}px system-ui`;const tw=cx.measureText(d.say).width+12;const bx=clamp(x-tw/2,4,W-tw-4),by=y-TS*1.75;cx.fillStyle=d.st==="mad"?"#ffe0da":"#e6ffe9";cx.strokeStyle=OUT;cx.lineWidth=lw(.03);rr(bx,by,tw,TS*.32,TS*.14);cx.fill();cx.stroke();cx.fillStyle=OUT;cx.textAlign="left";cx.fillText(d.say,bx+6,by+TS*.22);
+  if(d.st==="happy"&&rnd()<.05)fx("heart",d.x,.95,1.2,{vz:.8,L:1});}}
+// ---------- escena ----------
+function drawFX(){for(const f of FX){const [x,y]=S(f.x,f.y,f.z);const a=1-f.t/f.L;
+ if(f.k==="txt"){cx.font=`900 ${TS*.32}px system-ui`;cx.textAlign="center";cx.lineWidth=TS*.07;cx.strokeStyle=`rgba(255,255,255,${a})`;cx.strokeText(f.txt,x,y);cx.fillStyle=f.col||"#3ec46d";cx.globalAlpha=a;cx.fillText(f.txt,x,y);cx.globalAlpha=1;}
+ else if(f.k==="conf"){cx.fillStyle=f.col;cx.save();cx.translate(x,y);cx.rotate(f.r+f.t*8);cx.fillRect(-TS*.05,-TS*.025,TS*.1,TS*.05);cx.restore();}
+ else if(f.k==="steam"||f.k==="dust"){ell(x,y,TS*(.08+f.t*.15),TS*(.07+f.t*.12),f.k==="dust"?`rgba(200,210,215,${a*.6})`:`rgba(255,255,255,${a*.7})`);}
+ else if(f.k==="spark"){ell(x,y,TS*.025,TS*.025,`rgba(255,${200-f.t*300|0},60,${a})`);}
+ else if(f.k==="bub"){ell(x,y,TS*.05,TS*.05,null,`rgba(255,255,255,${a})`);}
+ else if(f.k==="heart"){cx.globalAlpha=a;cx.font=`${TS*.3}px system-ui`;cx.textAlign="center";cx.fillText("💚",x,y);cx.globalAlpha=1;}}}
+function draw(){cx.save();if(G.shake>0){cx.translate((rnd()-.5)*G.shake*16,(rnd()-.5)*G.shake*16)}
+ cx.drawImage(floorCache(),0,0,W,H);
+ // doctores (detrás del vidrio)
+ const qd=G.docs.filter(q=>q.st==="q");G.docs.forEach(d=>drawDoc(d,qd.indexOf(d)));
+ drawGlass();
+ // objetos ordenados por profundidad
+ if(MODE==="line")drawBelt();if(ENV.night){cx.fillStyle="rgba(30,25,80,.10)";cx.fillRect(0,0,W,H);}
+ const L=[];for(const k in ST)L.push([depth(ST[k].x,ST[k].y)+(TR?ST[k].ex:ST[k].ey),()=>drawStation(ST[k],G.pl.goal===k||SEL===k)]);
+ for(const c of G.clutter)if(c.on)L.push([depth(c.x,c.y),()=>{const [x,y]=S(c.x,c.y);ell(x,y,TS*.25,TS*.08,"rgba(30,60,80,.2)");cx.font=`${TS*.5}px system-ui`;cx.textAlign="center";cx.fillStyle="#000";cx.fillText(c.ic,x,y-TS*.05);if(G.phase==="5s"){cx.strokeStyle=`rgba(224,73,60,${.6+.35*Math.sin(AT*6)})`;cx.lineWidth=TS*.05;cx.beginPath();cx.ellipse(x,y-TS*.2,TS*.38,TS*.34,0,0,7);cx.stroke();ell(x+TS*.3,y-TS*.5,TS*.12,TS*.12,"#e0493c",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.14}px system-ui`;cx.fillText("!",x+TS*.3,y-TS*.45);}}]);
+ if(G.phase==="prod"||G.phase==="end"||G.phase==="dhr")L.push([depth(G.pl.x,G.pl.y)+.01,drawPlayer]);
+ L.sort((a,b)=>a[0]-b[0]);for(const [,f] of L)f();
+ if(G.phase==="5s"){cx.strokeStyle="rgba(224,73,60,.75)";cx.lineWidth=TS*.06;cx.setLineDash([TS*.16,TS*.12]);cx.beginPath();if(MODE==="line"){for(const k of PROC){const a=ap(ST[k]),b=ap(ST[LV.SHFOR[k]]);cx.moveTo(...S(a[0],a[1]));cx.lineTo(...S(b[0],b[1]));}}else{const seq=["rack",...PROC,"win"].map(k=>ap(ST[k]));seq.forEach((q,i)=>i?cx.lineTo(...S(q[0],q[1])):cx.moveTo(...S(q[0],q[1])));}cx.stroke();cx.setLineDash([]);
+  ORDER.forEach((k,i)=>{const s=ST[k],q=S(s.x-s.ex+.1,s.y-s.ey+.05,SH+.15);ell(q[0],q[1],TS*.16,TS*.16,"#0f9d8a",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.18}px system-ui`;cx.textAlign="center";cx.fillText(i+1,q[0],q[1]+TS*.06);});}
+ const p=G.pl;if(p.goal&&p.path.length){const q=S(p.path[p.path.length-1][0],p.path[p.path.length-1][1]);ell(q[0],q[1],TS*.14,TS*.06,"rgba(15,157,138,.45)");}
+ drawFX();
+ // partículas en el aire
+ const n=Math.round(G.P/5);for(let i=0;i<n;i++){const a=i*97.3,xx=(a*13.7+AT*.4*(i%3+1))%(MW-1)+.5,yy=(a*7.1)%(MH-GL-.6)+GL+.3,zz=.6+Math.sin(AT+i)*.3;const q=S(xx,yy,zz);ell(q[0],q[1],TS*.03,TS*.03,G.P>80?"rgba(220,90,70,.55)":"rgba(120,140,150,.45)");}
+ cx.restore();
+ if(G.stop>0){cx.fillStyle="rgba(224,73,60,.12)";cx.fillRect(0,0,W,H);bigText(`🌫️ Alarma de partículas · ${Math.ceil(G.stop)} s`,"#e0493c",TS*.42);}
+ if(G.cd>0){const n=Math.ceil(G.cd-.6);bigText(n>0?String(n):"¡A producir!",n>0?"#ffb020":"#3ec46d",TS*(n>0?1.4:.8)*(1+((G.cd%1))*.25));}}
+function drawBelt(){const L=G.line,r=MR(BELT.x0,BELT.y-.32,BELT.x1-BELT.x0,.64);cx.fillStyle="rgba(30,60,80,.18)";cx.fillRect(r[0]+TS*.05,r[1]+TS*.1,r[2],r[3]);
+ const t=box((BELT.x0+BELT.x1)/2,BELT.y,BELT.x1-BELT.x0,.64,.22,"#4b5560","#7d8b95");const off=(L.on?AT*1.2:0)%1;cx.strokeStyle="rgba(255,255,255,.18)";cx.lineWidth=2;
+ for(let x=BELT.x0+off*.5;x<BELT.x1;x+=.5){const a=S(x,BELT.y-.3,.22),b=S(x,BELT.y+.3,.22);cx.beginPath();cx.moveTo(...a);cx.lineTo(...b);cx.stroke();}
+ // puente peatonal
+ box((BELT.b0+BELT.b1)/2,BELT.y,BELT.b1-BELT.b0,.9,.34,"#ffd23f","#d9a60a");const q=S((BELT.b0+BELT.b1)/2,BELT.y,.34);cx.fillStyle=OUT;cx.font=`900 ${TS*.13}px system-ui`;cx.textAlign="center";cx.fillText("CRUCE",q[0],q[1]+TS*.05);
+ // unidades sobre la banda
+ const xs=LV.LINE.map(k=>ST[k].x);for(let i=0;i<L.u.length;i++){const u=L.u[i];if(!u)continue;const x0=xs[i],x1=i+1<xs.length?xs[i+1]:xs[i];const f=L.on?clamp(L.ph*1.6-.3,0,1):0;const xx=i<xs.length-1&&L.mv?x0+(x1-x0)*f:x0;const p=S(xx,BELT.y,.3);drawSetUnit(p[0],p[1]+TS*.05,TS*.32,u.bad);}}
+function bigText(t,col,sz){cx.font=`900 ${sz}px system-ui`;cx.textAlign="center";cx.lineJoin="round";cx.lineWidth=sz*.18;cx.strokeStyle=OUT;cx.strokeText(t,W/2,H/2);cx.fillStyle=col;cx.fillText(t,W/2,H/2);cx.lineWidth=sz*.06;cx.strokeStyle="#fff";}
+// ---------- niveles ----------
+const SEALSOP="Bolsa médica de película y papel grado médico. Sella SOLO dentro de la ventana validada: 140–160 °C, 40–60 psi, 1,0–1,5 s.";
+const LEVELS={
+1:{id:1,name:"Catéter",ic:"🩺",mode:"cell",prod:"cat",unit:"catéter",units:"catéteres",LEN:300,takt:35,
+ env:{room:"CUARTO LIMPIO ISO 7 · CÉLULA DE CATÉTERES",hall:"PASILLO DEL HOSPITAL → HEMODINAMIA",sign:"HEMODINAMIA →",signCol:"#2f8fd0",fa:"#e3f3f4",fb:"#f6fcfc",ca:"#efe3cc",cb:"#f2e8d4",wall:"#cfe0d8",wall2:"#b7cfc4",bg:"#bfd8e2",night:0},
+ STG:{tubo:"tubo extruido",cortado:"tubo cortado",punta:"tubo con punta",unido:"catéter unido",probado:"catéter probado",inspeccionado:"catéter inspeccionado",sellado:"catéter sellado",listo:"catéter listo",rechazado:"pieza rechazada"},
+ st:{rack:{n:"Tubos",ic:"🧵",fx:1,x:1.45,y:3.05,col:"#4a86c5",give:"tubo"},
+  corte:{n:"Corte",ic:"✂️",in:"tubo",out:"cortado",man:1,tm:2,col:"#3a9be0",sop:"Coloca el tubo en la plantilla y corta a 120 mm. Verifica la longitud con la regla de la estación."},
+  punta:{n:"Punta",ic:"🔥",in:"cortado",out:"punta",man:1,tm:2.5,col:"#e8743f",sop:"Forma la punta en el molde caliente sin forzar. Una punta con rebaba puede lastimar un vaso sanguíneo."},
+  uv:{n:"Unión UV",ic:"💡",in:"punta",out:"unido",mach:1,tm:6,col:"#8b5ad8",sop:"Aplica el adhesivo al conector y cura con luz UV durante 6 s. No retires la pieza antes de que termine el ciclo."},
+  fuga:{n:"Fuga",ic:"🫧",in:"unido",out:"probado",mach:1,tm:4,col:"#25a9c0",sop:"Presuriza a 30 psi durante 4 s. Si falla, la pieza va al 🗑️ scrap. El equipo debe tener la calibración vigente."},
+  insp:{n:"Inspección",ic:"🔍",in:"probado",out:"inspeccionado",man:1,tm:2,col:"#e0a51c",sop:"Revisa punta, unión y marcas con la lupa. Si tienes duda, mira con más aumento antes de decidir."},
+  sell:{n:"Selladora",ic:"♨️",in:"inspeccionado",out:"sellado",mach:1,tm:3,col:"#e04a7c",sop:SEALSOP},
+  etiq:{n:"Etiqueta UDI",ic:"🏷️",in:"sellado",out:"listo",man:1,tm:1.5,col:"#3fae62",sop:"Etiqueta con lote, vencimiento y código UDI. Revisa que el sello no tenga canales, arrugas ni partes sin sellar."},
+  scrap:{n:"Scrap",ic:"🗑️",fx:1,x:7,y:5.25,col:"#d0453a"},
+  win:{n:"Entrega",ic:"🔔",fx:1,x:12.15,y:2.75,col:"#2f8fd0"}},
+ PROC:["corte","punta","uv","fuga","insp","sell","etiq"],SCRAMBLE:["fuga","etiq","corte","sell","punta","insp","uv"],
+ clut:[{ic:"📦",n:"Caja de cartón",x:4.5,y:5.7,p:1.2,why:"El cartón suelta fibras y partículas: está prohibido dentro del cuarto limpio. El material entra en contenedores plásticos limpios."},
+  {ic:"☕",n:"Taza de café",x:9.5,y:4.3,p:.5,why:"No se permiten alimentos ni bebidas en el cuarto limpio."},
+  {ic:"📱",n:"Celular personal",x:10.4,y:6.5,p:.5,why:"Los objetos personales se quedan afuera: contaminan y distraen."},
+  {ic:"📄",n:"Papeles sueltos",x:3.7,y:3.7,p:.8,why:"Solo se usa papel para cuarto limpio y documentos controlados, en su lugar."},
+  {ic:"🔧",n:"Llave fuera de su lugar",x:8.6,y:7,p:.2,keep:1,why:"Esta sí se necesita: va a su lugar en el tablero de sombras (Seiton: un lugar para cada cosa)."}],
+ ev:{cal:70,drift:125,aud:182,boss:212}},
+2:{id:2,name:"Guía metálica",ic:"🧵",mode:"cell",prod:"guia",unit:"guía",units:"guías",LEN:300,takt:38,
+ env:{room:"CUARTO LIMPIO ISO 8 · CÉLULA DE GUÍAS",hall:"PASILLO DEL HOSPITAL → RADIOLOGÍA INTERVENCIONISTA",sign:"RADIOLOGÍA →",signCol:"#8b5ad8",fa:"#f3ead8",fb:"#fbf6ec",ca:"#c9c3dc",cb:"#d6d1e6",wall:"#5d5f86",wall2:"#4b4d70",bg:"#3b3d5c",night:1},
+ STG:{alambre:"alambre",recto:"alambre enderezado",afilado:"punta rectificada",recubierto:"guía recubierta",curado:"recubrimiento curado",medido:"guía medida",enrollado:"guía enrollada",sellado:"guía sellada",listo:"guía lista",rechazado:"pieza rechazada"},
+ st:{rack:{n:"Alambre",ic:"🌀",fx:1,x:1.45,y:3.05,col:"#7f8c99",give:"alambre"},
+  ender:{n:"Enderezado",ic:"📏",in:"alambre",out:"recto",man:1,tm:2,col:"#4a86c5",sop:"Pasa el alambre por los rodillos de enderezado y verifica que quede recto sobre la regla."},
+  punta:{n:"Rectificado",ic:"⚙️",in:"recto",out:"afilado",man:1,tm:2.5,col:"#e8743f",sop:"Rectifica la punta en la esmeriladora hasta el perfil de la plantilla. Usa la protección de la rueda."},
+  recub:{n:"Recubrimiento",ic:"🧪",in:"afilado",out:"recubierto",mach:1,tm:3,col:"#22a88c",sop:"Inmersión en el baño de recubrimiento hidrofílico. La viscosidad del baño define el espesor."},
+  horno:{n:"Horno de curado",ic:"🔥",in:"recubierto",out:"curado",batch:1,cap:4,tm:14,fx:1,x:7,y:5.35,w:2.2,d:1.25,col:"#c9472f",sop:"Horno compartido por lotes: carga hasta 4 guías y arráncalo. Cada ciclo dura 14 s, lleno o a medias."},
+  medi:{n:"Medición SPC",ic:"📈",in:"curado",out:"medido",mach:1,tm:3,col:"#e0a51c",sop:"Mide el espesor del recubrimiento. Especificación 9–15 µm. Vigila el gráfico de control: una tendencia avisa antes de que haya rechazos."},
+  enroll:{n:"Enrollado",ic:"⭕",in:"medido",out:"enrollado",man:1,tm:2,col:"#8b5ad8",sop:"Enrolla la guía en el aro dispensador sin doblarla. Un doblez es un defecto crítico."},
+  sell:{n:"Selladora",ic:"♨️",in:"enrollado",out:"sellado",mach:1,tm:3,col:"#e04a7c",sop:SEALSOP},
+  etiq:{n:"Etiqueta UDI",ic:"🏷️",in:"sellado",out:"listo",man:1,tm:1.5,col:"#3fae62",sop:"Etiqueta con lote, vencimiento y código UDI. Revisa el sello antes de etiquetar."},
+  scrap:{n:"Scrap",ic:"🗑️",fx:1,x:4.35,y:3.05,col:"#d0453a"},
+  win:{n:"Entrega",ic:"🔔",fx:1,x:12.15,y:2.75,col:"#8b5ad8"}},
+ PROC:["ender","punta","recub","horno","medi","enroll","sell","etiq"],SCRAMBLE:["enroll","medi","sell","punta","etiq","ender","recub"],
+ clut:[{ic:"🥤",n:"Botella de agua",x:4.8,y:7,p:.5,why:"Nada de bebidas en el cuarto limpio, ni siquiera agua."},
+  {ic:"🧥",n:"Suéter personal",x:9.6,y:7.2,p:1.1,why:"La ropa de calle suelta fibras: se queda en el casillero, fuera de la esclusa."},
+  {ic:"🖊️",n:"Lapicero común",x:10.2,y:4.1,p:.4,why:"Solo se usan lapiceros aprobados para cuarto limpio: los comunes sueltan partículas."},
+  {ic:"📦",n:"Caja de cartón",x:3.6,y:5.9,p:1.2,why:"El cartón suelta fibras: el material entra en contenedores plásticos limpios."},
+  {ic:"🧰",n:"Kit de herramientas",x:8.8,y:3.9,p:.2,keep:1,why:"Esta sí se necesita: va a su lugar marcado, no en el piso (Seiton)."}],
+ ev:{coat:58,drift:128,aud:175,boss:210}},
+3:{id:3,name:"Set de infusión",ic:"💧",mode:"line",prod:"set",unit:"caja de sets",units:"cajas",LEN:300,takt:27,CT:2.3,BOX:5,
+ env:{room:"SALA DE PRODUCCIÓN ISO 8 · LÍNEA DE SETS DE INFUSIÓN",hall:"PASILLO DEL HOSPITAL → EMERGENCIAS",sign:"EMERGENCIAS →",signCol:"#e0493c",fa:"#e4e9ec",fb:"#eef2f4",ca:"#e8e2dc",cb:"#f1ece6",wall:"#e7d6d3",wall2:"#d9bdb8",bg:"#c9d3da",night:0,lanes:1},
+ STG:{bandeja:"bandeja de componentes",caja:"caja de 5 sets",rechazado:"bolsa de rechazos"},
+ st:{m1:{n:"Corte de tubo",ic:"✂️",line:1,x:2.2,y:4.9,w:1.2,d:.95,col:"#3a9be0",comp:"rollo",apd:[0,1],sop:"Corta el tubo a la longitud del set. Consume 1 metro de tubo por set."},
+  m2:{n:"Spike",ic:"📍",line:1,x:3.8,y:4.9,w:1.2,d:.95,col:"#e8743f",comp:"spike",apd:[0,1],sop:"Une el spike (la punta que perfora la bolsa de suero) al tubo con solvente."},
+  m3:{n:"Cámara de goteo",ic:"💧",line:1,x:5.4,y:4.9,w:1.2,d:.95,col:"#25a9c0",comp:"camara",apd:[0,1],sop:"Ensambla la cámara de goteo, donde el personal de enfermería cuenta las gotas."},
+  m4:{n:"Regulador",ic:"🎚️",line:1,x:8.4,y:4.9,w:1.2,d:.95,col:"#8b5ad8",comp:"regul",apd:[0,1],sop:"Coloca el regulador de rodillo que controla el flujo."},
+  m5:{n:"Prueba de flujo",ic:"🫧",line:1,x:10,y:4.9,w:1.2,d:.95,col:"#e0a51c",apd:[0,1],sop:"Prueba de flujo y oclusión al 100 %. Los rechazos caen a la bolsa: cuando se llena, la línea se detiene."},
+  m6:{n:"Sellado en bolsa",ic:"♨️",line:1,x:11.6,y:4.9,w:1.2,d:.95,col:"#e04a7c",comp:"bolsa",apd:[0,1],sop:SEALSOP},
+  pack:{n:"Empaque",ic:"📦",line:1,x:13.05,y:4.9,w:1.1,d:.95,col:"#3fae62",apd:[0,-1],sop:"Agrupa 5 sets en una caja con su etiqueta UDI. Lleva cada caja a la ventanilla."},
+  sh_rollo:{n:"Tubo",ic:"🧵",shelf:"rollo",col:"#3a9be0",w:1.3,d:.8,apd:[0,-1]},
+  sh_spike:{n:"Spikes",ic:"📍",shelf:"spike",col:"#e8743f",w:1.3,d:.8,apd:[0,-1]},
+  sh_camara:{n:"Cámaras",ic:"💧",shelf:"camara",col:"#25a9c0",w:1.3,d:.8,apd:[0,-1]},
+  sh_regul:{n:"Reguladores",ic:"🎚️",shelf:"regul",col:"#8b5ad8",w:1.3,d:.8,apd:[0,-1]},
+  sh_bolsa:{n:"Bolsas",ic:"🛍️",shelf:"bolsa",col:"#e04a7c",w:1.3,d:.8,apd:[0,-1]},
+  scrap:{n:"Scrap",ic:"🗑️",fx:1,x:10,y:7,col:"#d0453a"},
+  win:{n:"Entrega",ic:"🔔",fx:1,x:12.15,y:2.75,col:"#e0493c"}},
+ LINE:["m1","m2","m3","m4","m5","m6","pack"],PROC:["sh_rollo","sh_spike","sh_camara","sh_regul","sh_bolsa"],SHFOR:{sh_rollo:"m1",sh_spike:"m2",sh_camara:"m3",sh_regul:"m4",sh_bolsa:"m6"},
+ SLOTS:[[2.2,8.45],[3.8,8.45],[5.4,8.45],[8.4,8.45],[11.6,8.45]],SCRAMBLE:["sh_bolsa","sh_regul","sh_rollo","sh_spike","sh_camara"],
+ clut:[{ic:"📦",n:"Caja de cartón del proveedor",x:6.9,y:7.3,p:1.2,why:"El cartón del proveedor se queda en la bodega: los componentes entran en bandejas limpias."},
+  {ic:"🍪",n:"Paquete de galletas",x:3,y:6.6,p:.5,why:"Nada de comida en la sala de producción."},
+  {ic:"🎧",n:"Audífonos personales",x:9,y:3.4,p:.4,why:"Objetos personales fuera: además no dejan oír las alarmas de la línea."},
+  {ic:"🪣",n:"Balde sin identificar",x:4.6,y:3.5,p:.6,why:"Todo recipiente debe estar identificado. Sin etiqueta, no se sabe qué contiene: fuera."},
+  {ic:"🧹",n:"Escoba fuera de su lugar",x:12.4,y:7.4,p:.2,keep:1,why:"Se necesita: va a su lugar en la estación de limpieza (Seiton)."}],
+ ev:{drift:95,aud:160,boss:205,lot:130}}};
+let LV=LEVELS[1],ST={},ORDER=[],PROC=[],SLOTS=[],SCRAMBLE=[],CLUT=[],STG={},ENV={},MODE="cell",IDEAL=0;
+const CSLOTS=[[1.6,4.95],[1.6,6.85],[4.2,8.45],[7,8.45],[9.8,8.45],[12.4,6.85],[12.4,4.95]];
+function sizeSt(){for(const k in ST){const s=ST[k];const w=s.w||1.3,d=s.d||1.02;s.ex=(TR?d:w)/2;s.ey=(TR?w:d)/2;s._ap=null;}}
+function loadLevel(n){LV=LEVELS[n];MODE=LV.mode;STG=LV.STG;ENV=LV.env;CLUT=LV.clut;ST={};for(const k in LV.st){ST[k]=Object.assign({id:k},LV.st[k]);}
+ PROC=LV.PROC;ORDER=PROC.filter(k=>!ST[k].fx);SLOTS=LV.SLOTS||CSLOTS;SCRAMBLE=LV.SCRAMBLE;sizeSt();FKEY="";
+ // mejor distribución posible (fuerza bruta sobre 5040 permutaciones como máximo)
+ const perm=a=>a.length<=1?[a]:a.flatMap((x,i)=>perm(a.slice(0,i).concat(a.slice(i+1))).map(r=>[x,...r]));let best=1e9;
+ for(const pm of perm(ORDER)){setSlots(pm);const r=routeLen();if(r<best)best=r;}IDEAL=best;setSlots(SCRAMBLE);}
+window.__lv=1;
+// ---------- utilidades de interfaz ----------
+let AT=0,SEL=null,KEYS={},SAVE={best:{},player:null,outbox:[]};
+try{Object.assign(SAVE,JSON.parse(localStorage.getItem(SK)||"{}"))}catch(e){}
+function store(){try{localStorage.setItem(SK,JSON.stringify(SAVE))}catch(e){}}
+function openD(h){$("dlg").innerHTML=h;$("ov").hidden=false;$("dlg").scrollTop=0;}
+function closeD(){$("ov").hidden=true;}
+function toast(m,ms){const d=document.createElement("div");d.innerHTML=m;$("toast").appendChild(d);setTimeout(()=>d.remove(),ms||4200);while($("toast").children.length>2)$("toast").firstChild.remove();}
+let AC=null,muted=true;function toggleSnd(){muted=!muted;$("snd").textContent=muted?"🔇":"🔊";if(!AC)try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+function beep(f,d,v){if(!AC||muted)return;const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=v||.05;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d);}
+function toggleRun(){G.pl.run=!G.pl.run;$("brun").classList.toggle("on",G.pl.run);if(G.pl.run)toast("🏃 Corriendo: llegas más rápido… pero levantas más partículas.");}
+function log(caso,titulo,tema,v,op){G.dec.push({caso,titulo,tema,res:v===1?"bien":v===.5?"parcial":"mal",midio:false,opcion:op||""});}
+function inWin(){const s=G.seal;return s.T>=SEALW.T[0]&&s.T<=SEALW.T[1]&&s.P>=SEALW.P[0]&&s.P<=SEALW.P[1]&&s.d>=SEALW.d[0]&&s.d<=SEALW.d[1];}
+function fmt(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function hud(){const left=G.phase==="prod"?G.LEN-G.t:G.LEN;$("clk").textContent=fmt(left);$("srv").textContent=G.served+"/"+G.total;
+ const nx=G.nextDoc-G.t;$("tk").textContent=G.phase==="prod"&&nx>0&&G.nextDoc<G.LEN-8?`${G.takt} s · próximo en ${Math.ceil(nx)}`:`${G.takt} s`;
+ $("pts").textContent=G.pts;const b=$("pbar").firstChild;b.style.width=clamp(G.P,0,100)+"%";b.style.background=G.P>80?"#d64532":G.P>55?"#d98a00":"#1f9a55";
+ const sv=G.phase==="menu"||G.phase==="gown"||G.phase==="5s"?"—":`${Math.round(G.seal.T)} °C`;$("sealT").textContent=sv;$("sealhud").classList.toggle("al",G.phase==="prod"&&!inWin());}
+// ---------- vestimenta ----------
+const GOWN=[["💍","Quitarse joyas y reloj, y guardar el celular en el casillero"],["🧼","Lavarse y secarse las manos"],["🧢","Cofia: cubrir todo el cabello"],["😷","Cubrebocas"],["👟","Cubrecalzado, uno a la vez al cruzar la banca"],["🥼","Bata de cuarto limpio, sin que toque el piso"],["🧤","Guantes y desinfección con alcohol"]];
+const GOWNX=[["💄","Retocarse el maquillaje antes de entrar","El maquillaje y los perfumes desprenden partículas: se entra sin maquillaje."],["🍬","Comerse un confite en la esclusa","No se come ni se mastica chicle en el área de vestimenta ni en el cuarto limpio."]];
+let GW={i:0,opts:[]};
+function gownDlg(){G.phase="gown";if(!GW.opts.length){GW.i=0;GW.opts=GOWN.map((g,k)=>({k,g})).concat(GOWNX.map((g,k)=>({x:k,g}))).sort(()=>rnd()-.5);}
+ openD(`<span class="tag">Paso 1 de 4 · Esclusa de vestimenta</span><h2>👕 Vístete para entrar al cuarto limpio</h2><p>Toca los pasos <b>en el orden correcto</b>. La regla general es <b>de arriba hacia abajo</b> y lo que toca el producto (los guantes) va de último.</p>
+ <div class="data">${GOWN.slice(0,GW.i).map(g=>`<span class="chip">✅ ${g[0]} ${g[1].split(":")[0].split(",")[0]}</span>`).join("")||"<span class='mut'>Todavía nada…</span>"}</div>
+ ${GW.opts.map((o,j)=>{const done=o.k!=null&&o.k<GW.i;return `<button class="opt${done?" done":""}" data-j="${j}" ${done?"disabled":""}>${o.g[0]} ${o.g[1]}</button>`}).join("")}
+ <p class="mut">El orden exacto cambia según el procedimiento de cada planta; aquí usamos uno típico. Errores: <b>${G.gownErr}</b></p>`);
+ document.querySelectorAll("#dlg .opt").forEach(b=>b.onclick=()=>gownPick(+b.dataset.j,b));}
+function gownPick(j,b){const o=GW.opts[j];if(o.k===GW.i){GW.i++;beep(880,.07);if(GW.i>=GOWN.length)return showerDlg();return gownDlg();}
+ G.gownErr++;G.pBase+=.35;beep(220,.15);b.classList.add("err");setTimeout(()=>b.classList.remove("err"),350);
+ toast(o.x!=null?"❌ "+o.g[2]:`❌ Todavía no: antes va <b>${GOWN[GW.i][0]} ${GOWN[GW.i][1].split(":")[0].split(",")[0]}</b>. Cada error en la vestimenta suma partículas al cuarto limpio.`,5200);gownDlg();}
+function showerDlg(){openD(`<span class="tag">Paso 1 de 4 · Esclusa</span><h2>🌬️ Ducha de aire</h2><p>Mantén presionado el botón mientras el aire filtrado te sopla las partículas de la ropa. Gira despacio con los brazos un poco abiertos.</p>
+ <div class="hb" style="height:14px"><i id="shb" style="width:0;background:var(--tl)"></i></div><button class="btn" id="shw" style="width:100%">Mantén presionado 3 s</button><p class="mut">Las puertas tienen interbloqueo: no puedes abrir la del cuarto limpio hasta que se cierre la de la esclusa.</p>`);
+ let t0=0,iv=null;const b=$("shw");const go=e=>{e.preventDefault();t0=performance.now();iv=setInterval(()=>{const f=(performance.now()-t0)/3000;$("shb").style.width=clamp(f*100,0,100)+"%";if(f>=1){clearInterval(iv);iv=null;beep(990,.1);log("vestimenta","Vestimenta para cuarto limpio","Cuarto limpio · Vestimenta",G.gownErr===0?1:G.gownErr<=2?.5:0,G.gownErr+" errores");setTimeout(fiveSDlg,250);}},50)};
+ const stop=()=>{if(iv){clearInterval(iv);iv=null;$("shb").style.width="0";toast("🌬️ La ducha dura 3 segundos completos. Inténtalo de nuevo.");}};
+ b.addEventListener("pointerdown",go);b.addEventListener("pointerup",stop);b.addEventListener("pointerleave",stop);}
+// ---------- 5S y armado de la célula ----------
+function fiveSDlg(){closeD();G.phase="5s";banner5s();toast(MODE==="line"?"👆 Toca un estante del supermercado y luego otro para intercambiarlos. Toca lo marcado en rojo para sacarlo (tarjeta roja).":"👆 Toca una estación y luego otra para intercambiarlas. Toca los objetos marcados en rojo para sacarlos (tarjeta roja).",6500);}
+function banner5s(){const rl=routeLen(),left=G.clutter.filter(c=>c.on).length;const ok=rl<=IDEAL*1.08;
+ const L5=MODE==="line";if(W<640){$("ban").hidden=false;$("ban").innerHTML=`<b>Paso 2 · 5S</b> · ${L5?"Caminata":"Recorrido"} <b style="color:${ok?"#1f9a55":"#d64532"}">${rl.toFixed(1)} m</b> <span class="mut">(mejor ≈ ${IDEAL.toFixed(1)})</span> · 🏷️ ${left}<br><button class="btn" onclick="done5s()">✅ Célula lista</button> <button class="btn o" onclick="help5s()">ℹ️</button>`;return}
+ $("ban").hidden=false;$("ban").innerHTML=L5?`<b>Paso 2 de 4 · Ordena el supermercado con 5S</b><br>🔁 Pon cada estante de componentes <b>frente a la máquina que alimenta</b>. 🏷️ Saca lo que no va (${left} pendientes).<br>Caminata para surtir todo:`:`<b>Paso 2 de 4 · Arma tu célula con 5S</b><br>🔁 Ordena las estaciones en <b>U</b>, siguiendo el proceso desde ${ST.rack.ic} ${ST.rack.n.toLowerCase()} hasta 🔔 entrega${ST.horno?" (el 🔥 horno es fijo: organiza la célula alrededor de él)":""}. 🏷️ Saca lo que no va (${left} pendientes).<br>Recorrido de una pieza: <b style="color:${ok?"#1f9a55":"#d64532"}">${rl.toFixed(1)} m</b> <span class="mut">(lo mejor posible ≈ ${IDEAL.toFixed(1)} m)</span><br><button class="btn" onclick="done5s()">✅ Célula lista</button> <button class="btn o" onclick="sopDlg()">📋 Ver el proceso</button>`;}
+function tap5s(x,y,sx,sy){for(const c of G.clutter)if(c.on&&Math.hypot(x-c.x,y-c.y)<.5){c.on=false;beep(700,.08);toast(`${c.keep?"🔧":"🏷️"} <b>${c.n}:</b> ${c.why}`,5600);banner5s();return}
+ {const k=hitSt(sx,sy,ORDER);const s=k&&ST[k];if(k){if(!SEL){SEL=k;beep(600,.05)}else if(SEL===k)SEL=null;else{const a=ST[SEL],b=s;[a.x,b.x]=[b.x,a.x];[a.y,b.y]=[b.y,a.y];[a.slot,b.slot]=[b.slot,a.slot];SEL=null;beep(820,.06);}banner5s();return}}}
+function help5s(){toast("🔁 Toca una estación y luego otra para intercambiarlas: ordénalas en U siguiendo el proceso, de 🧵 tubos a 🪟 ventanilla. 🏷️ Toca lo marcado en rojo para sacarlo.",7000)}
+function done5s(){const rl=routeLen(),left=G.clutter.filter(c=>c.on);const v=rl<=IDEAL*1.08?1:rl<=IDEAL*1.4?.5:0;
+ log("layout","Distribución de la célula","5S · Distribución",v,rl.toFixed(1)+" m");log("tarjetas","Tarjetas rojas","5S · Clasificar",left.length===0?1:left.length<=2?.5:0,left.length+" objetos sin sacar");
+ G.r5={rl,left:left.length};SEL=null;$("ban").hidden=true;
+ if(left.length)toast(`⚠️ Quedaron ${left.length} objeto(s) en la célula: van a sumar partículas todo el turno.`,5200);
+ sealDlg(true);}
+// ---------- selladora ----------
+function sealDlg(start){if(G.phase==="menu"||G.phase==="gown"||G.phase==="5s"&&!start)return;if(start)G.phase="seal";const s=G.seal;
+ const sl=(k,lab,mn,mx,st,u)=>`<div class="sl"><label>${lab}<b id="v_${k}">${s[k]}${u}</b></label><input type="range" min="${mn}" max="${mx}" step="${st}" value="${s[k]}" oninput="G.seal['${k}']=+this.value;$('v_${k}').textContent=(+this.value)+'${u}';sealInfo()"></div>`;
+ openD(`<span class="tag">${start?"Paso 3 de 4 · Verificación de arranque":"♨️ Selladora de bolsas"}</span><h2>♨️ Selladora de bolsas médicas</h2>
+ <p>${start?"Antes de producir se verifica la selladora: parámetros dentro de la ventana validada y un <b>sello de prueba</b> que pase la prueba de desprendimiento.":"Ajusta solo dentro de la ventana validada. Si estuvo fuera, lo sellado en ese tiempo es <b>sospechoso</b>."}</p>
+ <div class="data">📄 <b>Ventana validada (protocolo de validación):</b> temperatura <b>140–160 °C</b> · presión <b>40–60 psi</b> · tiempo de sellado <b>1,0–1,5 s</b></div>
+ ${sl("T","🌡️ Temperatura ",110,190,1," °C")}${sl("P","⬇️ Presión ",25,75,1," psi")}${sl("d","⏱️ Tiempo de sellado ",.5,2.2,.1," s")}
+ <div id="si" class="data"></div>
+ ${start?`<button class="btn o" onclick="testSeal()">🧪 Hacer sello de prueba</button> <button class="btn" id="sgo" onclick="startProd()" disabled>✍️ Firmar verificación y empezar</button>`:`<button class="btn" onclick="sealClose()">Listo</button>`}`);sealInfo();}
+function sealInfo(){const e=$("si");if(!e)return;const s=G.seal,w=inWin();e.style.borderLeftColor=w?"#1f9a55":"#d64532";e.innerHTML=w?"✅ Todos los parámetros están dentro de la ventana validada.":"⚠️ Hay parámetros <b>fuera de la ventana validada</b>: "+[s.T<140?"temperatura baja":s.T>160?"temperatura alta":"",s.P<40?"presión baja":s.P>60?"presión alta":"",s.d<1?"tiempo corto":s.d>1.5?"tiempo largo":""].filter(Boolean).join(", ")+".";
+ if(G.phase==="seal"&&$("sgo"))$("sgo").disabled=!G.sealTestOk||!w;}
+function sealDefect(){const s=G.seal;if(s.T<140)return "Sello débil: se despega con la mano (1,1 lbf; mínimo 2,5). La temperatura no alcanzó para fundir la capa sellante.";if(s.T>160)return "Sello quemado: la película se arrugó y el papel grado médico se puso quebradizo.";if(s.P<40)return "Canales en el sello: la presión no alcanzó a unir toda el área y la prueba de tinte muestra una fuga.";if(s.P>60)return "Sello adelgazado: la película se estiró y queda débil en el borde.";if(s.d<1)return "Sello incompleto: le faltó tiempo de contacto.";return "Sello sobreexpuesto: arrugas y deformación en la bolsa.";}
+function testSeal(){G.tests=(G.tests||0)+1;beep(500,.15);const w=inWin();G.sealTestOk=w;const e=$("si");sealInfo();
+ e.innerHTML+=w?"<br>🧪 <b>Sello de prueba:</b> ancho uniforme de 6 mm, sin canales ni arrugas. Desprendimiento: <b>4,1 lbf</b> (mínimo 2,5) ✅. Prueba de tinte: sin fugas ✅.":`<br>🧪 <b>Sello de prueba:</b> ❌ ${sealDefect()}`;if($("sgo"))$("sgo").disabled=!w;}
+function sealClose(){if(G.seal.drift&&inWin()){G.seal.drift=0;G.ev.driftFix=G.t;toast("♨️ Corregiste la temperatura. Lo sellado mientras estuvo fuera de ventana es <b>sospechoso</b>: anótalo para el cierre del lote.",6000);}closeD();hud();}
+function startProd(){log("arranque","Verificación de arranque de la selladora","Selladora · Ventana validada",G.tests===1?1:.5,G.tests+" sellos de prueba");closeD();G.phase="prod";G.t=0;G.P=10+G.gownErr*4;G.cd=3.6;hud();
+ toast(MODE==="line"?"💧 La línea arranca sola. Tú la mantienes viva: surte componentes desde los estantes, destraba atascos ⚠️, vacía los rechazos y lleva las cajas 📦 a 🔔 entrega.":`${LV.ic} ¡Llegan los doctores! Toca ${ST.rack.ic} ${ST.rack.n.toLowerCase()} para empezar. Cada doctor necesita ${LV.unit==="guía"?"una":"un"} ${LV.unit} listo en 🔔 entrega.`,7000);}
+// ---------- producción ----------
+function goTo(k){const a=ap(ST[k]);G.working=null;const p=G.pl;if(Math.hypot(p.x-a[0],p.y-a[1])<.15){p.tx=null;p.path=[];p.goal=null;faceTo(k);return interact(k)}p.tx=a[0];p.ty=a[1];p.goal=k;p.path=findPath([p.x,p.y],[a[0],a[1]]);}
+function faceTo(k){const s=ST[k];const d=(TR?s.y-G.pl.y:s.x-G.pl.x);if(Math.abs(d)>.05)G.pl.dir=Math.sign(d);}
+function nextFor(st){return PROC.find(k=>ST[k].in===st)}
+function interact(k){const s=ST[k],p=G.pl;if(G.stop>0){toast("🌫️ La célula está detenida por la alarma de partículas.");return}
+ if(k==="rack"){if(p.hold){toast(`Ya tienes una pieza en la mano: ${STG[p.hold.st]}.`);return}p.hold={st:s.give,prod:LV.prod};G.tubes=(G.tubes||0)+1;beep(660,.05);return}
+ if(s.shelf){if(p.hold){toast(`Tienes las manos ocupadas: ${STG[p.hold.st]||"algo"}.`);return}p.hold={st:"bandeja",comp:s.shelf,prod:"tray"};beep(660,.05);return}
+ if(s.line)return lineInteract(s);
+ if(s.batch)return ovenInteract(s);
+ if(k==="scrap"){if(!p.hold){toast("🗑️ Aquí van las piezas rechazadas.");return}if(p.hold.bag){G.scrap+=p.hold.n;}else{if(p.hold.st!=="rechazado")G.scrapGood++;G.scrap++;}p.hold=null;beep(300,.08);floatTxt(s.x,s.y,"🗑️","#e0493c");return}
+ if(k==="win"){if(!p.hold){toast("🪟 Trae aquí los catéteres <b>listos</b> (sellados y etiquetados).");return}
+  if(p.hold.st!=="listo"&&p.hold.st!=="caja"){toast(p.hold.st==="rechazado"?"🗑️ Lo rechazado va al scrap.":p.hold.st==="bandeja"?"Las bandejas van a las máquinas de la línea.":`Esta pieza todavía no está lista: va a <b>${ST[nextFor(p.hold.st)].n}</b>.`);return}
+  const d=G.docs.find(q=>q.st==="q"&&q.x>10.4);if(d)serve(d,p.hold);else if(G.stock.length<3){G.stock.push(p.hold);toast(`📦 ${LV.unit[0].toUpperCase()+LV.unit.slice(1)} en espera en la ventanilla. Ojo: producir de más también es desperdicio.`);}else{toast("🪟 La ventanilla está llena: no sobreproduzcas.");return}p.hold=null;return}
+ if(s.lock>0){toast(`🔒 ${s.n} está bloqueada ${Math.ceil(s.lock)} s más.`);return}
+ if(!s.p){if(!p.hold){toast(`${s.ic} ${s.n} recibe: <b>${STG[s.in]}</b>.`);return}
+  if(p.hold.st==="rechazado"){toast("🗑️ Las piezas rechazadas van al scrap.");return}
+  if(p.hold.st!==s.in){const n=nextFor(p.hold.st);toast(`Esta estación recibe <b>${STG[s.in]}</b>. Tu pieza (${STG[p.hold.st]}) va a <b>${n?ST[n].n:"la ventanilla"}</b>.`);return}
+  s.p=p.hold;p.hold=null;s.prog=0;s.done=false;beep(760,.05);if(!G.sopSeen[k]){G.sopSeen[k]=1;toast(`📋 <b>${s.n}:</b> ${s.sop}`,6000)}if(s.man)G.working=k;return}
+ if(s.done&&!s.wait){if(p.hold){toast("Tienes las manos ocupadas: deja primero tu pieza.");return}p.hold=s.p;s.p=null;s.done=false;s.prog=0;beep(900,.05);if(p.hold.st==="rechazado")toast("❌ Pieza rechazada: llévala al 🗑️ scrap.");return}
+ if(s.wait){G.working=k;return}
+ if(s.man){G.working=k;return}
+ if(k==="medi"&&G.spcAl&&!G.spcIgn){coatDlg();return}
+ if(k==="uv"&&!p.hold){if(s.prog<s.tm*.97){p.hold=s.p;p.hold.bad="curado incompleto";p.hold.st="unido";s.p=null;s.prog=0;toast("⚠️ Sacaste la pieza <b>antes de terminar el curado</b>. Se ve igual… pero la unión quedó débil.",5200);beep(260,.15);return}}
+ toast(`⏳ ${s.n} está trabajando.`);}
+function complete(s){const p=s.p;s.prog=s.tm;
+ if(s.id==="punta"&&LV.prod==="cat"){if(rnd()<.15)p.vis=1;else if(rnd()<.3)p.glint=1}
+ if(s.id==="medi"){const real=12+G.coat+(rnd()+rnd()+rnd()-1.5)*.7;const shown=G.medFake?12+(rnd()-.5)*.8:real;G.spc.push(+shown.toFixed(2));G.spcReal=(G.spcReal||[]).concat(+real.toFixed(2));
+  const L7=G.spc.slice(-6);const trend=L7.length===6&&L7.every((v,i)=>!i||v>L7[i-1]);if(!G.spcAl&&(shown>13.8||shown<10.2||trend)){G.spcAl=true;beep(1300,.1);toast("📈 <b>El gráfico de control avisa:</b> "+(trend?"6 puntos seguidos subiendo":"un punto fuera de los límites de control")+". Toca 📈 Medición para actuar.",6500);}
+  if(shown<9||shown>15){p.st="rechazado";s.done=true;floatTxt(s.x,s.y,"✗ "+shown.toFixed(1)+" µm","#e0493c");return}if(real<9||real>15)p.coatBad=1;}
+ if(s.id==="fuga"){if(G.calOk&&(p.bad||rnd()<.03)){p.st="rechazado";s.done=true;toast("🫧 ❌ Falló la prueba de fuga.");floatTxt(s.x,s.y,"✗ fuga","#e0493c");beep(240,.2);return}if(!G.calOk)p.unver=1}
+ if(s.id==="insp"){s.wait=true;return}
+ if(s.id==="sell"){if(!inWin()){p.sealBad=1;G.sealsOut=(G.sealsOut||0)+1}}
+ if(s.id==="etiq"&&p.sealBad&&!p.sealSeen&&rnd()<.5){p.sealSeen=1;s.wait=true;return}
+ p.st=s.out;s.done=true;beep(1040,.06);if(s.mach)floatTxt(s.x,s.y,"✓","#3ec46d");}
+function inspPanel(){const ip=$("insp");const k=G.working;const s=k&&ST[k];const at=s&&Math.hypot(G.pl.x-ap(s)[0],G.pl.y-ap(s)[1])<.4;
+ if(!(at&&s.wait&&s.p)){if(!ip.hidden){ip.hidden=true;ip.dataset.k=""}return}
+ if(ip.dataset.k===k+(s.p.lupa?"L":""))return;ip.dataset.k=k+(s.p.lupa?"L":"");ip.hidden=false;const p=s.p;
+ if(k==="insp"){const txt=p.lupa?(p.vis?"🔎 Con la lupa de 10× se ve claro: <b>hay una rebaba en la punta</b>.":"🔎 Con la lupa de 10× se ve claro: <b>la punta está lisa</b>, era solo un reflejo."):p.vis?"Ves algo en la punta… ¿una rebaba?":p.glint?"Hay un brillo en la punta… ¿es la luz o una rebaba?":"Punta lisa, unión limpia y marcas legibles.";
+  ip.innerHTML=`<b>🔍 Inspección visual</b><p>${txt}</p><div class="row"><button class="btn" onclick="inspDo(1)">✓ Conforme</button><button class="btn o" onclick="inspDo(0)">✗ Rechazar</button>${p.lupa?"":`<button class="btn o" onclick="inspLupa()">🔎 Lupa</button>`}</div>`;}
+ else ip.innerHTML=`<b>🏷️ Al etiquetar…</b><p>Ves un <b>canal en el sello</b> de la bolsa: una franja sin sellar por donde podría entrar contaminación.</p><div class="row"><button class="btn o" onclick="etqDo(1)">Etiquetar igual</button><button class="btn" onclick="etqDo(0)">✗ Rechazar la bolsa</button></div>`;}
+function inspLupa(){const p=ST.insp.p;if(!p)return;p.lupa=1;G.lupas=(G.lupas||0)+1;ST.insp.prog-=0;beep(600,.05);inspPanel();}
+function inspDo(ok){const s=ST.insp,p=s.p;if(!p)return;s.wait=false;s.done=true;
+ if(ok){p.st=s.out;if(p.vis){p.accVis=1;}}else{p.st="rechazado";if(!p.vis)G.scrapGood++;toast(p.vis?"✅ Bien visto: la rebaba podía lastimar al paciente.":"😬 La pieza estaba bien: rechazar de más también es desperdicio. Si dudas, usa la lupa.");}
+ G.inspN=(G.inspN||0)+1;if(ok&&!p.vis||!ok&&p.vis)G.inspOk=(G.inspOk||0)+1;$("insp").hidden=true;$("insp").dataset.k="";}
+function etqDo(go){const s=ST.etiq,p=s.p;if(!p)return;s.wait=false;s.done=true;if(go){p.st="listo";p.accSeal=1}else{p.st="rechazado";toast("✅ Bien: un canal en el sello rompe la barrera estéril.")}$("insp").hidden=true;$("insp").dataset.k="";}
+function serve(d,p){const fr=clamp(1-(G.t-d.t0)/d.pat,0,1);
+ const f=[];if(p.coatBad)f.push("Recubrimiento fuera de especificación (el medidor estaba ajustado)");if(p.quar)f.push("Set con un componente en cuarentena");
+ if(d.boss){d.got=(d.got||0)+1;beep(900,.08);floatTxt(d.x,1.2,`${d.got}/${d.need}`,"#7b4fb8");if(d.got<d.need){for(const x of [p.bad&&"Unión con curado incompleto",p.accVis&&"Rebaba en la punta aceptada en inspección",p.sealBad&&"Bolsa sellada fuera de la ventana validada",p.unver&&"Probado con un equipo fuera de calibración"].filter(Boolean).concat(f))G.nc.push({t:x,doc:d.name});return}
+  const pt=60+Math.round(fr*30);G.pts+=pt;d.st="happy";d.say="¡GRAAACIAS! ¡A QUIRÓFANO!";G.served++;G.bossOk=1;G.shake=.35;for(let i=0;i<3;i++)confetti(d.x+(i-1)*.6,1.8);floatTxt(d.x,1.2,"+"+pt,"#ffb020");beep(700,.15);setTimeout(()=>beep(1100,.2),120);setTimeout(()=>beep(1500,.3),260);}
+ else{const pt=20+Math.round(fr*10)+(d.vip?15:0);G.pts+=pt;d.st="happy";d.say=YAY[d.g%YAY.length];G.served++;beep(1200,.12);setTimeout(()=>beep(1500,.12),90);confetti(d.x,1.6);floatTxt(d.x,.95,"+"+pt,"#ffb020");}if(p.bad)f.push("Unión con curado incompleto");if(p.accVis)f.push("Rebaba en la punta aceptada en inspección");if(p.sealBad)f.push("Bolsa sellada fuera de la ventana validada");if(p.unver)f.push("Probado con un equipo fuera de calibración");
+ for(const x of f)G.nc.push({t:x,doc:d.name});}
+function spawnDoc(vip,boss){G.total++;G.docN++;const d={name:boss?"Dr. Ogro, jefe de cirugía":DOCN[(G.docN-1)%DOCN.length],t0:G.t,pat:boss?95:vip?55:95,x:-1.5,st:"q",g:G.docN,ph:rnd()*6,vip,boss,need:boss?3:1,got:0};
+ if(boss){const i=G.docs.findIndex(q=>q.st==="q");G.docs.splice(i<0?G.docs.length:i,0,d);G.shake=.4;beep(110,.5,.09);toast(`🧌 <b>¡Llegó el Dr. Ogro, jefe de cirugía!</b> Se metió de primero en la fila y necesita <b>3 ${LV.units} a la vez</b>. Hasta que lo atiendas, nadie más avanza.`,7000);}
+ else{G.docs.push(d);if(vip)toast("🚨 <b>Emergencia:</b> un doctor necesita un dispositivo para un paciente que no puede esperar.",5200);else if(G.docN>1)beep(330,.1);}}
+// ---------- eventos ----------
+// ---------- horno por lotes ----------
+function ovenInteract(s){const p=G.pl;
+ if(p.hold){if(p.hold.st!==s.in){toast(`El horno recibe <b>${STG[s.in]}</b>.`);return}if(s.run){toast("🔥 El horno está en ciclo: espera a que termine.");return}if(s.done&&s.q.length){toast("Saca primero el lote curado.");return}if(s.q.length>=s.cap){toast("El horno está lleno: arráncalo.");return}
+  s.done=false;s.q.push(p.hold);p.hold=null;beep(760,.05);floatTxt(s.x,s.y,`${s.q.length}/${s.cap}`,"#ff8a3d");if(!G.sopSeen.horno){G.sopSeen.horno=1;toast("📋 <b>Horno de curado:</b> "+s.sop+" Toca el horno con las manos libres para arrancarlo.",7000)}return}
+ if(s.done&&s.q.length){p.hold=s.q.shift();if(!s.q.length)s.done=false;beep(900,.05);return}
+ if(s.run){toast(`🔥 Curando… faltan ${Math.ceil(s.tm-s.prog)} s.`);return}
+ if(s.q.length){s.run=true;s.prog=0;G.ovenRuns++;G.ovenLoad+=s.q.length;beep(500,.2);toast(s.q.length<s.cap?`🔥 Horno arrancado con ${s.q.length} de ${s.cap}: más rápido para estas piezas, pero un ciclo con espacio vacío gasta igual energía y tiempo de horno.`:"🔥 Horno arrancado con carga completa.",5200);return}
+ toast("🔥 El horno está vacío. Trae guías recubiertas.");}
+function coatDlg(){openD(`<span class="tag">📈 Control estadístico de proceso</span><h2>El gráfico de control avisa</h2><p>El espesor del recubrimiento viene subiendo: ${G.spc.slice(-6).map(v=>v.toFixed(1)).join(" → ")} µm. La especificación es 9–15 µm y los límites de control son 10,2–13,8 µm.</p><p>¿Qué haces?</p>
+ ${[["Ajustar la viscosidad del baño según el procedimiento y verificar las siguientes piezas",1],["Seguir: todavía está dentro de especificación",0],["Hacerle un ajuste de cero al medidor: puede estar descalibrado",0]].map((o,k)=>[o,k]).sort(()=>rnd()-.5).map(([o,k])=>`<button class="opt" onclick="coatDo(${k})">${o[0]}</button>`).join("")}`);}
+function coatDo(k){log("spc","Tendencia en el gráfico de control","SPC · Control de proceso",[1,0,0][k],["Ajustar baño","Seguir","Ajustar medidor"][k]);
+ if(k===0){G.coat=0;G.coatDrift=0;G.spcAl=false;ST.recub.lock=8;toast("✅ Bien: el gráfico avisó antes de que hubiera rechazos. Ajustaste la causa (el baño), no el síntoma.",5600)}
+ else if(k===1){G.spcIgn=1;toast("⚠️ Una tendencia es una señal aunque todo esté «en especificación». Pronto vendrán los rechazos.",5600)}
+ else{G.medFake=1;G.spcAl=false;G.spcIgn=1;toast("⚠️ Ahora el gráfico se ve bonito… pero el recubrimiento sigue saliéndose. Ajustar el medidor esconde el problema.",6000)}closeD();}
+// ---------- línea ----------
+const CAPF={rollo:20,spike:12,camara:12,regul:12,bolsa:12},NEED={m1:"rollo",m2:"spike",m3:"camara",m4:"regul",m6:"bolsa"};
+function lineInteract(s){const p=G.pl,L=G.line;
+ if(L.jam[s.id]){G.working=s.id;if(!G.sopSeen.jam){G.sopSeen.jam=1;toast("🔒 Antes de meter la mano: <b>paro de la máquina y bloqueo (LOTO)</b>. Quédate en la máquina para destrabarla.",6500)}return}
+ if(p.hold&&p.hold.st==="bandeja"){if(!s.comp){toast("Esta máquina no lleva alimentador.");return}if(s.comp!==p.hold.comp){toast(`🧩 <b>Poka-yoke:</b> la bandeja de ${ST["sh_"+p.hold.comp].n.toLowerCase()} no encaja en el alimentador de ${s.n.toLowerCase()}.`);beep(220,.15);return}
+  L.feed[s.comp]=CAPF[s.comp];p.hold=null;beep(880,.06);floatTxt(s.x,s.y,"+"+CAPF[s.comp],COMPC[s.comp]);return}
+ if(s.id==="m5"&&!p.hold&&L.rej>0){p.hold={st:"rechazado",bag:1,n:L.rej,prod:"bag"};L.rej=0;beep(500,.06);toast("🗑️ Lleva la bolsa de rechazos al scrap.");return}
+ if(s.id==="pack"&&!p.hold&&L.boxes.length){p.hold=L.boxes.shift();beep(900,.05);return}
+ if(!G.sopSeen[s.id]){G.sopSeen[s.id]=1;toast(`📋 <b>${s.n}:</b> ${s.sop}`,6000)}else if(s.comp)toast(`${s.ic} ${s.n}: ${L.feed[s.comp]} de ${CAPF[s.comp]} en el alimentador.`);}
+function stepLine(dt){const L=G.line,ks=LV.LINE;let why=null;
+ if(G.stop>0)why="Alarma de partículas";else if(Object.keys(L.jam).some(k=>L.jam[k]))why="Atasco";else if(L.lock>0)why="Retención de calidad";else if(L.rej>=6)why="Bolsa de rechazos llena";else if(L.boxes.length>=3)why="Salida llena";
+ else for(let i=0;i<ks.length;i++){const c=NEED[ks[i]];const has=i===0||!!L.u[i-1];if(c&&has&&L.feed[c]<=0){why="Sin material";break}}
+ if(L.lock>0)L.lock-=dt;
+ if(why&&why!==L.lastWhy&&G.t>2){toast(`⛔ <b>Línea detenida:</b> ${why.toLowerCase()}.`,3500);beep(260,.2);}L.lastWhy=why;L.on=!why;
+ if(!L.on){L.down+=dt;L.why[why]=(L.why[why]||0)+dt;L.mv=false;return}
+ L.run+=dt;L.mv=true;L.ph+=dt/LV.CT;
+ if(L.ph>=1){L.ph=0;const u=L.u,n=ks.length;
+  if(u[n-1]){L.pack.push(u[n-1]);u[n-1]=null;L.good++;if(L.pack.length>=LV.BOX){const f=L.pack;L.boxes.push({st:"caja",prod:"caja",sealBad:f.some(x=>x.sealBad),quar:f.some(x=>x.quar)});L.pack=[];floatTxt(ST.pack.x,ST.pack.y,"📦","#3fae62");beep(1000,.06);}}
+  for(let i=n-2;i>=0;i--)if(u[i]&&!u[i+1]){u[i+1]=u[i];u[i]=null;}
+  if(!u[0]){u[0]={};L.made++;}
+  for(let i=0;i<n;i++){const x=u[i];if(!x||x.at===i)continue;x.at=i;const k=ks[i],c=NEED[k];if(c)L.feed[c]--;G.busy[k]=(G.busy[k]||0)+LV.CT;
+   if(k==="m2"&&G.quarUsed)x.quar=1;
+   if(k==="m5"&&rnd()<.05){u[i]=null;L.rej++;L.bad++;floatTxt(ST.m5.x,ST.m5.y,"✗","#e0493c");}
+   if(k==="m6"&&!inWin()){x.sealBad=1;G.sealsOut=(G.sealsOut||0)+1;}}}
+ for(const k of ks)if(k!=="pack"&&!L.jam[k]&&rnd()<dt*.005){L.jam[k]=1;beep(300,.25);toast(`⚠️ <b>Atasco en ${ST[k].n}.</b> La línea se detuvo.`,3500);}}
+function lotDlg(){openD(`<span class="tag">📦 Recibo de materiales</span><h2>Llegó un lote nuevo de spikes</h2><p>Bodega trae un lote nuevo de spikes con la etiqueta amarilla de <b>«EN CUARENTENA»</b>: calidad todavía no lo ha liberado. Te quedan pocos spikes del lote liberado.</p><p>¿Qué haces?</p>
+ ${[["Seguir con lo liberado y pedirle a calidad que revise y libere el lote nuevo",1],["Detener la línea hasta que calidad lo revise (20 s)",.5],["Usarlo: es el mismo proveedor, trae certificado de análisis y calidad lo libera en la mañana",0]].map((o,k)=>[o,k]).sort(()=>rnd()-.5).map(([o,k])=>`<button class="opt" onclick="lotDo(${k})">${o[0]}</button>`).join("")}`);}
+function lotDo(k){log("cuarentena","Lote de componentes en cuarentena","Materiales · Cuarentena",[1,.5,0][k],["Pedir liberación","Detener la línea","Usarlo"][k]);
+ if(k===0){G.line.feed.spike+=6;toast("✅ Bien: calidad revisó el lote y lo liberó en un rato. Llegaron 6 spikes extra liberados.",5200)}
+ else if(k===1){G.line.lock=20;toast("🟡 Correcto en calidad, pero no hacía falta parar: había material liberado para seguir.",5200)}
+ else{G.quarUsed=1;toast("⚠️ Todo lo que se arme con ese lote queda <b>sin liberar</b>. Si calidad lo rechaza, hay que recuperar el producto.",6000)}closeD();}
+function calDlg(){openD(`<span class="tag">📋 Metrología</span><h2>🫧 La calibración del probador de fuga venció hoy</h2><p>Al pasar por la estación ves la etiqueta de calibración: <b>vencía ayer a medianoche</b>. El probador parece funcionar normal.</p><p>¿Qué haces?</p>
+ ${[["Ponerle la etiqueta «fuera de servicio» y cambiarlo por el probador de respaldo calibrado (12 s)",1],["Bloquearlo y llamar a metrología para que lo calibre (30 s)",.5],["Seguir usándolo y verificarlo con la pieza patrón cada hora hasta que llegue metrología",0]].map((o,k)=>[o,k]).sort(()=>rnd()-.5).map(([o,k])=>`<button class="opt" onclick="calDo(${k})">${o[0]}</button>`).join("")}`);}
+function calDo(k){const v=[1,.5,0][k];log("calibracion","Probador con calibración vencida","Metrología · Calibración",v,["Respaldo calibrado","Metrología","Usarlo igual"][k]);
+ if(k===0){ST.fuga.lock=12;G.ev.calDone=1;toast("✅ Bien: un equipo con calibración vencida no puede liberar producto. El respaldo ya está calibrado.",5200)}
+ else if(k===1){ST.fuga.lock=30;G.ev.calDone=1;toast("🟡 Correcto, pero más lento: había un equipo de respaldo calibrado disponible.",5200)}
+ else{G.calOk=false;toast("⚠️ Todo lo que pruebes con ese equipo queda <b>sin verificar</b>: no hay evidencia de que la prueba sea válida.",6000)}closeD();}
+const AUD=[["¿Dónde está la instrucción de trabajo de esta estación y qué versión usas?",[["En la estación: es la versión vigente y controlada",1],["No la tengo a mano, pero el entrenamiento cubre todos los pasos",0],["Tengo mi propia copia impresa para consultarla más rápido",0]]],
+ ["¿Qué haces si un parámetro de la selladora sale de la ventana validada?",[["Detener, ajustar, separar lo sellado desde el último control bueno y reportarlo",1],["Ajustarlo y seguir: si el sello se ve bien, no hay producto afectado",0],["Hacer un sello de prueba y, si pasa, seguir con el parámetro como está",0]]],
+ ["¿Qué es el código UDI de la etiqueta?",[["La identificación única del dispositivo: permite rastrear el lote hasta el paciente",1],["El código que usa el hospital para reponer inventario",0],["El número de registro sanitario del producto",0]]],
+ ["¿Por qué no se corre dentro del cuarto limpio?",[["Mover el aire y la ropa levanta partículas que pueden contaminar el producto",1],["Solo por el riesgo de resbalar",.5],["Para no distraer a los demás operadores",0]]],
+ ["Se te cayó una pieza al piso. ¿Qué haces?",[["Va a scrap: lo que toca el piso se considera contaminado",1],["Limpiarla con alcohol isopropílico y paño de cuarto limpio, y seguir",0],["Inspeccionarla con la lupa y seguir si no tiene marcas",0]]]];
+function audDlg(){const q=AUD[Math.floor(rnd()*AUD.length)];G.audQ=q;const ops=q[1].map((o,k)=>({o,k})).sort(()=>rnd()-.5);
+ openD(`<span class="tag">🕵️ Auditoría sorpresa</span><h2>Llega el auditor de calidad</h2><p>«Buenas. Solo una pregunta rápida mientras trabaja:»</p><div class="data"><b>${q[0]}</b></div>${ops.map(x=>`<button class="opt" onclick="audDo(${x.k})">${x.o[0]}</button>`).join("")}`);}
+function audDo(k){const o=G.audQ[1][k];log("auditoria","Auditoría: "+G.audQ[0],"Auditoría · Sistema de calidad",o[1],o[0]);G.audOk=o[1]===1;
+ if(o[1]===1)toast("🕵️ «Muy bien. Gracias, siga trabajando.»");else{G.audFind=1;toast("🕵️ «Voy a anotar un hallazgo.» La respuesta correcta era: <b>"+G.audQ[1][0][0]+"</b>.",6500)}closeD();}
+// ---------- bucle ----------
+function step(dt){if(G.phase!=="prod")return;if(G.cd>0){const o=Math.ceil(G.cd-.6);G.cd-=dt;const n=Math.ceil(G.cd-.6);if(n!==o)beep(n>0?600:1000,.15,.07);return}G.t+=dt;const p=G.pl;
+ if(G.t>=G.LEN){G.phase="dhr";$("insp").hidden=true;setTimeout(()=>{if(G.phase==="dhr")dhrDlg()},500);return}
+ const E=LV.ev;
+ if(E.cal&&!G.ev.cal&&G.t>=E.cal){G.ev.cal=1;calDlg();}
+ if(E.coat&&!G.ev.coat&&G.t>=E.coat){G.ev.coat=1;G.coatDrift=1;}
+ if(G.coatDrift)G.coat+=dt*.03;
+ if(E.lot&&!G.ev.lot&&G.t>=E.lot){G.ev.lot=1;lotDlg();}
+ if(E.drift&&!G.ev.drift&&G.t>=E.drift){G.ev.drift=1;G.seal.drift=1;beep(1400,.08);}
+ if(G.seal.drift&&G.seal.T<174)G.seal.T+=dt*1.6;
+ if(E.aud&&!G.ev.aud&&G.t>=E.aud){G.ev.aud=1;audDlg();}
+ if(E.boss&&!G.ev.boss&&G.t>=E.boss){G.ev.boss=1;spawnDoc(false,true);}
+ if(G.t>=G.nextDoc&&G.nextDoc<G.LEN-8){if(!(E.boss&&G.t>E.boss-12&&G.t<E.boss+20))spawnDoc(false);G.nextDoc+=G.takt;}
+ if(G.stop>0)G.stop-=dt;
+ for(const k of ORDER){const s=ST[k];if(s.lock>0){s.lock-=dt;if(s.lock<=0&&k==="fuga")toast("🫧 Probador de fuga calibrado y listo.");}
+  if(!s.p||s.done||s.wait||G.stop>0||s.lock>0)continue;let go=s.mach;if(s.man){const a=ap(s);go=G.working===k&&Math.hypot(p.x-a[0],p.y-a[1])<.35&&p.tx==null;}
+  if(go){s.prog+=dt;G.busy[k]+=dt;if(s.prog>=s.tm)complete(s);}}
+ if(ST.horno){const s=ST.horno;if(s.run&&G.stop<=0){s.prog+=dt;G.busy.horno+=dt;if(s.prog>=s.tm){s.run=false;s.done=true;s.prog=0;for(const q of s.q)q.st=s.out;beep(1200,.1);floatTxt(s.x,s.y,"✓ lote","#3ec46d");}}}
+ if(MODE==="line"){stepLine(dt);for(const k of LV.LINE){const s=ST[k];if(G.line.jam[k]){const a=ap(s);if(G.working===k&&Math.hypot(p.x-a[0],p.y-a[1])<.35&&!p.path.length){s.prog+=dt;if(s.prog>=2.5){G.line.jam[k]=0;s.prog=0;G.working=null;beep(1000,.08);floatTxt(s.x,s.y,"✓","#3ec46d");}}}else s.prog=0;}}
+ // movimiento
+ let vx=(KEYS.ArrowRight||KEYS.d?1:0)-(KEYS.ArrowLeft||KEYS.a?1:0),vy=(KEYS.ArrowDown||KEYS.s?1:0)-(KEYS.ArrowUp||KEYS.w?1:0);if(TR)[vx,vy]=[vy,vx];const run=p.run||KEYS.Shift;const sp=(run?5.2:3.4)*(G.stop>0?.5:1);let moved=0;
+ if(vx||vy){p.tx=null;p.goal=null;p.path=[];G.working=null;const n=Math.hypot(vx,vy);const nx=p.x+vx/n*sp*dt,ny=p.y+vy/n*sp*dt;const ox=p.x,oy=p.y;if(!blocked(nx,ny,.2)){p.x=nx;p.y=ny}else if(!blocked(nx,p.y,.2))p.x=nx;else if(!blocked(p.x,ny,.2))p.y=ny;moved=Math.hypot(p.x-ox,p.y-oy);const sd=TR?vy:vx;if(sd)p.dir=Math.sign(sd);}
+ else if(p.path.length){let m=sp*dt;while(m>0&&p.path.length){const t=p.path[0],dx=t[0]-p.x,dy=t[1]-p.y,d=Math.hypot(dx,dy);const sd=TR?dy:dx;if(Math.abs(sd)>.02)p.dir=Math.sign(sd);if(d<=m){p.x=t[0];p.y=t[1];p.path.shift();m-=d;moved+=d}else{p.x+=dx/d*m;p.y+=dy/d*m;moved+=m;m=0}}
+  if(!p.path.length){p.tx=null;const g=p.goal;p.goal=null;if(g){faceTo(g);interact(g);}}}
+ if(moved){p.walk+=dt;G.dist+=moved*1.2;}
+ G.tt=(G.tt||0)+dt;if(G.tt>.25){G.tt=0;G.trail.push([p.x,p.y]);}
+ // partículas
+ const cl=G.clutter.reduce((a,c)=>a+(c.on?c.p:0),0);const gen=.25+(moved?(run?4.4:1.1):0)+cl+G.pBase;G.P+=(gen*1.2-G.P*.07)*dt;
+ if(G.P>=100&&G.stop<=0){G.stop=8;G.P=45;G.alarms++;G.shake=.5;beep(200,.4,.08);toast("🌫️ <b>Alarma de partículas:</b> se superó el límite ISO 7. La célula se detiene para limpiar. ¡Camina, no corras!",6000);}
+ // doctores
+ const q=G.docs.filter(d=>d.st==="q");let qx=11.55;q.forEach((d,i)=>{const tx=qx;qx-=d.boss?1.7:1.2;const ox=d.x;d.x+=clamp(tx-d.x,-1.4*dt,1.4*dt);d.vx=d.x-ox;
+  if(i===0&&G.stock.length&&d.x>10.4){serve(d,G.stock.shift());}
+  else if(G.t-d.t0>d.pat){d.st="mad";d.say=d.boss?"¡GRRRAAAH! ¡ME QUEJARÉ CON LA GERENCIA!":d.vip?"grrr… el paciente… no puede esperar…":`grrr… me voy sin ${LV.unit}…`;G.missed++;const pen=d.boss?20:5;G.pts=Math.max(0,G.pts-pen);floatTxt(d.x,.95,"−"+pen,"#e0493c");if(d.boss){G.shake=.9;G.bossMad=1;}beep(150,.3,.07);}});
+ for(const d of G.docs)if(d.st!=="q")d.x+=dt*(d.st==="happy"?4:1.6);G.docs=G.docs.filter(d=>d.x<MW+2);
+ inspPanel();}
+let last=performance.now(),HT=0;function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;AT+=dt;if($("ov").hidden)step(dt);fxStep(dt);if(G.shake>0)G.shake=Math.max(0,G.shake-dt);draw();HT+=dt;if(HT>.25){HT=0;hud()}requestAnimationFrame(loop);}
+// ---------- entrada ----------
+function hitSt(sx,sy,list){const L=list.slice().sort((a,b)=>depth(ST[b].x,ST[b].y)-depth(ST[a].x,ST[a].y));for(const k of L){const s=ST[k],r=MR(s.x-s.ex,s.y-s.ey,2*s.ex,2*s.ey);if(sx>=r[0]&&sx<=r[0]+r[2]&&sy>=r[1]-((s.h||SH)+.55)*TS&&sy<=r[1]+r[3]+TS*.05)return k}return null}
+let GEAR=[-99,-99];function gearPos(){return GEAR}
+cv.addEventListener("pointerdown",e=>{if(!AC&&!muted)toggleSnd();const sx=e.clientX,sy=e.clientY;const [x,y]=toMap(sx,sy);
+ if(G.phase==="5s")return tap5s(x,y,sx,sy);if(G.phase!=="prod")return;
+ {const q=gearPos();if(Math.hypot(sx-q[0],sy-q[1])<TS*.3)return sealDlg();}
+ {const k=hitSt(sx,sy,Object.keys(ST));if(k)return goTo(k);}
+ if(y<GL+.2){if(G.pl.hold&&(G.pl.hold.st==="listo"||G.pl.hold.st==="caja"))return goTo("win");return}
+ if(blocked(x,y,.2))return;G.working=null;const p=G.pl;p.goal=null;p.tx=x;p.ty=y;p.path=findPath([p.x,p.y],[x,y]);});
+addEventListener("keydown",e=>{if(!$("ov").hidden)return;const k=e.key.length===1?e.key.toLowerCase():e.key;KEYS[k]=true;if(k==="Shift")KEYS.Shift=true;
+ if((k===" "||k==="e")&&G.phase==="prod"){e.preventDefault();const p=G.pl;let best=null,bd=1.6;for(const kk in ST){const a=ap(ST[kk]);const d=Math.hypot(p.x-a[0],p.y-a[1]);if(d<bd){bd=d;best=kk}}if(best)goTo(best);}
+ if(k.startsWith("Arrow"))e.preventDefault();});
+addEventListener("keyup",e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;KEYS[k]=false;if(k==="Shift")KEYS.Shift=false;});
+addEventListener("blur",()=>{KEYS={}});
+// ---------- cierre del lote (DHR) ----------
+let DQ=[],DI=0;
+function dhrDlg(){G.working=null;const sus=[];const nc=G.nc.length;
+ if(G.sealsOut)sus.push(`${G.sealsOut} bolsa(s) sellada(s) con la selladora fuera de la ventana validada`);if(!G.calOk)sus.push("piezas probadas con el probador de fuga fuera de calibración");if(G.nc.some(x=>/curado/.test(x.t)))sus.push("una unión que salió del curado UV antes de tiempo");if(G.nc.some(x=>/Rebaba/.test(x.t)))sus.push("una pieza con rebaba aceptada en inspección");if(G.nc.some(x=>/canal|Bolsa/.test(x.t))&&!G.sealsOut)sus.push("una bolsa con canal en el sello que se etiquetó igual");if(G.medFake)sus.push("guías medidas después de ajustar el medidor de espesor");if(G.quarUsed)sus.push("sets armados con spikes de un lote en cuarentena");
+ DQ=[{id:"correccion",tema:"Documentación · Buenas prácticas",q:"Al revisar el expediente del lote ves que anotaste mal la temperatura de la selladora. ¿Cómo lo corriges?",o:[["Una línea sobre el dato, el valor correcto al lado, iniciales, fecha y motivo",1,"Así se corrige: el dato original sigue legible y queda claro quién, cuándo y por qué."],["Escribir el valor correcto encima del incorrecto, con letra clara para que se lea bien",0,"Escribir encima esconde el dato original: no se sabe qué decía, quién lo cambió ni por qué."],["Pasar la hoja en limpio con los datos correctos y descartar la original",0,"Destruir un registro original es una falta grave de integridad de datos."]]},
+  {id:"firma",tema:"Documentación · Integridad de datos",q:"Una casilla de la verificación de arranque quedó sin firmar. ¿Qué haces?",o:[["Firmar con la fecha y hora reales y una nota que explique la omisión",1,"La verdad con fecha real. Un registro tardío pero honesto se puede explicar; uno falso, no."],["Firmar con la hora del arranque, porque la verificación sí se hizo a esa hora",0,"Poner una fecha que no es la real es falsificar un registro."],["Pedirle al supervisor que la firme él, porque estuvo presente en el arranque",0,"Cada quien firma lo que hizo y cuando lo firma. Firmar por otro es falsificar."]]},
+  {id:"conciliacion",tema:"Documentación · Conciliación",q:MODE==="line"?`Conciliación del lote: la línea arrancó ${G.line.made} sets; hay ${G.line.good} empacados, ${G.line.bad} rechazados y algunos sobre la banda. La cuenta no cierra por 1.`:`Conciliación del lote: tomaste ${G.tubes||0} ${LV.prod==="guia"?"alambres":"tubos"}; hay ${G.served} entregados, ${G.stock.length} en la ventanilla, ${G.scrap} en scrap y algunas piezas en proceso. La cuenta no cierra por 1.`,o:[["Investigar y documentar la diferencia antes de cerrar el lote",1,"La conciliación existe para detectar mezclas y pérdidas: una diferencia se investiga."],["Anotar la diferencia como «scrap no registrado» para que la cuenta cierre",0,"Es un número inventado para cuadrar: la diferencia se investiga, no se explica de oficio."],["Cerrar el lote y anotar la diferencia para revisarla en la reunión semanal",0,"Para entonces el lote ya salió. Ese 1 podría estar en el lote equivocado."]]}];
+ if(sus.length)DQ.push({id:"nc",tema:"Calidad · No conformidad",q:`Al revisar los registros encuentras: <b>${sus.join("; ")}</b>. Parte de ese producto ya se entregó.`,o:[["Abrir una no conformidad, avisar a calidad y poner en cuarentena el producto sospechoso, incluido el entregado",1,"Exactamente. Avisar a tiempo permite retirar el producto antes de que llegue a un paciente."],["Separar lo que queda en planta y esperar a ver si llega algún reclamo del hospital",0,"El paciente no se va a quejar: el defecto se descubre cuando ya es tarde. Lo entregado también se reporta."],["Anotar los parámetros dentro de la ventana, ya que la desviación fue corta",0,"Anotar un valor que no fue el real es falsificar registros: es lo más grave que puede pasar en la industria médica."]]});
+ DI=0;dhrQ();}
+function dhrQ(){const q=DQ[DI];const ops=q.o.map((o,k)=>({o,k})).sort(()=>rnd()-.5);
+ openD(`<span class="tag">Paso 4 de 4 · Expediente del lote (DHR) · ${DI+1} de ${DQ.length}</span><h2>📁 Cierre del lote</h2><p class="mut">Son las 5:00 del reloj: se acabó la producción. Antes de liberar, se revisa y firma el expediente del lote.</p><div class="data"><b>${q.q}</b></div>${ops.map(x=>`<button class="opt" onclick="dhrDo(${x.k})">${x.o[0]}</button>`).join("")}`);}
+function dhrDo(k){const q=DQ[DI],o=q.o[k];log(q.id,"Cierre del lote: "+q.id,q.tema,o[1],o[0]);q.res=o[1];if(q.id==="nc"&&o[1]===1)G.contained=1;if(q.id==="nc"&&k===2)G.falsif=1;
+ openD(`<span class="tag">Expediente del lote</span><h2 class="${o[1]?"ok":"bad"}">${o[1]?"✅ Correcto":"❌ No es lo correcto"}</h2><p>${o[2]}</p>${o[1]?"":`<div class="data"><b>Lo correcto:</b> ${q.o[0][0]}</div>`}<button class="btn" onclick="DI++;DI<DQ.length?dhrQ():results()">${DI+1<DQ.length?"Siguiente":"Ver resultados"}</button>`);}
+// ---------- resultados ----------
+function results(){G.phase="end";const sr=G.total?G.served/G.total:0,nc=G.nc.length,dok=DQ.filter(q=>q.res===1).length;
+ let st=sr>=.85&&nc===0&&G.alarms===0&&dok===DQ.length?3:sr>=.6&&(nc===0||G.contained)&&!G.falsif?2:G.served>0?1:0;if(nc>0&&st>2)st=2;
+ SAVE.best[G.lv]=Math.max(SAVE.best[G.lv]||0,st);store();
+ const tit=st===3?(MODE==="line"?"Línea de clase mundial 🏆":"Célula de clase mundial 🏆"):st===2?"Buen turno en el cuarto limpio":st===1?"Turno superado… con lecciones":`Los doctores se fueron sin ${LV.unit}`;
+ const BK=MODE==="line"?LV.LINE:PROC;const bn=BK.slice().sort((a,b)=>(G.busy[b]||0)-(G.busy[a]||0))[0];
+ const Ln=G.line,plan=Ln.run+Ln.down||1,avail=Ln.run/plan,perf=Math.min(1,(Ln.made*LV.CT)/(Ln.run||1)),qual=Ln.good/((Ln.good+Ln.bad)||1),oee=avail*perf*qual;
+ const L=[];if(G.missed)L.push(`⏱️ <b>Takt:</b> ${G.missed} doctor(es) se fueron sin ${LV.unit}. El takt de ${G.takt} s es el ritmo que pide el cliente${MODE==="line"?"; en una línea, cada minuto parada es producción que no vuelve.":"; mantén siempre una pieza avanzando en cada máquina."}`);
+ if(G.bossOk)L.push(`🧌 <b>Jefe final:</b> atendiste al Dr. Ogro con sus 3 ${LV.units}. Un pedido grande se gana con flujo constante, no con carreras de último minuto.`);else if(G.bossMad)L.push(`🧌 <b>Jefe final:</b> el Dr. Ogro se fue sin sus 3 ${LV.units}. Tener un pequeño inventario de seguridad (2 o 3 en la ventanilla) ayuda con los pedidos grandes que no avisan.`);
+ if(G.r5&&G.r5.rl>IDEAL*1.08)L.push(MODE==="line"?`🔁 <b>Supermercado:</b> surtir la línea te hacía caminar ${G.r5.rl.toFixed(1)} m por ronda; con cada estante frente a su máquina eran ≈${IDEAL.toFixed(1)} m.`:`🔁 <b>Distribución:</b> tu célula hacía caminar ${G.r5.rl.toFixed(1)} m por pieza; ordenada siguiendo el proceso eran ≈${IDEAL.toFixed(1)} m. Caminar es desperdicio (muda de movimiento).`);
+ if(G.r5&&G.r5.left)L.push(`🏷️ <b>5S:</b> dejaste ${G.r5.left} objeto(s) que no van en el área limpia y sumaron partículas todo el turno.`);
+ if(LV.prod==="guia"){const avg=G.ovenRuns?G.ovenLoad/G.ovenRuns:0;L.push(`🔥 <b>Horno por lotes:</b> ${G.ovenRuns} ciclos con ${avg.toFixed(1)} guías en promedio (capacidad 4). ${avg<3?"Muchos ciclos a medias: rápido para cada pieza, pero el horno se vuelve el cuello de botella.":"Buenas cargas: cada ciclo aprovechó el horno."} Esperar a llenar un lote frena el flujo; arrancar vacío desperdicia capacidad.`);
+  if(G.medFake)L.push("📈 <b>SPC:</b> ajustaste el medidor en vez del proceso. El gráfico se veía bien mientras el recubrimiento se salía. Se corrige la causa, nunca el instrumento.");else if(G.spcIgn)L.push("📈 <b>SPC:</b> ignoraste una tendencia. El gráfico de control avisa <b>antes</b> de que haya rechazos: es la ventaja de controlar el proceso y no solo inspeccionar.");}
+ if(G.quarUsed)L.push("📦 <b>Materiales:</b> usaste un lote en cuarentena. Lo que no está liberado no entra a la línea, aunque se vea igual.");
+ if(G.alarms)L.push(`🌫️ <b>Partículas:</b> ${G.alarms} alarma(s). Correr levanta partículas: en un cuarto limpio se camina.`);
+ if(G.sealsOut)L.push(`♨️ <b>Selladora:</b> ${G.sealsOut} bolsa(s) se sellaron fuera de la ventana validada. Vigila la temperatura de la selladora (arriba en la barra): una deriva no avisa dos veces.`);
+ if(G.nc.some(x=>/curado/.test(x.t)))L.push("💡 <b>Trabajo estándar:</b> sacaste piezas del UV antes de tiempo. Saltarse un paso no se ve… hasta que falla en el paciente.");
+ if(G.nc.some(x=>/Rebaba/.test(x.t))||G.scrapGood)L.push(`🔍 <b>Inspección:</b> ${G.nc.some(x=>/Rebaba/.test(x.t))?"aceptaste piezas con rebaba":""}${G.nc.some(x=>/Rebaba/.test(x.t))&&G.scrapGood?" y ":""}${G.scrapGood?"rechazaste piezas buenas":""}. Cuando dudes, usa la lupa: medir antes de decidir.`);
+ if(!G.calOk)L.push("🫧 <b>Metrología:</b> un equipo con calibración vencida no da evidencia válida. Todo lo que probó queda en duda.");
+ if(!L.length)L.push("🌟 Seguiste el estándar, cuidaste el cuarto limpio y cumpliste el takt. Así se trabaja cuando del otro lado hay un paciente.");
+ const sendR={turno:`Nivel ${G.lv} · ${LV.name}`,titulo:`Célula Limpia · ${LV.name}`,estrellas:st,margen:G.served,seg:Math.max(0,100-G.alarms*20-G.gownErr*5),conf:Math.round(sr*100),ok:G.served,bad:nc,ign:G.missed,meas:G.lupas||0};sendRes("celula",sendR,G.dec);
+ const nxt=LEVELS[G.lv+1];openD(`<span class="tag">${LV.ic} Nivel ${G.lv} · ${LV.name}</span><h2>${"⭐".repeat(st)}${"☆".repeat(3-st)} ${tit}</h2>
+ <div class="grid2"><div class="data">⭐ Puntos: <b>${G.pts}</b><br>🩺 Doctores atendidos: <b>${G.served} de ${G.total}</b><br>😴 Se fueron sin ${LV.unit}: <b>${G.missed}</b><br>🧌 Dr. Ogro: <b>${G.bossOk?"atendido ✅":G.bossMad?"se fue ❌":"—"}</b><br>🗑️ Scrap: <b>${G.scrap}</b>${G.scrapGood?` <span class="mut">(${G.scrapGood} buenas)</span>`:""}<br>🚶 Caminaste: <b>${Math.round(G.dist)} m</b></div>
+ <div class="data">🌫️ Alarmas de partículas: <b>${G.alarms}</b><br>👕 Errores de vestimenta: <b>${G.gownErr}</b><br>♨️ Sellos fuera de ventana: <b>${G.sealsOut||0}</b><br>📁 Expediente: <b>${dok} de ${DQ.length}</b> bien</div></div>
+ ${nc?`<div class="data" style="border-left-color:#d64532">⚠️ <b>Producto no conforme que llegó al hospital: ${nc}</b>${G.contained?" · <span class='ok'>lo reportaste a tiempo y quedó en cuarentena</span>":" · <span class='bad'>sin reportar</span>"}<br>${G.nc.map(x=>`<span class="mut">· ${x.t} (${x.doc})</span>`).join("<br>")}</div>`:""}
+ ${MODE==="line"?`<h3>⚙️ OEE de la línea: ${Math.round(oee*100)} %</h3><div class="data">Disponibilidad <b>${Math.round(avail*100)} %</b> × Rendimiento <b>${Math.round(perf*100)} %</b> × Calidad <b>${Math.round(qual*100)} %</b><br><span class="mut">Corrió ${Math.round(Ln.run)} s y estuvo parada ${Math.round(Ln.down)} s · ${Ln.good} sets buenos, ${Ln.bad} rechazados</span></div><h3>📊 Pareto de paros</h3>${Object.entries(Ln.why).sort((a,b)=>b[1]-a[1]).map(([w,t],i,a)=>`<div class="mut">${w} · ${Math.round(t)} s</div><div class="hb"><i style="width:${t/a[0][1]*100}%;background:${i?"#ffb020":"#d64532"}"></i></div>`).join("")||"<p class='mut'>¡Sin paros!</p>"}`:
+ `<h3>⏳ Tiempo de trabajo por estación</h3>${PROC.map(k=>`<div class="mut">${ST[k].ic} ${ST[k].n} · ${Math.round(G.busy[k]||0)} s${k===bn?" · <b style='color:#d64532'>la que más tiempo ocupa</b>":""}</div><div class="hb"><i style="width:${(G.busy[k]||0)/Math.max(...PROC.map(q=>G.busy[q]||0),1)*100}%;background:${k===bn?"#d64532":ST[k].col}"></i></div>`).join("")}`}
+ ${LV.prod==="guia"&&G.spc.length?`<h3>📈 Tu gráfico de control</h3><canvas id="spcc" width="640" height="220" style="width:100%;max-width:420px;border-radius:8px;border:1px solid var(--bd);background:#fff"></canvas>`:""}
+ <h3>🍝 Tu diagrama de espagueti</h3><canvas id="spg" width="640" height="360" style="width:100%;max-width:420px;border-radius:8px;border:1px solid var(--bd);background:#f4f8fa"></canvas>
+ <h3>📚 Lo que aprendiste</h3>${L.map(x=>`<p>${x}</p>`).join("")}
+ ${nxt&&st>=1?`<p><b>🔓 Desbloqueaste el nivel ${G.lv+1}: ${nxt.ic} ${nxt.name}</b> · ${nxt.mode==="line"?"línea automatizada":"célula"} en ${nxt.env.sign.replace(" →","").toLowerCase()}.</p>`:""}
+ ${nxt&&st>=1?`<button class="btn" onclick="restart(${G.lv+1})">▶ Siguiente nivel</button> `:""}<button class="btn${nxt&&st>=1?" o":""}" onclick="restart(${G.lv})">🔁 Jugar de nuevo</button> <button class="btn o" onclick="restart(0)">🗺️ Niveles</button> <a class="btn o" href="../index.html#juegos">Volver a PES Labs</a>`);drawSpg();drawSpc();}
+function drawSpc(){const c=$("spcc");if(!c)return;const g=c.getContext("2d");const pts=G.spc,n=pts.length;const Y=v=>200-(clamp(v,7,17)-7)/10*180;g.fillStyle="#fff";g.fillRect(0,0,640,220);
+ const ln=(v,col,d)=>{g.strokeStyle=col;g.setLineDash(d||[]);g.lineWidth=2;g.beginPath();g.moveTo(40,Y(v));g.lineTo(630,Y(v));g.stroke();g.setLineDash([]);g.fillStyle=col;g.font="600 13px system-ui";g.fillText(v,6,Y(v)+4);};
+ ln(9,"#d64532",[6,4]);ln(15,"#d64532",[6,4]);ln(10.2,"#e0a51c",[4,4]);ln(13.8,"#e0a51c",[4,4]);ln(12,"#1f9a55");
+ g.strokeStyle="#2f6a95";g.lineWidth=2;g.beginPath();pts.forEach((v,i)=>{const x=40+i*590/Math.max(1,n-1);i?g.lineTo(x,Y(v)):g.moveTo(x,Y(v))});g.stroke();
+ pts.forEach((v,i)=>{const x=40+i*590/Math.max(1,n-1);g.fillStyle=v<9||v>15?"#d64532":v<10.2||v>13.8?"#e0a51c":"#2f6a95";g.beginPath();g.arc(x,Y(v),4,0,7);g.fill();});
+ g.fillStyle="#5d7581";g.font="600 13px system-ui";g.fillText("Espesor del recubrimiento (µm) · rojo: especificación · ámbar: límites de control",40,216);}
+function drawSpg(){const c=$("spg");if(!c)return;const g=c.getContext("2d"),s=45,oy=-1.9*s;g.fillStyle="#f4f8fa";g.fillRect(0,0,640,440);
+ for(const k in ST){const t=ST[k];g.fillStyle="#fff";g.strokeStyle=t.col;g.lineWidth=2;g.fillRect(t.x*s-32,t.y*s+oy-22,64,44);g.strokeRect(t.x*s-32,t.y*s+oy-22,64,44);g.font="22px system-ui";g.textAlign="center";g.fillText(t.ic,t.x*s,t.y*s+oy+8);}
+ g.strokeStyle="rgba(214,69,50,.35)";g.lineWidth=1.6;g.beginPath();G.trail.forEach((q,i)=>i?g.lineTo(q[0]*s,q[1]*s+oy):g.moveTo(q[0]*s,q[1]*s+oy));g.stroke();
+ g.fillStyle="#5d7581";g.font="600 15px system-ui";g.textAlign="left";g.fillText(`${Math.round(G.dist)} m caminados en el turno`,10,350);}
+function restart(lv){newGame(lv||G.lv);GW={i:0,opts:[]};closeD();if(lv)startGame(lv,true);else menu();}
+// ---------- ayuda, instrucciones y jugador ----------
+function sopDlg(){if(MODE==="line")return openD(`<span class="tag">📋 Trabajo estándar</span><h2>La línea de sets de infusión</h2><div class="data">${LV.LINE.map(k=>ST[k].ic+" "+ST[k].n).join(" → ")} → 🔔 Entrega</div>
+ ${LV.LINE.map(k=>`<p><b>${ST[k].ic} ${ST[k].n}</b>${ST[k].comp?` <span class="mut">(alimentador: ${ST["sh_"+ST[k].comp].n.toLowerCase()})</span>`:""}<br>${ST[k].sop}</p>`).join("")}
+ <h3>Tu trabajo en la línea</h3><p>🛒 Surte los alimentadores desde los estantes del supermercado antes de que se vacíen · ⚠️ Destraba atascos (con bloqueo) · 🗑️ Vacía la bolsa de rechazos · 📦 Lleva cada caja a entrega · ♨️ Vigila la selladora</p><button class="btn" onclick="closeD()">Entendido</button>`);
+ openD(`<span class="tag">📋 Trabajo estándar</span><h2>El proceso: ${LV.name.toLowerCase()}</h2>
+ <div class="data">${ST.rack.ic} ${ST.rack.n} → ${PROC.map(k=>ST[k].ic+" "+ST[k].n).join(" → ")} → 🔔 Entrega</div>
+ ${PROC.map(k=>`<p><b>${ST[k].ic} ${ST[k].n}</b> <span class="mut">(${ST[k].tm} s${ST[k].batch?" · horno por lotes de hasta "+ST[k].cap:ST[k].mach?" · máquina: trabaja sola":" · manual: quédate en la estación"})</span><br>${ST[k].sop}</p>`).join("")}
+ <h3>Reglas del cuarto limpio</h3><p>🚶 Se camina, no se corre · 🗑️ Lo rechazado y lo que cae al piso va a scrap · 📄 Solo documentos controlados · ♨️ Ningún parámetro fuera de la ventana validada · 🫧 Ningún equipo con calibración vencida</p><button class="btn" onclick="closeD()">Entendido</button>`);}
+function helpDlg(){openD(`<h2>🩺 Célula Limpia</h2><p>Fabricas dispositivos médicos en un área limpia. Afuera, los doctores llevan 30 horas de guardia y llegan como zombies: cada uno necesita su dispositivo para atender a un paciente. Cuando se lo das, despierta y corre al quirófano. Al final de cada nivel llega el 🧌 <b>Dr. Ogro</b>, jefe de cirugía, que pide 3 a la vez.</p>
+ <ul style="font-size:14px;line-height:1.5"><li><b>Moverte:</b> toca una estación y caminas hasta ella. En computadora también puedes usar las flechas o WASD y la barra espaciadora (o E) para usar la estación más cercana.</li>
+ <li><b>Manos:</b> llevas una cosa a la vez. En las <b>celdas</b>, las estaciones manuales avanzan solo si te quedas en ellas y las máquinas trabajan solas. El 🔥 <b>horno</b> trabaja por lotes: lo cargas y lo arrancas tocándolo con las manos libres.</li><li><b>Línea:</b> la banda no para mientras tenga material. Tú surtes los alimentadores, destrabas ⚠️ atascos, vacías rechazos y llevas las cajas.</li>
+ <li><b>🎯 Takt:</b> llega un doctor cada ${G.takt} s y su paciencia se agota. Puedes dejar hasta 3 en espera en la ventanilla.</li>
+ <li><b>🌫️ Partículas:</b> suben al caminar, mucho más al 🏃 correr, y con lo que no sacaste en 5S. Si llegan al límite, la célula se detiene.</li>
+ <li><b>♨️ Selladora:</b> vigila su temperatura en la barra de arriba; tócala para ajustarla dentro de la ventana validada.</li></ul>
+ <p class="mut">Planta, procesos y datos genéricos con fines educativos, sin marcas reales. Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · PES Labs · CC BY-NC 4.0.</p><button class="btn" onclick="closeD()">Entendido</button> <a class="btn o" href="../index.html#juegos">Volver a PES Labs</a>`);}
+const LVLS=[[1,"Célula en U · Hemodinamia · 5S, takt, selladora y expediente del lote"],[2,"Célula + horno por lotes · Radiología, de noche · SPC y flujo contra lotes"],[3,"Línea automatizada · Emergencias · OEE, supermercado y Pareto de paros"],["🫀","Stent","Célula con microscopio · Cardiología"],["🔀","Cambio de producto","Despeje de línea entre lotes"],["🕵️","Día de auditoría","Todo el sistema de calidad"],["🧟","La gran guardia","Todos los productos a la vez"]];
+function unlocked(n){return n===1||(SAVE.best[n-1]||0)>=1}
+function menu(){G.phase="menu";const pl=SAVE.player||{};
+ openD(`<span class="tag">PES Labs · Juego de manufactura de dispositivos médicos</span><h2>🩺 Célula Limpia</h2>
+ <p>En el hospital, los doctores llevan <b>30 horas de guardia</b> y ya parecen zombies 🧟: arrastran los pies y solo repiten «catéteeer…». Lo único que los despierta es recibir a tiempo el dispositivo que necesita su paciente.</p>
+ <p>Tú fabricas dispositivos médicos en un <b>área limpia</b>, primero en celdas y luego en una línea. Vístete bien, organiza con <b>5S</b>, verifica la <b>selladora</b>, sigue el <b>trabajo estándar</b> y produce al ritmo del <b>takt</b>. Del otro lado hay un paciente.</p>
+ <div class="data"><b>👤 Jugador</b><label for="nk">Tu nickname</label><input id="nk" maxlength="24" placeholder="Ej.: JR-07" value="${(pl.nick||"").replace(/"/g,"")}"><label for="rc">Código de sala (solo si tu profesor te dio uno)</label><input id="rc" maxlength="12" placeholder="Ej.: IND-4821" style="text-transform:uppercase" value="${pl.room||""}"></div><p id="perr" class="bad"></p>
+ <h3>Niveles</h3>${LVLS.map((l,i)=>{if(typeof l[0]==="number"){const L=LEVELS[l[0]],ok=unlocked(l[0]),b=SAVE.best[l[0]]||0;return `<button class="opt" ${ok?`onclick="startGame(${l[0]})"`:"disabled style='opacity:.55'"}>${ok?"▶️":"🔒"} <b>${l[0]}. ${L.ic} ${L.name}</b> ${b?"⭐".repeat(b):""}<br><span class="mut">${l[1]}${ok?"":" · supera el nivel anterior para desbloquearlo"}</span></button>`}return `<div class="mut" style="margin:6px 4px">🔒 <b>${i+1}. ${l[0]} ${l[1]}</b> · ${l[2]} · próximamente</div>`}).join("")}
+ <p class="mut">⏱️ Unos 10 minutos por nivel · 💻 Se disfruta más en computadora, pero funciona en el celular.</p>
+ <button class="btn o" onclick="helpDlg()">❓ Cómo se juega</button>`);}
+function startGame(lv,again){lv=lv||1;if(!again){const nk=($("nk").value||"").trim().replace(/[<>"'`]/g,"").slice(0,24),rc=($("rc").value||"").trim().toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,12);
+ if(rc&&!nk){$("perr").textContent="Escribe tu nickname para que tu profesor te reconozca.";return}SAVE.player={nick:nk||"Operador",room:rc};store();if(rc)checkRoom(rc);}
+ if(G.lv!==lv)newGame(lv);GW={i:0,opts:[]};if(!muted&&!AC)toggleSnd();levelIntro();}
+function levelIntro(){const L=LV;openD(`<span class="tag">Nivel ${G.lv} · ${L.mode==="line"?"Línea automatizada":"Célula"}</span><h2>${L.ic} ${L.name}</h2>
+ <p>${G.lv===1?"Hospital: <b>Hemodinamia</b>. Los doctores necesitan catéteres para sus cateterismos. Trabajas en una <b>célula en U</b>: tú llevas cada pieza de estación en estación.":G.lv===2?"Hospital: <b>Radiología intervencionista</b>, en el turno de noche. Las guías metálicas guían los catéteres por los vasos. Tu célula comparte un <b>horno de curado por lotes</b> que no se puede mover, y el recubrimiento se controla con un <b>gráfico de control</b>.":"Hospital: <b>Emergencias</b>. Un set de infusión es el tubo que lleva el suero de la bolsa al paciente: se fabrican por miles, así que aquí trabajas en una <b>línea automatizada</b>. La banda no espera: tu trabajo es que nunca se detenga."}</p>
+ <div class="data">🧌 Al final del nivel llega el <b>Dr. Ogro</b>, jefe de cirugía: pide <b>3 ${L.units}</b> a la vez y se mete de primero en la fila.</div>
+ <button class="btn" onclick="gownDlg()">Entrar a la esclusa ▶</button> <button class="btn o" onclick="restart(0)">🗺️ Niveles</button>`);}
+// ---------- sala del profesor ----------
+const apiOn=()=>window.PES_API&&!/PEGAR/.test(PES_API);
+async function checkRoom(rc){if(!apiOn())return;try{const r=await fetch(PES_API,{method:"POST",body:JSON.stringify({a:"check",code:rc})});const j=await r.json();toast(j.ok?`🏫 Conectado a la sala <b>${rc}</b> · ${j.curso}`:`⚠️ No encontramos la sala <b>${rc}</b>.`)}catch(e){}}
+function sendRes(kind,r,dec){const pl=SAVE.player;if(!pl||!pl.room)return;SAVE.outbox.push({a:"submit",code:pl.room,nick:pl.nick,kind,r,dec:dec||[]});store();flushOut();}
+let FLUSH=false;async function flushOut(){if(FLUSH||!SAVE.outbox.length||!apiOn())return;FLUSH=true;try{while(SAVE.outbox.length){const b=SAVE.outbox[0];const res=await fetch(PES_API,{method:"POST",body:JSON.stringify(b)});const j=await res.json();if(!j.ok&&!/no encontrada/i.test(j.err||""))break;SAVE.outbox.shift();store();if(j.ok)toast("📤 Resultados enviados a tu profesor.")}}catch(e){}FLUSH=false;}
+setInterval(flushOut,30000);
+// ---------- inicio ----------
+newGame();hud();menu();requestAnimationFrame(loop);
+</script>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>

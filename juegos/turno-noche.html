@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Turno Noche · Juego de ingeniería de planta</title>
+<meta name="description" content="Eres el único ingeniero de una planta envasadora de bebida gaseosa de 18:00 a 06:00. Calidad, proceso, ambiente, seguridad y personas: ¿sobrevives al turno?">
+<meta property="og:title" content="Turno Noche: ¿sobrevives 12 horas como ingeniero de planta?">
+<meta property="og:description" content="Juego gratis de PES Labs: envasadora de bebida gaseosa, de noche y solo tú a cargo.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-pes-labs.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0d0f12;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e8e4dc;touch-action:none;-webkit-user-select:none;user-select:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;z-index:5}
+.pn{background:rgba(18,16,14,.88);border:1px solid rgba(255,190,90,.18);border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+#top{top:calc(6px + env(safe-area-inset-top,0px));left:6px;right:6px;display:flex;gap:6px;align-items:stretch;justify-content:center;flex-wrap:wrap;pointer-events:none}
+#top .pn{padding:5px 10px;font-size:12.5px;white-space:nowrap;pointer-events:auto;display:flex;align-items:center;gap:6px}
+#top b{font-size:14px;color:#ffd27a}
+#mg b{color:#9be08f}#mg.neg b{color:#ff8a70}
+.spd{display:flex;gap:3px}
+button{font:inherit}
+.spd button,#bar button{background:rgba(40,34,28,.9);color:#efe6d6;border:1px solid rgba(255,190,90,.25);border-radius:8px;padding:5px 9px;cursor:pointer}
+.spd button.on{background:#c97a1c;color:#fff;border-color:#f0a440}
+#bar{bottom:calc(8px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:6px}
+#bar button{padding:8px 12px;font-size:13.5px;font-weight:600;position:relative;white-space:nowrap}
+#bar .cnt{position:absolute;top:-6px;right:-6px;background:#e0412b;color:#fff;border-radius:9px;font-size:11px;padding:1px 6px}
+#kp{left:6px;top:calc(48px + env(safe-area-inset-top,0px));padding:7px 9px;font-size:11.5px;width:200px}
+#kp h4{margin:0 0 4px;font-size:12px;color:#ffb347;display:flex;justify-content:space-between;cursor:pointer}
+#kp.min .bd{display:none}
+.row{display:flex;justify-content:space-between;gap:6px;margin:2px 0}
+.bar{height:5px;background:#2b2621;border-radius:3px;overflow:hidden;margin:1px 0 4px}.bar i{display:block;height:100%}
+#ov{position:fixed;inset:0;z-index:20;background:rgba(5,4,3,.6);display:flex;align-items:center;justify-content:center;padding:12px}
+#ov[hidden]{display:none}
+#dlg{max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:16px 18px;font-size:14.5px;line-height:1.45}
+#dlg h2{margin:0 0 6px;font-size:19px;color:#ffc56b}
+#dlg .tag{display:inline-block;font-size:11.5px;background:#3a2c1a;color:#ffc56b;border-radius:6px;padding:2px 7px;margin-bottom:6px}
+#dlg .data{background:#1f1b17;border-left:3px solid #c97a1c;padding:7px 10px;margin:8px 0;font-size:13.5px;border-radius:4px}
+#dlg .data b{color:#ffd27a}
+#dlg input{width:100%;padding:9px 11px;margin:3px 0 8px;border-radius:8px;border:1px solid rgba(255,190,90,.35);background:#120f0c;color:#efe6d6;font:inherit;font-size:15px}
+#dlg label{font-size:12.5px;color:#a99e8e}
+.opt{display:block;width:100%;text-align:left;margin:7px 0;padding:10px 12px;background:#2a241e;border:1px solid rgba(255,190,90,.25);color:#efe6d6;border-radius:9px;cursor:pointer;font-size:14px}
+.opt:hover{background:#3a3026}
+.btn{display:inline-block;padding:9px 16px;background:#c97a1c;color:#fff;border:0;border-radius:9px;font-weight:700;cursor:pointer;margin:8px 6px 0 0;text-decoration:none;font-size:14px}
+.btn.o{background:transparent;border:1px solid #c97a1c;color:#ffc56b}
+.ok{color:#9be08f}.bad{color:#ff8a70}.mut{color:#a99e8e;font-size:12.5px}
+.sl{margin:10px 0}.sl label{display:flex;justify-content:space-between;font-size:13.5px}.sl input{width:100%;accent-color:#e08a1c}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;flex-direction:column;gap:5px;align-items:center;pointer-events:none;width:min(94vw,520px)}
+#toast div{background:rgba(25,20,15,.94);border:1px solid rgba(255,190,90,.35);border-radius:9px;padding:7px 12px;font-size:13px;text-align:center;animation:fi .25s}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}}
+.hide2{}@media (max-width:360px){.hide2{display:none}}
+.tbs{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0}.tb{background:#1f2a33;color:#cfe3f0;border:1px solid #3b5a70;border-radius:8px;padding:6px 9px;font-size:12.5px;cursor:pointer}.tb.on{opacity:.45}.tb.sug{border-color:#3cff7a;box-shadow:0 0 0 2px rgba(60,255,122,.35)}
+.li{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:#221d18;margin:6px 0;cursor:pointer}
+.li:hover{background:#2e2620}
+@media (max-width:640px){#kp{width:150px;font-size:11px;top:calc(84px + env(safe-area-inset-top,0px))}#toast{bottom:calc(64px + env(safe-area-inset-bottom,0px))}#top .pn{font-size:11.5px;padding:4px 7px}#top b{font-size:12.5px}.hide{display:none}#bar button{padding:8px 9px;font-size:12.5px}}
+
+#dlg .data.blur{filter:blur(1.6px);transition:filter .3s}#dlg .data.blur:hover,#dlg .data.blur:active{filter:blur(.6px)}
+.bar{height:5px;background:#2b2621;border-radius:3px;overflow:hidden;margin:1px 0 4px}
+</style></head><body>
+<canvas id="cv"></canvas>
+<div id="top" class="hud">
+ <div class="pn">🌙 <b id="clk">18:00</b><span class="hide mut" id="left"></span></div>
+ <div class="pn">📦 <b id="pr">0</b><span class="hide mut">cajas</span></div>
+ <div class="pn" title="Tu energía">⚡ <b id="en">100</b><span class="mut">☕<span id="cf">3</span></span></div>
+ <div class="pn spd"><button data-s="0">⏸</button><button data-s="1" class="on">▶</button><button data-s="4">▶▶</button><button data-s="10">▶▶▶</button></div>
+</div>
+<div id="kp" class="hud pn"><h4 onclick="this.parentNode.classList.toggle('min')">📊 Tu turno <span>▾</span></h4><div class="bd" id="kpb"></div></div>
+<div id="bar" class="hud">
+ <button onclick="lineDlg()">🎛️<span class="hide"> Línea</span></button>
+ <button onclick="listDlg()">❗<span class="hide2"> Pendientes</span><span class="cnt" id="ninc" hidden>0</span></button>
+ <button onclick="comedorDlg()">🍽️<span class="hide"> Comedor</span></button>
+ <button onclick="ronda()">🚶<span class="hide"> Ronda</span></button>
+ <button onclick="radioDlg()">📻<span class="hide"> Radio</span></button>
+ <button onclick="helpDlg()">❓</button>
+ <button id="snd" onclick="toggleSnd()">🔇</button>
+</div>
+<div id="toast"></div>
+<div id="ov" hidden><div id="dlg" class="pn"></div></div>
+<a id="pes-credit" href="../index.html#sobre" target="_blank" rel="noopener" title="Uso libre con crédito al autor · CC BY-NC 4.0" style="position:fixed;right:6px;bottom:4px;z-index:5;font:600 10px/1.2 system-ui,sans-serif;color:#dfe7ee;background:rgba(10,16,24,.55);padding:3px 7px;border-radius:8px;text-decoration:none;opacity:.75">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script src="../pes-api.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const cv=$("cv"),cx=cv.getContext("2d");
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;}
+addEventListener("resize",resize);resize();
+// ---------- utilidades ----------
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+const TW=32,TH=16;
+const P=(x,y,z=0)=>[(x-y)*TW,(x+y)*TH-z];
+function hex(c){c=c.replace("#","");if(c.length===3)c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];return [parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)]}
+function sh(c,k){const [r,g,b]=hex(c);const f=v=>Math.round(clamp(v*k,0,255));return `rgb(${f(r)},${f(g)},${f(b)})`}
+function poly(pts,fill,stroke){cx.beginPath();cx.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)cx.lineTo(pts[i][0],pts[i][1]);cx.closePath();if(fill){cx.fillStyle=fill;cx.fill()}if(stroke){cx.strokeStyle=stroke;cx.lineWidth=1;cx.stroke()}}
+// caja isométrica con mugre
+function box(x,y,w,d,h,col,z0=0,o={}){
+ const A=P(x,y,z0),B=P(x+w,y,z0),C=P(x+w,y+d,z0),D=P(x,y+d,z0),Ah=P(x,y,z0+h),Bh=P(x+w,y,z0+h),Ch=P(x+w,y+d,z0+h),Dh=P(x,y+d,z0+h);
+ poly([D,C,Ch,Dh],sh(col,.62));poly([C,B,Bh,Ch],sh(col,.82));poly([Ah,Bh,Ch,Dh],o.top||sh(col,1.05));
+ // mugre: degradado inferior
+ if(h>8&&!o.clean){const g=cx.createLinearGradient(0,D[1],0,Dh[1]);g.addColorStop(0,"rgba(20,14,8,.45)");g.addColorStop(.5,"rgba(20,14,8,0)");poly([D,C,B,Bh,Ch,Dh],g);}
+ if(o.win){// ventanas
+  const n=o.win, lit=o.lit;
+  for(let i=0;i<n;i++){const t=(i+.5)/n;for(const lv of (o.lv||[.55])){
+   const p1=P(x+w,y+d*t-.12,z0+h*lv),p2=P(x+w,y+d*t+.12,z0+h*lv);const q=P(x+w*t-.12,y+d,z0+h*lv),q2=P(x+w*t+.12,y+d,z0+h*lv);
+   cx.strokeStyle=lit?`rgba(255,${200+((i*37)%40)},120,${.55+.4*NIGHT})`:"rgba(30,40,50,.9)";cx.lineWidth=3.2;
+   cx.beginPath();cx.moveTo(p1[0],p1[1]);cx.lineTo(p2[0],p2[1]);cx.stroke();cx.beginPath();cx.moveTo(q[0],q[1]);cx.lineTo(q2[0],q2[1]);cx.stroke();}}
+ }
+ if(o.rust){cx.strokeStyle="rgba(110,60,25,.35)";cx.lineWidth=1.5;for(let i=0;i<o.rust;i++){const t=(i*0.37+0.13)%1;const a=P(x+w,y+d*t,z0+h*.95),b=P(x+w,y+d*t,z0+h*(.3+.4*((i*.53)%1)));cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();}}
+}
+// tanque cilíndrico
+function cyl(x,y,r,h,col,z0=0,o={}){
+ const [sx,sy]=P(x,y,z0),rx=r*TW*1.414,ry=r*TH*1.414,ty=sy-h;
+ const g=cx.createLinearGradient(sx-rx,0,sx+rx,0);g.addColorStop(0,sh(col,.45));g.addColorStop(.35,sh(col,.95));g.addColorStop(.6,sh(col,.8));g.addColorStop(1,sh(col,.4));
+ cx.fillStyle=g;cx.beginPath();cx.moveTo(sx-rx,ty);cx.lineTo(sx-rx,sy);cx.ellipse(sx,sy,rx,ry,0,Math.PI,0,true);cx.lineTo(sx+rx,ty);cx.closePath();cx.fill();
+ // mugre y óxido
+ const g2=cx.createLinearGradient(0,sy+ry,0,ty);g2.addColorStop(0,"rgba(25,15,5,.55)");g2.addColorStop(.45,"rgba(25,15,5,0)");cx.fillStyle=g2;
+ cx.beginPath();cx.moveTo(sx-rx,ty);cx.lineTo(sx-rx,sy);cx.ellipse(sx,sy,rx,ry,0,Math.PI,0,true);cx.lineTo(sx+rx,ty);cx.closePath();cx.fill();
+ if(o.rust!==0){cx.strokeStyle="rgba(120,62,22,.4)";cx.lineWidth=2;for(let i=0;i<(o.rust||5);i++){const a=-.85+1.7*((i*0.618+x*.1)%1),xx=sx+rx*a,yy=ty+ry*Math.sqrt(1-a*a)*.9;cx.beginPath();cx.moveTo(xx,yy);cx.lineTo(xx,yy+h*(.25+.5*((i*.41)%1)));cx.stroke();}}
+ if(o.bands){cx.strokeStyle="rgba(0,0,0,.25)";cx.lineWidth=1;for(let k=1;k<o.bands;k++){const yy=sy-h*k/o.bands;cx.beginPath();cx.ellipse(sx,yy,rx,ry,0,0,Math.PI);cx.stroke();}}
+ if(o.stripe){cx.fillStyle=o.stripe;cx.beginPath();const y1=sy-h*.62,y2=sy-h*.5;cx.moveTo(sx-rx,y1);cx.ellipse(sx,y1,rx,ry,0,Math.PI,0,true);cx.lineTo(sx+rx,y2);cx.ellipse(sx,y2,rx,ry,0,0,Math.PI);cx.closePath();cx.fill();}
+ cx.fillStyle=o.top||sh(col,.75);cx.beginPath();cx.ellipse(sx,ty,rx,ry,0,0,Math.PI*2);cx.fill();
+ if(o.roof!==false){cx.strokeStyle="rgba(0,0,0,.3)";cx.beginPath();cx.ellipse(sx,ty,rx*.6,ry*.6,0,0,Math.PI*2);cx.stroke();}
+ if(o.level!=null){// indicador de nivel
+  const lx=sx+rx*.55,lh=h*.8,ly=sy-h*.1;cx.fillStyle="rgba(0,0,0,.55)";cx.fillRect(lx-3,ly-lh,6,lh);cx.fillStyle=o.level>.9||o.level<.12?"#ff6b4a":"#e8b04a";cx.fillRect(lx-2,ly-lh*o.level,4,lh*o.level);}
+ return [sx,ty];
+}
+function sphere(x,y,r,z,col){const [sx,sy]=P(x,y,0),R=r*TW*1.1;
+ cx.strokeStyle="#3b3a36";cx.lineWidth=3;for(const a of[-.7,-.25,.25,.7]){cx.beginPath();cx.moveTo(sx+R*a,sy-z+R*.3);cx.lineTo(sx+R*a*1.1,sy+R*.25*Math.abs(a));cx.stroke();}
+ const g=cx.createRadialGradient(sx-R*.35,sy-z-R*.4,R*.1,sx,sy-z,R);g.addColorStop(0,sh(col,1.15));g.addColorStop(.7,sh(col,.75));g.addColorStop(1,sh(col,.4));
+ cx.fillStyle=g;cx.beginPath();cx.arc(sx,sy-z,R,0,7);cx.fill();
+ cx.strokeStyle="rgba(100,55,20,.35)";cx.lineWidth=1.5;for(let i=0;i<4;i++){cx.beginPath();cx.moveTo(sx-R*.5+i*R*.3,sy-z+R*.2);cx.lineTo(sx-R*.5+i*R*.3,sy-z+R*.75);cx.stroke();}
+ return [sx,sy-z-R];}
+function pipeLine(pts,col,wd,flow,spd){
+ const s=pts.map(p=>P(p[0],p[1],p[2]||0));cx.lineCap="round";cx.lineJoin="round";
+ cx.strokeStyle="rgba(0,0,0,.35)";cx.lineWidth=wd+2;cx.beginPath();s.forEach((p,i)=>i?cx.lineTo(p[0],p[1]+1):cx.moveTo(p[0],p[1]+1));cx.stroke();
+ cx.strokeStyle=col;cx.lineWidth=wd;cx.beginPath();s.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));cx.stroke();
+ if(flow){cx.setLineDash([3,9]);cx.lineDashOffset=-T*(spd||22);cx.strokeStyle=flow;cx.lineWidth=Math.max(1.2,wd*.45);cx.beginPath();s.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));cx.stroke();cx.setLineDash([]);}
+}
+function face(id,sz=56){const c=CHARS[id];let s=`<svg width="${sz}" height="${sz}" viewBox="0 0 64 64" style="flex:none;border-radius:50%;background:#2a241e;border:2px solid #c97a1c">`;
+ s+=`<path d="M8 64 Q10 46 32 44 Q54 46 56 64Z" fill="${c.v}"/><path d="M26 44 L32 52 L38 44Z" fill="#e8e4dc"/><rect x="27" y="36" width="10" height="9" fill="${c.sk}"/>`;
+ if(c.a==="long")s+=`<path d="M17 30 Q16 50 24 50 L24 26Z M47 30 Q48 50 40 50 L40 26Z" fill="${c.hr}"/>`;
+ if(c.a==="bun")s+=`<circle cx="32" cy="12" r="7" fill="${c.hr}"/>`;
+ s+=`<ellipse cx="32" cy="28" rx="13" ry="14" fill="${c.sk}"/>`;
+ if(!c.hat||c.a==="bun")s+=`<path d="M19 26 Q20 13 32 13 Q44 13 45 26 Q40 19 32 19 Q24 19 19 26Z" fill="${c.hr}"/>`;
+ s+=`<circle cx="27" cy="29" r="1.8" fill="#222"/><circle cx="37" cy="29" r="1.8" fill="#222"/><path d="M28 36 Q32 39 36 36" stroke="#5a2a1a" stroke-width="1.6" fill="none"/>`;
+ if(c.a==="beard")s+=`<path d="M20 31 Q22 44 32 44 Q42 44 44 31 Q40 38 32 38 Q24 38 20 31Z" fill="${c.hr}" opacity=".9"/>`;
+ if(c.a==="must")s+=`<path d="M26 34 Q32 31 38 34 Q32 35 26 34Z" fill="${c.hr}"/>`;
+ if(c.a==="glasses")s+=`<circle cx="27" cy="29" r="4" stroke="#222" stroke-width="1.4" fill="none"/><circle cx="37" cy="29" r="4" stroke="#222" stroke-width="1.4" fill="none"/><path d="M31 29h2" stroke="#222" stroke-width="1.4"/>`;
+ if(c.hat==="straw")s+=`<ellipse cx="32" cy="18" rx="20" ry="4" fill="#d8c48a"/><path d="M22 18 Q23 8 32 8 Q41 8 42 18Z" fill="#cdb878"/><rect x="22" y="15" width="20" height="2" fill="#7a5a3a"/>`;
+ else if(c.hat&&c.a!=="bun")s+=`<path d="M17 22 Q18 9 32 9 Q46 9 47 22Z" fill="${c.hat}"/><rect x="15" y="21" width="34" height="3" rx="1.5" fill="${c.hat}"/><rect x="30" y="9" width="4" height="13" fill="rgba(0,0,0,.12)"/>`;
+ return s+"</svg>";}
+function bubble(id,txt){const c=CHARS[id];return `<div style="display:flex;gap:10px;align-items:flex-start;margin:8px 0">${face(id)}<div><b style="color:#ffc56b">${c.n}</b> <span class="mut">· ${c.r}</span><div style="background:#2a241e;border-radius:4px 12px 12px 12px;padding:7px 10px;margin-top:3px">«${txt}»</div></div></div>`;}
+const WHO={cav:"marta",foul:"marta",salt:"marta",o2low:"marta",o2hi:"marta",dieoff:"marta",flood:"marta",cool:"marta",flare:"jorge",leak:"andres",ppe:"jorge",truck:"lucia",ship:"lucia",heavy:"lucia",kick:"beto",loss:"beto",bit:"beto",rod:"andres",sep:"beto",h2s:"jorge",wax:"beto",hammer:"andres",plat:"jorge",fcc:"marta",hdt:"marta",refo:"marta",claus:"marta",boiler:"andres",blend:"lucia",olor:"rafa"};
+function house(x,y,wall,roof){box(x,y,1.8,1.4,10,wall,0,{win:2,lit:NIGHT>.3,lv:[.5],clean:1});
+ const a=P(x,y,10),b=P(x+1.8,y,10),c2=P(x+1.8,y+1.4,10),d=P(x,y+1.4,10),r1=P(x,y+.7,18),r2=P(x+1.8,y+.7,18);
+ poly([d,c2,r2,r1],sh(roof,.85));poly([a,b,r2,r1],sh(roof,1.1));poly([c2,b,r2],sh(roof,.6));}
+function tree(x,y,r){const [sx,sy]=P(x,y,0);cx.fillStyle="#3a2a1c";cx.fillRect(sx-1.5,sy-12,3,12);const g=cx.createRadialGradient(sx-4,sy-20*r-6,2,sx,sy-18*r-4,14*r);g.addColorStop(0,"#4f6a3e");g.addColorStop(1,"#22301c");cx.fillStyle=g;cx.beginPath();cx.arc(sx,sy-16*r-6,13*r,0,7);cx.fill();}
+
+function lab(x,y,t){cx.font="bold 10px system-ui";cx.textAlign="center";cx.fillStyle="rgba(0,0,0,.6)";cx.fillText(t,x+1,y+1);cx.fillStyle="#efe6d6";cx.fillText(t,x,y);cx.textAlign="left";}
+function hitU(u,p,w,h){HIT.push({x:p[0]-w/2,y:p[1]-h*.25,w,h,u})}
+function truck(x,y,a,col,fire){const dx=Math.cos(a),dy=Math.sin(a);const [sx,sy]=P(x,y,0);cx.save();cx.translate(sx,sy);
+ const ex=(dx-dy)*TW,ey=(dx+dy)*TH;const ang=Math.atan2(ey,ex);
+ cx.rotate(ang);cx.fillStyle="rgba(0,0,0,.35)";cx.fillRect(-22,-4,44,10);
+ cx.fillStyle=fire?"#c8261a":"#2b2b2b";cx.fillRect(-20,-6,30,10);
+ if(!fire){const g=cx.createLinearGradient(0,-12,0,2);g.addColorStop(0,sh(col,1.1));g.addColorStop(1,sh(col,.55));cx.fillStyle=g;cx.beginPath();cx.ellipse(-6,-8,15,6,0,0,7);cx.fill();}
+ else{cx.fillStyle="#e33";cx.fillRect(-20,-12,30,8);cx.fillStyle=`rgba(80,160,255,${Math.sin(T*12)>0?1:.2})`;cx.fillRect(10,-14,6,3);}
+ cx.fillStyle=fire?"#d33":"#d8d0c0";cx.fillRect(10,-12,10,12);cx.fillStyle="rgba(120,170,210,.8)";cx.fillRect(16,-10,3,5);
+ if(NIGHT>.25){cx.fillStyle="rgba(255,240,180,.9)";cx.fillRect(19,-3,3,3);}
+ cx.restore();}
+function car(x,y,a,col){const [sx,sy]=P(x,y,0);const ex=(Math.cos(a)-Math.sin(a))*TW,ey=(Math.cos(a)+Math.sin(a))*TH;cx.save();cx.translate(sx,sy);cx.rotate(Math.atan2(ey,ex));
+ cx.fillStyle="rgba(0,0,0,.35)";cx.fillRect(-9,-2,18,6);cx.fillStyle=col;cx.fillRect(-9,-6,18,7);cx.fillStyle=sh(col,1.3);cx.fillRect(-4,-9,9,4);cx.restore();}
+function person(p){const [sx,sy]=P(p.x,p.y,0);const bob=p.mv?Math.abs(Math.sin(T*10+p.x))*1.5:0;
+ cx.fillStyle="rgba(0,0,0,.35)";cx.beginPath();cx.ellipse(sx,sy,4,2,0,0,7);cx.fill();
+ cx.fillStyle="#2c3440";cx.fillRect(sx-2.2,sy-7-bob,1.8,7);cx.fillRect(sx+.4,sy-7-bob,1.8,7);
+ cx.fillStyle=p.v;cx.fillRect(sx-3,sy-13-bob,6,7);cx.fillStyle="rgba(230,230,90,.8)";cx.fillRect(sx-3,sy-10-bob,6,1);
+ cx.fillStyle="#c89a78";cx.beginPath();cx.arc(sx,sy-15.5-bob,2.3,0,7);cx.fill();cx.fillStyle=p.h;cx.beginPath();cx.arc(sx,sy-16.5-bob,2.6,Math.PI,0);cx.fill();}
+// ---------- personajes del turno ----------
+const CHARS={
+ lalo:{n:"Lalo",r:"Operador de la llenadora · 15 años en el turno de noche",sk:"#b8865e",hr:"#3a2418",hat:"#2f6db5",v:"#2f6db5",a:"must"},
+ caro:{n:"Carolina",r:"Analista de calidad del turno",sk:"#d6a983",hr:"#2a1a10",hat:null,v:"#f2f0e8",a:"long"},
+ tito:{n:"Tito",r:"Mecánico de turno",sk:"#8a5a3c",hr:"#111",hat:"#f2c21b",v:"#e2701c",a:"beard"},
+ mari:{n:"Marisol",r:"Montacarguista y encargada de bodega",sk:"#c99a74",hr:"#5a3420",hat:"#f2f0e8",v:"#d4c21a",a:"bun"},
+ chepe:{n:"Don Chepe",r:"Guarda de seguridad del portón",sk:"#a87452",hr:"#dddddd",hat:"straw",v:"#3b4a5a",a:"must"},
+ mora:{n:"Ing. Esteban Mora",r:"Gerente de planta (por teléfono)",sk:"#e0b48e",hr:"#6a6a6a",hat:null,v:"#3b4a5a",a:"glasses"},
+ nico:{n:"Nico",r:"Operador nuevo · primera semana",sk:"#e0b48e",hr:"#5a3420",hat:"#f2f0e8",v:"#2f9a4a",a:"glasses"}};
+const TOOLS={gas:{n:"📟 Detector de gases",t:12,no:"Sin gases fuera de lo normal en la zona."},term:{n:"🌡️ Cámara termográfica",t:12,no:"Temperaturas normales en el equipo."},vib:{n:"🩺 Analizador de vibraciones",t:12,no:"Vibraciones dentro de lo normal."},trend:{n:"📈 Tendencias del SCADA",t:8,no:"Las tendencias no muestran nada raro."},lab:{n:"🧪 Laboratorio de calidad",t:30,no:"Las muestras salieron dentro de especificación."},cam:{n:"📹 Cámaras de seguridad",t:8,no:"En las cámaras no se ve nada fuera de lo normal."}};
+// área: cal · pro · amb · seg · per
+const CASES=[
+ {id:"co2",u:"llen",area:"cal",who:"caro",t:"Las botellas salen con poco gas",tag:"Calidad · Carbonatación",say:"Ingeniero, el último control dio el gas bajo. El cliente lo nota de inmediato: sabe «muerta».",sayx:"El último control salió raro. Puede ser el equipo de medición, no sé.",
+  data:()=>`CO₂ del último control: <b>3,1 volúmenes</b> (especificación 3,6–4,0). Temperatura del producto: <b>${S.Tp.toFixed(1)} °C</b>.`,x:()=>`Un control de CO₂ salió por debajo de la especificación. El anterior estaba bien.`,
+  meas:["term","El producto entra al carbonatador a <b>9 °C</b> (normal 3–4 °C): el enfriador no está dando abasto. A más temperatura, el agua disuelve menos CO₂."],
+  opts:[["Bajar la temperatura del producto (revisar el enfriador) y retener lo producido desde el último control bueno",1,"Correcto. La solubilidad del CO₂ baja con la temperatura (ley de Henry). Se corrige la causa y se retiene el producto fuera de especificación."],
+   ["Subir la presión del carbonatador para compensar",.5,"Sube el gas por un rato, pero con producto caliente aumenta la espuma en la llenadora. Sirve de puente mientras se enfría."],
+   ["Pedir a calidad que recalibre el medidor de CO₂ y repetir el control antes de retener",0,"Mientras se recalibra, sigues llenando producto bajo. El dato es consistente con la temperatura alta: no hay evidencia de que el medidor falle."],
+   ["Bajar la velocidad de la llenadora para darle más tiempo de contacto al CO₂",0,"Suena lógico, pero lo que limita es la solubilidad: con el producto a 9 °C el agua no retiene más gas, vaya rápido o lento."]],
+  pre:()=>{S.Tp=9},fix:()=>{S.Tp=4},hold:.6,dl:2.5,esc:"Se despacharon 2 horas de producto sin gas: queja del cliente."},
+ {id:"brix",u:"jar",area:"cal",who:"caro",t:"El Brix salió fuera de especificación",tag:"Calidad · Jarabe",say:"El Brix dio bajo. ¿Lo dejo pasar? Es poquito.",sayx:"Algo raro con el sabor del último control.",
+  data:()=>`Brix del producto: <b>10,2 °Bx</b> (especificación 10,8–11,2).`,x:()=>`Un control de sabor en el laboratorio no salió igual al patrón.`,
+  meas:["trend","El caudalímetro de jarabe del proporcionador marca <b>6 % menos</b> desde las 19:40: la relación jarabe/agua se desajustó."],
+  opts:[["Detener el llenado, ajustar el proporcionador y retener el producto desde el último control bueno",1,"Correcto. El Brix es el contenido de azúcar: fuera de especificación el producto no se vende. Se corrige la proporción y se retiene lo afectado."],
+   ["Ajustar el proporcionador sin detener la línea y retener solo la última media hora",.5,"Se corrige, pero se ajusta en marcha y se retiene menos de lo afectado: el desvío empezó a las 19:40."],
+   ["Corregir el tanque de jarabe agregando el azúcar calculada para subir 0,6 °Bx",0,"El jarabe no estaba mal: el problema es la proporción. Además, reprocesar jarabe terminado requiere autorización de calidad."],
+   ["Mezclar el producto bajo con el siguiente lote para que el promedio quede en especificación",0,"Mezclar para «promediar» es esconder producto fuera de especificación. Cada botella debe cumplir."]],
+  hold:.8,dl:2,esc:"Se mezcló producto con Brix bajo en la bodega: hay que reprocesar."},
+ {id:"nivel",u:"insp",area:"cal",who:"lalo",t:"El inspector rechaza muchas botellas por nivel bajo",tag:"Calidad · Llenado",say:"El inspector está botando botellas como loco. ¿Le bajamos la sensibilidad?",sayx:"Hay más rechazos que de costumbre en el inspector.",
+  data:()=>`Rechazos por nivel bajo: <b>3,8 %</b> (normal &lt; 0,5 %).`,x:()=>`Los rechazos del inspector subieron.`,
+  meas:["trend","El <b>92 %</b> de los rechazos vienen de la <b>válvula 17</b> de la llenadora. Las demás válvulas llenan bien."],
+  opts:[["Dejar fuera de producción la válvula 17 y programar su cambio en la próxima parada",1,"Correcto. El dato apunta a una sola válvula: se aísla y la llenadora sigue con las demás."],
+   ["Bajar la velocidad de la llenadora",.5,"Puede reducir rechazos, pero la válvula 17 sigue fallando y pierdes producción."],
+   ["Abrir un milímetro la tolerancia del inspector de nivel: está rechazando botellas casi buenas",0,"Los inspectores no se desajustan para producir. El problema es una válvula: el inspector está haciendo su trabajo."],
+   ["Subir el nivel de llenado de todas las válvulas para compensar",0,"Las demás válvulas estaban bien: ahora llenan de más, regalas producto y aumenta la espuma. Una válvula, una solución."]],
+  slow:.85,dl:3},
+ {id:"torque",u:"tap",area:"cal",who:"caro",t:"Tapas flojas: el producto pierde gas",tag:"Calidad · Taponado",say:"Encontré botellas con la tapa floja. Pierden el gas en la bodega.",sayx:"Hay botellas que se sienten blandas al apretarlas.",
+  data:()=>`Torque de apertura: algunas tapas en <b>6 in·lb</b> (especificación 12–18).`,x:()=>`Varias botellas de la bodega se sienten blandas al apretarlas.`,
+  meas:["lab","Torque por cabezal: el <b>cabezal 4</b> de la taponadora da 6 in·lb; los demás, 14–16 in·lb."],
+  opts:[["Ajustar o cambiar el cabezal 4 y retener lo producido desde el último control",1,"Correcto. Un solo cabezal falla: se corrige y se retiene el producto afectado."],
+   ["Subir el torque de todos los cabezales",.5,"Corrige el 4, pero aprieta de más los demás: tapas difíciles de abrir o roscas dañadas."],
+   ["Cambiar el lote de tapas: pueden venir con la rosca fuera de medida",0,"Las tapas flojas salen todas del cabezal 4: el patrón apunta a la máquina, no al material."],
+   ["Reforzar el muestreo de torque y revisar todo al final del turno",0,"Mientras tanto se siguen produciendo botellas que pierden gas. Lo afectado se retiene desde el último control bueno."]],
+  hold:.5,dl:2.5},
+ {id:"cuerpo",u:"llen",area:"cal",who:"lalo",t:"Un pedazo de plástico dentro de una botella",tag:"Calidad · Cuerpo extraño",say:"¡Ingeniero! En una botella hay un pedacito de plástico azul.",sayx:"Encontré algo raro dentro de una botella.",
+  data:()=>`Un fragmento de plástico azul duro dentro de una botella llena, detectado en la inspección visual.`,x:()=>`Una botella con «algo» flotando adentro.`,
+  meas:["cam","En el video se ve una <b>guía azul del transportador rota</b> justo antes de la llenadora, soltando pedazos."],
+  opts:[["Detener la línea, cambiar la guía rota, inspeccionar y retener todo lo producido desde la última revisión",1,"Correcto. Un cuerpo extraño es un riesgo para el consumidor: se elimina la fuente y se retiene el producto que pudo contaminarse."],
+   ["Cambiar la guía sin detener y retener solo la última hora",.5,"Elimina la fuente, pero la guía pudo estar soltando pedazos desde antes."],
+   ["Retirar esa botella, revisar 50 más y, si están limpias, seguir",0,"Sin encontrar el origen, el plástico puede seguir cayendo. Hay que detener, ubicar la guía rota y retener."],
+   ["Subir la sensibilidad del inspector de visión para que atrape los pedazos",0,"El inspector no está diseñado para eso y no corrige la causa. Primero se detiene y se busca el origen."]],
+  stop:1,dl:1.5,esc:"Un consumidor encontró plástico en una botella: retiro de producto del mercado."},
+ {id:"codigo",u:"cod",area:"cal",who:"nico",t:"El código de fecha sale borroso",tag:"Calidad · Trazabilidad",say:"Ingeniero, la fecha en las botellas casi no se lee. ¿Importa mucho?",sayx:"¿Las fechas de las botellas tienen que verse perfectas?",
+  data:()=>`El inspector de visión rechaza <b>4 %</b> por código ilegible.`,x:()=>`Aparecen botellas con el código de fecha poco legible.`,
+  meas:["trend","Los rechazos empezaron justo después del <b>cambio de tinta</b> de las 20:15. El cabezal de la codificadora no se purgó."],
+  opts:[["Limpiar y purgar el cabezal de la codificadora, verificar la legibilidad y recodificar o retener lo afectado",1,"Correcto. Sin fecha legible no hay trazabilidad: si hay un problema, no se sabe qué lote retirar."],
+   ["Bajar la velocidad de la línea para que la codificadora alcance",.5,"Puede mejorar un poco la impresión, pero el cabezal sucio sigue ahí."],
+   ["Dejarlo pasar: el lote se puede rastrear por la etiqueta de la tarima",0,"La tarima se desarma en el supermercado: cada botella necesita su código legible para poder retirarla."],
+   ["Cambiar a un formato de código más corto que la codificadora imprima mejor",0,"El formato del código es un requisito: no se cambia en el turno. La causa es un cabezal sucio."]],
+  hold:.3,dl:3},
+ {id:"micro",u:"agua",area:"cal",who:"caro",t:"Conteo microbiológico alto en el agua tratada",tag:"Calidad · Inocuidad",say:"La muestra de agua tratada de la tarde salió con conteo alto.",sayx:"Una muestra de agua salió diferente a lo normal.",
+  data:()=>`Recuento en agua tratada: <b>45 UFC/100 mL</b> (máximo 0).`,x:()=>`Un resultado de laboratorio del agua salió fuera de lo normal.`,
+  meas:["term","La lámpara UV del tratamiento de agua está a <b>40 % de intensidad</b>: ya cumplió su vida útil."],
+  opts:[["Cambiar la lámpara UV, revisar la cloración, sanitizar, re-muestrear y retener el producto",1,"Correcto. El agua es el ingrediente principal: si falla su desinfección, el producto puede contaminarse."],
+   ["Subir el cloro del tanque de agua tratada",.5,"Ayuda a desinfectar, pero la lámpara UV sigue fallando y el cloro puede afectar el sabor."],
+   ["Pedir la confirmación al laboratorio externo y seguir produciendo mientras llega (48 h)",0,"Son 48 horas de producto sin respaldo. Ante un resultado fuera de límite, primero se retiene y se actúa."],
+   ["Liberar: el producto lleva conservante y el conteo está apenas sobre el límite",0,"El conservante no es un permiso para usar agua contaminada. «Apenas sobre el límite» sigue siendo fuera de límite."]],
+  hold:.7,dl:2},
+ {id:"cip",u:"cip",area:"cal",who:"tito",t:"El CIP de la llenadora no llegó a temperatura",tag:"Calidad · Limpieza",say:"El CIP terminó, ¿arrancamos? Ya estamos atrasados.",sayx:"El CIP terminó con una alarma. Seguro no es nada.",
+  data:()=>`Ciclo CIP con alarma de temperatura.`,x:()=>`El ciclo de limpieza terminó con una alarma.`,
+  meas:["trend","La soda llegó a <b>62 °C</b> (requiere 75 °C) durante el paso de 20 minutos: el intercambiador del CIP no calentó bien."],
+  opts:[["Repetir el ciclo CIP completo y verificar la limpieza antes de arrancar",1,"Correcto. Un CIP depende de tiempo, temperatura, concentración y acción mecánica. Si falla uno, la limpieza no está garantizada."],
+   ["Alargar el enjuague final con agua caliente",.5,"Ayuda, pero no reemplaza la soda caliente para quitar la suciedad."],
+   ["Arrancar y adelantar el CIP intermedio un par de horas",0,"Un CIP que no llegó a temperatura no limpió ni desinfectó: se produciría con la llenadora sucia."],
+   ["Repetir solo la etapa de soda con el doble de concentración para recuperar tiempo",0,"La temperatura y el tiempo no se compensan con más químico, y duplicar la soda deja residuos difíciles de enjuagar."]],
+  stop:1,dl:1.5},
+ {id:"etiq",u:"etiq",area:"pro",who:"lalo",t:"Etiquetas torcidas y despegadas",tag:"Proceso · Etiquetado",say:"La etiquetadora está pegando mal. Ya perdí la cuenta de los atascos.",sayx:"La etiquetadora anda mal hoy.",
+  data:()=>`Etiquetas torcidas y sueltas en el <b>8 %</b> de las botellas.`,x:()=>`Hay botellas con la etiqueta mal puesta.`,
+  meas:["term","El pegamento está a <b>135 °C</b> (requiere 150 °C) y las botellas llegan con condensación por el producto frío y la humedad de la noche."],
+  opts:[["Subir el pegamento a su temperatura y secar las botellas con el soplador de aire antes de etiquetar",1,"Correcto. Pegamento frío y botellas mojadas no adhieren. Se atacan las dos causas."],
+   ["Bajar la velocidad de la etiquetadora",.5,"Reduce los atascos, pero el pegado sigue siendo malo."],
+   ["Cambiar el rollo de etiquetas: este lote puede venir con poco adhesivo",0,"El pegamento es caliente y está frío: la causa está en la máquina, no en el rollo."],
+   ["Subir la temperatura del producto unos grados para que las botellas no condensen",0,"Producto más caliente es menos CO₂ disuelto: arreglas la etiqueta y dañas la bebida."]],
+  slow:.8,dl:3},
+ {id:"sopla",u:"sop",area:"pro",who:"tito",t:"La sopladora saca botellas deformes",tag:"Proceso · Soplado",say:"La sopladora está sacando botellas chuecas. Las preformas deben venir malas.",sayx:"Salen botellas raras de la sopladora.",
+  data:()=>`Rechazo de botellas deformes: <b>6 %</b>.`,x:()=>`Aumentó el rechazo en la sopladora.`,
+  meas:["term","En el horno de la sopladora, la <b>zona 3 está fría</b>: una lámpara infrarroja se quemó y la preforma no se calienta parejo."],
+  opts:[["Cambiar la lámpara de la zona 3 con bloqueo de energía y verificar el perfil de temperatura",1,"Correcto. La preforma necesita un perfil de temperatura parejo para estirarse bien."],
+   ["Subir la potencia de las zonas vecinas",.5,"Compensa un poco, pero el perfil sigue desbalanceado."],
+   ["Cambiar el lote de preformas: la deformación empezó con el lote nuevo",0,"La termografía muestra una zona fría: el problema es la lámpara, no las preformas."],
+   ["Bajar la presión de soplado para que la botella se estire más suave",0,"Con una zona fría, el plástico sigue estirando desigual. Se corrige la temperatura, no la presión."]],
+  slow:.75,dl:3},
+ {id:"atasco",u:"emp",area:"pro",who:"tito",t:"Atascos repetidos en la empacadora",tag:"Proceso · Empaque",say:"La empacadora se atasca cada diez minutos. Ya la destrabé cinco veces.",sayx:"La empacadora se para seguido.",
+  data:()=>`<b>6 paros</b> por atasco en la última hora.`,x:()=>`La empacadora tiene paros frecuentes.`,
+  meas:["cam","Los atascos empiezan cuando la acumulación antes de la empacadora se llena: la <b>fotocelda de acumulación está sucia</b> y no frena a tiempo."],
+  opts:[["Limpiar y ajustar la fotocelda con la máquina bloqueada",1,"Correcto. Una fotocelda sucia no ve la acumulación y la máquina se atasca. Se corrige con la máquina bloqueada."],
+   ["Bajar la velocidad de la llenadora para que no se acumule",.5,"Reduce los atascos, pero pierdes producción por una fotocelda sucia."],
+   ["Puentear la fotocelda por el resto del turno y reportarla a mantenimiento",0,"Sin fotocelda, la máquina no detecta botellas caídas: más atascos y nadie se da cuenta. Los sensores no se puentean."],
+   ["Dejar la guarda abierta para que el operador destrabe al vuelo mientras llega mantenimiento",0,"Destrabar con la máquina en movimiento es como se pierden dedos. Se interviene solo con bloqueo."]],
+  slow:.7,dl:3},
+ {id:"frio",u:"nh3",area:"pro",who:"lalo",t:"El enfriador no llega a temperatura",tag:"Proceso · Refrigeración",say:"El producto viene cada vez más tibio. Esto va a afectar el gas.",sayx:"El producto viene más tibio que de costumbre.",
+  data:()=>`Producto a la salida del enfriador: <b>${S.Tp.toFixed(1)} °C</b> (objetivo 4 °C).`,x:()=>`La temperatura del producto viene subiendo.`,
+  meas:["vib","Un ventilador del condensador evaporativo de amoníaco está <b>detenido</b>: el motor se disparó por sobrecarga."],
+  opts:[["Arrancar el ventilador de respaldo del condensador y revisar el motor disparado",1,"Correcto. Con menos condensación, la refrigeración pierde capacidad. Se recupera el enfriamiento y se investiga el disparo."],
+   ["Bajar la velocidad de la línea mientras se recupera",.5,"Menos caudal ayuda a enfriar, pero no arregla el ventilador."],
+   ["Enfriar el agua de proceso con hielo en el tanque de mezcla para ganar tiempo",0,"No es higiénico ni alcanza para un caudal industrial, y lo que entra al tanque debe ser agua tratada."],
+   ["Abrir el bypass del glicol para que circule más rápido por el intercambiador",0,"El glicol ya está tibio: el problema es el condensador. Un bypass sin ingeniería puede desbalancear todo el sistema."]],
+  pre:()=>{S.Tp=8},fix:()=>{S.Tp=4},slow:.9,dl:2.5},
+ {id:"aire",u:"aire",area:"pro",who:"tito",t:"Baja la presión de aire comprimido",tag:"Proceso · Servicios",say:"Las válvulas de la llenadora están lentas. Algo pasa con el aire.",sayx:"Varias máquinas se están comportando lento.",
+  data:()=>`Presión de aire: <b>5,8 bar</b> (normal 7 bar).`,x:()=>`Las máquinas de la línea se ponen lentas.`,
+  meas:["trend","El <b>compresor 2 se disparó por alta temperatura</b> a las 21:10. Solo el compresor 1 está operando."],
+  opts:[["Arrancar el compresor de respaldo y revisar el enfriamiento del compresor 2",1,"Correcto. Se recupera la presión y se investiga por qué se calentó el compresor."],
+   ["Bajar la velocidad de la línea para consumir menos aire",.5,"Funciona, pero pierdes producción teniendo un compresor de respaldo."],
+   ["Subir el punto de ajuste del compresor 1 al máximo hasta la mañana",0,"El compresor 2 se está calentando y el 1 queda al límite: podrías perder los dos a medianoche."],
+   ["Hacer bypass del secador de aire para ganar caudal",0,"El aire toca el producto en la sopladora: sin secador lleva humedad y aceite."]],
+  slow:.7,dl:2},
+ {id:"agua",u:"agua",area:"pro",who:"tito",t:"Baja el caudal de agua tratada",tag:"Proceso · Tratamiento de agua",say:"El tanque de agua tratada va bajando. A este paso nos quedamos sin agua.",sayx:"El tanque de agua tratada está bajando.",
+  data:()=>`Caudal de agua tratada: <b>−35 %</b>.`,x:()=>`El nivel del tanque de agua tratada baja.`,
+  meas:["trend","La diferencia de presión de los <b>filtros de arena</b> está al doble de lo normal: el retrolavado de la tarde no se hizo."],
+  opts:[["Hacer el retrolavado de los filtros de arena",1,"Correcto. Un filtro saturado deja pasar menos agua. El retrolavado lo limpia invirtiendo el flujo."],
+   ["Bajar la velocidad de la línea mientras se recupera el tanque",.5,"Da tiempo, pero el filtro sigue tapado."],
+   ["Abrir un rato el bypass del filtro para recuperar nivel y luego retrolavar",0,"El tratamiento de agua nunca se puentea, ni «un rato»: esa agua va al producto."],
+   ["Subir la presión de la bomba de alimentación para empujar más agua por los filtros",0,"Con los filtros tapados, más presión solo los compacta más y puede romper el lecho."]],
+  slow:.8,dl:3},
+ {id:"jarabe",u:"jar",area:"pro",who:"caro",t:"Se acaba el jarabe antes de lo previsto",tag:"Proceso · Planificación",say:"El tanque 3 se acaba en 20 minutos y el 4 todavía no tiene la prueba de Brix.",sayx:"Hay que revisar los tanques de jarabe.",
+  data:()=>`Tanque 3: <b>20 min</b> de jarabe. Tanque 4: preparado, <b>sin aprobación de calidad</b>.`,x:()=>`Los tanques de jarabe están bajos.`,
+  meas:["lab","El tanque 4 estará aprobado en unos <b>40 minutos</b>, cuando termine la prueba de Brix y sabor."],
+  opts:[["Bajar la velocidad de la llenadora hasta que calidad apruebe el tanque 4",1,"Correcto. Se estira el jarabe disponible sin usar producto sin aprobar."],
+   ["Parar la línea hasta que el tanque 4 esté aprobado",.5,"Es seguro, pero bajando la velocidad no habrías parado."],
+   ["Empezar a usar el tanque 4 y tomar la muestra de Brix en línea al arrancar",0,"Si el Brix sale mal, ya llenaste producto con él. Ningún tanque se usa sin aprobación."],
+   ["Estirar el tanque 3 agregándole un poco de agua tratada hasta que aprueben el 4",0,"Diluir el jarabe cambia la receta: el producto sale fuera de Brix."]],
+  slow:.6,dl:1.5},
+ {id:"apagon",u:"ofi",area:"pro",who:"lalo",t:"Un parpadeo de energía paró toda la línea",tag:"Proceso · Arranque",say:"¡Se fue la luz un segundo y se paró todo!",sayx:"¡Se paró todo de repente!",
+  data:()=>`Caída de tensión de 0,3 s. Todas las máquinas en falla.`,x:()=>`Todas las máquinas se detuvieron al mismo tiempo.`,
+  meas:["trend","Caída de tensión por la tormenta. La llenadora quedó con <b>botellas a medio llenar</b> y el carbonatador perdió presión."],
+  opts:[["Arranque ordenado: verificar seguridades, revisar el producto en proceso y arrancar desde el final de la línea hacia la llenadora",1,"Correcto. Arrancar del final hacia el inicio evita atascos, y el producto a medio llenar se separa."],
+   ["Arrancar desde la llenadora y ver qué falla",.5,"Funciona, pero la producción se acumula contra máquinas que todavía están en falla."],
+   ["Arrancar todo a la vez para recuperar el tiempo perdido",0,"El pico de arranque puede disparar de nuevo la energía, y el producto que quedó en proceso no se revisó."],
+   ["Esperar a mantenimiento en la mañana para no arriesgar los equipos",0,"Un arranque ordenado es parte del trabajo del turno: perder la noche entera no es necesario."]],
+  stop:1,dl:1},
+ {id:"ph",u:"ptar",area:"amb",who:"tito",t:"pH alto en la descarga de aguas residuales",tag:"Ambiente · Aguas residuales",say:"El medidor de la descarga marca algo raro.",sayx:"El medidor de la descarga marca algo raro.",
+  data:()=>`pH en la descarga: <b>11,8</b> (límite del permiso: 9).`,x:()=>`Una alarma en la planta de aguas residuales.`,
+  meas:["lab","pH 11,8. Coincide con el <b>drenaje del CIP con soda</b> de las 22:30."],
+  opts:[["Desviar al tanque de neutralización, dosificar ácido y no descargar hasta tener el pH en rango",1,"Correcto. La descarga debe cumplir el permiso. La soda del CIP se neutraliza antes de salir."],
+   ["Diluir con agua limpia antes de descargar",.5,"Baja el pH, pero gastas mucha agua y no es una solución aceptada por el permiso."],
+   ["Descargar ahora y compensar en la próxima descarga: el promedio del día quedará en rango",0,"El permiso es para cada descarga, no para el promedio. Lo que salió con pH alto ya llegó al río."],
+   ["Agregar ácido directamente en la caja de registro de la salida",0,"Dosificar químicos en la red, sin control ni mezcla, puede dejar el pH al otro extremo y es una descarga no autorizada."]],
+  amb:12,dl:2,esc:"Descarga fuera de permiso: reporte ambiental y multa."},
+ {id:"co2fuga",u:"co2",area:"seg",who:"tito",t:"Escarcha y silbido en la línea del tanque de CO₂",tag:"Seguridad · Gases",say:"La línea del tanque de CO₂ tiene hielo y suena. Si quiere la aprieto rapidito.",sayx:"Algo suena raro cerca del tanque de CO₂.",
+  data:()=>`Escarcha y silbido en una unión de la línea de CO₂.`,x:()=>`Un ruido extraño cerca del tanque de CO₂.`,
+  meas:["gas","CO₂ al <b>1,2 %</b> en la zona baja junto al tanque (límite de exposición 0,5 %). El CO₂ es más pesado que el aire y se acumula abajo."],
+  opts:[["Aislar la línea, ventilar, señalizar y que nadie entre a zonas bajas sin detector",1,"Correcto. El CO₂ desplaza el oxígeno y se acumula en zonas bajas: puede asfixiar sin olor ni aviso."],
+   ["Aislar la línea y seguir trabajando cerca con la puerta abierta",.5,"Aislar es correcto, pero el CO₂ ya se acumula en zonas bajas: sin medición ni señalización, alguien puede desmayarse."],
+   ["Que Tito apriete la unión con guantes térmicos: es solo un cuarto de vuelta",0,"Nunca se interviene una línea presurizada. Una unión que falla con presión puede salir disparada."],
+   ["Ventilar abriendo el portón y seguir: el CO₂ no es tóxico como el amoníaco",0,"No es tóxico, pero desplaza el oxígeno. En un foso o una zona baja puede asfixiar sin que nadie lo note."]],
+  safety:1,seg:8,dl:1.5,esc:"Un operador se mareó en la zona del tanque de CO₂."},
+ {id:"amonia",u:"nh3",area:"seg",who:"tito",t:"Olor a amoníaco en la sala de refrigeración",tag:"Seguridad · Amoníaco",say:"Huele fuerte a amoníaco en la sala de compresores.",sayx:"Huele raro en la sala de compresores.",
+  data:()=>`Olor penetrante en la sala de compresores de refrigeración.`,x:()=>`Un olor raro en la sala de compresores.`,
+  meas:["gas","NH₃ a <b>35 ppm</b> en la sala (límite 25 ppm). La fuente parece una válvula del separador de líquido."],
+  opts:[["Activar la ventilación de emergencia, evacuar la sala y entrar solo con equipo autónomo para aislar la fuga",1,"Correcto. El amoníaco es tóxico y corrosivo para ojos y pulmones. Se evacua, se ventila y solo entra personal con protección respiratoria."],
+   ["Abrir las puertas, ventilar y esperar a mantenimiento",.5,"Ventilar ayuda, pero la fuga sigue activa y alguien tiene que aislarla con el equipo adecuado."],
+   ["Entrar rápido con mascarilla y gafas a cerrar la válvula principal",0,"Una mascarilla común no protege del amoníaco. Solo se entra con equipo autónomo."],
+   ["Apagar la ventilación para que el olor no llegue al barrio mientras se revisa",0,"El amoníaco se concentra dentro de la sala y el riesgo para las personas aumenta."]],
+  safety:1,seg:10,amb:4,dl:1,esc:"Dos personas afectadas por amoníaco y vecinos evacuados."},
+ {id:"ruido",u:"barrio",area:"amb",who:"chepe",t:"Los vecinos se quejan del ruido",tag:"Ambiente · Comunidad",say:"Ingeniero, una señora del barrio vino a quejarse: los camiones no la dejan dormir.",sayx:"Vino una vecina a hablar con usted.",
+  data:()=>`Quejas por ruido de madrugada.`,x:()=>`Una vecina quiere hablar con el responsable de la planta.`,
+  meas:["cam","Entre las 2 y las 4 a. m. los camiones esperan en la calle <b>con el motor encendido</b> y la alarma de retroceso sonando."],
+  opts:[["Coordinar horarios con logística, que esperen dentro con el motor apagado y usar alarmas de banda ancha",1,"Correcto. Se reduce el ruido en la fuente y se cuida la relación con la comunidad."],
+   ["Pedir a los choferes que no piten",.5,"Ayuda un poco, pero los motores encendidos y las alarmas siguen."],
+   ["Explicarle a la vecina, con respeto, que la planta tiene permiso para operar las 24 horas",0,"Tener permiso no te exime de ser buen vecino. La queja tiene una causa que se puede atender."],
+   ["Que los camiones esperen afuera, en la calle, para que no hagan ruido en el patio",0,"Afuera quedan justo frente a las casas: el ruido y el riesgo pasan al vecindario."]],
+  amb:6,dl:3},
+ {id:"derrame",u:"cip",area:"seg",who:"nico",t:"Derrame de soda cáustica en la sala CIP",tag:"Seguridad · Químicos",say:"¡Se regó un montón de soda en el piso del CIP! ¿Lo lavo con la manguera?",sayx:"Hay un líquido regado en la sala CIP.",
+  data:()=>`Unos 40 litros de soda cáustica al 2 % en el piso.`,x:()=>`Un líquido transparente regado en la sala CIP.`,
+  meas:["lab","El papel indicador da <b>pH 13</b>: es soda cáustica. Corrosiva para piel y ojos."],
+  opts:[["Aislar la zona, usar EPP para químicos, contener y neutralizar con el kit de derrames",1,"Correcto. La soda causa quemaduras químicas. Se contiene, se neutraliza y se recoge con protección."],
+   ["Contener con material absorbente y esperar a la brigada de la mañana",.5,"Contiene el riesgo, pero la zona queda peligrosa por horas."],
+   ["Diluir con abundante agua hacia el desagüe: la planta de aguas residuales neutraliza la soda",0,"La planta de aguas residuales no está diseñada para un golpe de soda concentrada, y la manguera salpica al operador."],
+   ["Recogerlo con trapos y guantes de nitrilo antes de que alguien se resbale",0,"El nitrilo común no resiste soda concentrada por mucho tiempo: se necesita el EPP para químicos y el kit de derrames."]],
+  safety:1,seg:6,amb:4,dl:1.5},
+ {id:"monta",u:"bod",area:"seg",who:"mari",t:"Un montacargas casi atropella a un operario",tag:"Seguridad · Montacargas",say:"Casi le paso encima a Nico. Salió de entre las tarimas.",sayx:"Hubo un susto en la bodega.",
+  data:()=>`Casi accidente en la bodega: un montacargas y un peatón.`,x:()=>`Un susto en la bodega.`,
+  meas:["cam","El <b>pasillo peatonal está bloqueado</b> por tarimas y el montacargas iba más rápido que el límite de 8 km/h."],
+  opts:[["Detener los montacargas, despejar el pasillo peatonal y reforzar el límite de velocidad con todos",1,"Correcto. Se corrigen las dos causas: el pasillo bloqueado y la velocidad."],
+   ["Hablar con la montacarguista y seguir",.5,"Ayuda, pero el pasillo sigue bloqueado y el riesgo sigue."],
+   ["Llamarle la atención a Nico por salir de entre las tarimas",0,"Culpar a la persona no corrige la condición: el pasillo peatonal estaba invadido."],
+   ["Darle a Nico un chaleco de alta visibilidad y seguir",0,"Un chaleco ayuda, pero no corrige la falta de separación ni la velocidad del montacargas."]],
+  safety:1,seg:6,dl:1.5,esc:"Un operario atropellado por un montacargas: lesión grave."},
+ {id:"loto",u:"llen",area:"seg",who:"tito",t:"Destrabar la llenadora sin bloquear",tag:"Seguridad · LOTO",say:"Hay una botella trabada en la estrella. Son 30 segundos, meto la mano y listo.",sayx:"La llenadora se trabó, ya la arreglo.",
+  data:()=>`La llenadora está detenida con una botella trabada.`,x:()=>`La llenadora está trabada.`,
+  meas:["cam","La llenadora está en paro pero <b>sin candado</b>, y el botón de arranque está en la consola, a 20 metros."],
+  opts:[["Detener: bloqueo y etiquetado (LOTO) antes de intervenir y verificar energía cero",1,"Correcto. Una máquina «parada» puede arrancar. El candado personal garantiza que nadie la encienda."],
+   ["Parar con el paro de emergencia y que alguien vigile el botón de arranque",.5,"Mejor que nada, pero un paro de emergencia no es un bloqueo: no garantiza energía cero."],
+   ["Parar la máquina desde el panel; Tito conoce bien la estrella",0,"La experiencia no reemplaza el bloqueo: los atrapamientos les pasan sobre todo a los que confían."],
+   ["Usar la herramienta de gancho para sacar la botella sin meter la mano",0,"Más seguro que la mano, pero sin bloqueo la estrella puede girar y lanzar la herramienta o atrapar el brazo."]],
+  safety:1,seg:10,stop:1,dl:.8,esc:"El mecánico sufrió un atrapamiento en la mano."},
+ {id:"guarda",u:"emp",area:"seg",who:"nico",t:"Una guarda abierta con la máquina operando",tag:"Seguridad · Guardas",say:"La guarda de la empacadora está abierta y la máquina sigue funcionando. ¿Es normal?",sayx:"Vi algo raro en la empacadora.",
+  data:()=>`La empacadora funciona con una guarda abierta.`,x:()=>`Algo raro en la empacadora.`,
+  meas:["cam","El interruptor de seguridad de la guarda está <b>puenteado con cinta</b>."],
+  opts:[["Parar la máquina, quitar el puente, reparar el interruptor y averiguar por qué lo puentearon",1,"Correcto. Puentear una seguridad casi siempre tiene un motivo (atascos, prisa): si no se corrige la causa, volverán a hacerlo."],
+   ["Cerrar la guarda, quitar el puente y reportarlo en la mañana",.5,"Se corrige el riesgo inmediato, pero si no averiguas por qué lo puentearon, mañana aparecerá otro puente."],
+   ["Dejarlo así hasta la parada programada, con un operador vigilando",0,"Un vigilante no detiene una máquina. Una máquina sin guarda no opera."],
+   ["Poner un rótulo de peligro y restringir el paso a la zona",0,"Un rótulo no reemplaza la protección física, y el operador sigue teniendo que acercarse."]],
+  safety:1,seg:8,dl:1.2},
+ {id:"confinado",u:"jar",area:"seg",who:"tito",t:"Hay que entrar a limpiar un tanque de jarabe",tag:"Seguridad · Espacio confinado",say:"Hay que entrar al tanque 2 a limpiar un residuo. Me meto rápido.",sayx:"Hay que limpiar adentro del tanque 2.",
+  data:()=>`Limpieza manual dentro del tanque de jarabe 2.`,x:()=>`Trabajo dentro de un tanque.`,
+  meas:["gas","Dentro del tanque: <b>O₂ 19 %</b> (mínimo 19,5 %) y CO₂ residual."],
+  opts:[["Permiso de espacio confinado: ventilar, medir O₂ continuamente, vigía afuera y plan de rescate",1,"Correcto. En espacios confinados la atmósfera puede matar sin aviso. Se trabaja con permiso, medición, vigía y rescate listo."],
+   ["Ventilar 30 minutos y entrar con detector",.5,"Mejor que nada, pero falta el vigía y el plan de rescate."],
+   ["Entrar con el detector y que alguien vigile desde la boca del tanque: son 5 minutos",0,"Sin permiso ni plan de rescate, si el mecánico se desmaya el vigía entra a sacarlo… y son dos víctimas."],
+   ["Entrar con mascarilla y un arnés amarrado a la escalera",0,"La mascarilla no da oxígeno, y un arnés sin sistema de rescate no permite sacar a nadie."]],
+  safety:1,seg:10,dl:1.5,esc:"El mecánico se desmayó dentro del tanque."},
+ {id:"dormido",u:"llen",area:"per",who:"lalo",t:"Un operador se quedó dormido en la consola",tag:"Personas · Fatiga",say:"Ingeniero… Nico se quedó dormido en la consola. Es su tercer turno seguido.",sayx:"Hay un tema con Nico.",
+  data:()=>`Un operador dormido frente a la consola.`,x:()=>`Un operador no responde en su puesto.`,
+  meas:["cam","Nico lleva <b>3 turnos seguidos</b> cubriendo ausencias."],
+  opts:[["Hablar con él con respeto, rotarlo a una tarea menos crítica, cubrir su puesto y revisar su jornada",1,"Correcto. La fatiga es un riesgo de seguridad, no una falta de disciplina. Se protege a la persona y a la operación."],
+   ["Darle un café y una pausa de 10 minutos, y que siga en la consola",.5,"Ayuda un rato, pero después de tres turnos seguidos la fatiga vuelve: no debe operar equipo crítico."],
+   ["Reportarlo a recursos humanos para que se tome una medida",0,"Es un problema de jornada, no de disciplina. El reporte no protege a nadie esta noche."],
+   ["Dejarlo descansar en la consola: la línea va estable y Lalo lo cubre de reojo",0,"Una persona dormida frente a la consola es una alarma que nadie atiende."]],
+  conf:6,seg:4,dl:1.5},
+ {id:"ausente",u:"pal",area:"per",who:"mari",t:"Faltó el operador de la paletizadora",tag:"Personas · Cobertura",say:"El de la paletizadora no vino. ¿Quién la opera?",sayx:"Falta alguien en el turno.",
+  data:()=>`La paletizadora no tiene operador asignado.`,x:()=>`Hay un puesto sin cubrir.`,
+  meas:["cam","Lalo y Marisol están entrenados en la paletizadora. Nico no."],
+  opts:[["Mover a una persona entrenada y bajar un poco la velocidad hasta reorganizar",1,"Correcto. Solo opera una máquina quien está entrenado."],
+   ["Pedir a alguien del turno de la tarde que se quede",.5,"Resuelve, pero cansa a alguien que ya trabajó todo el día."],
+   ["Poner a Nico con la instrucción de trabajo impresa: la paletizadora es sencilla",0,"La instrucción no reemplaza el entrenamiento. Operar sin entrenamiento es un riesgo para él y para la máquina."],
+   ["Operarla tú mientras se resuelve, desde la consola de la paletizadora",0,"La planta se queda sin quien tome decisiones. El ingeniero de noche no puede quedarse amarrado a un puesto."]],
+  slow:.7,dl:2},
+ {id:"camion",u:"muelle",area:"per",who:"mari",t:"Llegó un camión dos horas antes",tag:"Logística · Despacho",say:"El camión de las 7 llegó a las 5. Quiere cargar ya.",sayx:"Llegó un camión antes de hora.",
+  data:()=>`Un camión pide carga antes de su hora.`,x:()=>`Un camión está en el portón.`,
+  meas:["trend","Hay 18 tarimas liberadas por calidad y <b>6 tarimas retenidas</b> en la bodega."],
+  opts:[["Cargar solo producto liberado por calidad y que espere el resto",1,"Correcto. El producto retenido nunca se despacha, aunque presione el cliente."],
+   ["Que espere hasta su hora",.5,"Es válido, pero podías adelantar con el producto liberado."],
+   ["Cargar las tarimas retenidas que solo esperan el resultado del laboratorio, con una nota para el cliente",0,"Producto retenido es producto no liberado, aunque «seguro salga bien». No se despacha."],
+   ["Cargar rápido sin revisar etiqueta por etiqueta: todas las tarimas son del mismo producto",0,"Así es como se cuelan tarimas retenidas o de otro lote. Se verifica cada etiqueta."]],
+  dl:2},
+ {id:"envuelta",u:"pal",area:"pro",who:"mari",t:"Tarimas mal envueltas que se inclinan",tag:"Proceso · Paletizado",say:"Las tarimas salen flojas. Una casi se me cae del montacargas.",sayx:"Las tarimas no se ven firmes.",
+  data:()=>`Tarimas inestables al moverlas.`,x:()=>`Las tarimas se mueven al levantarlas.`,
+  meas:["trend","Desde el cambio de rollo de las 23:00, el preestiramiento de la envolvedora está al <b>150 %</b> (el estándar es 250 %)."],
+  opts:[["Ajustar el preestiramiento de la envolvedora y volver a envolver las tarimas afectadas",1,"Correcto. Con poco preestiramiento la película no aprieta la carga."],
+   ["Darle vueltas extra de película a cada tarima",.5,"Funciona, pero gastas mucha más película sin corregir el ajuste."],
+   ["Despacharlas con esquineros: el camión va con amarres",0,"Una carga inestable se cae al frenar o al descargar. Se corrige el envoltorio antes de despachar."],
+   ["Armar tarimas de menos camas para que sean más estables",0,"Pierdes capacidad en cada camión y la causa (el preestiramiento) sigue igual."]],
+  seg:3,slow:.9,dl:2.5},
+ {id:"gotera",u:"pref",area:"pro",who:"chepe",t:"Goteras sobre la bodega de preformas",tag:"Proceso · Materiales",say:"Con este aguacero está entrando agua en la bodega de preformas.",sayx:"Está entrando agua por el techo en algún lado.",
+  data:()=>`Agua cayendo sobre tarimas de preformas.`,x:()=>`Hay agua en el piso de una bodega.`,
+  meas:["cam","El agua cae sobre <b>6 tarimas</b> de preformas que no tienen la cubierta de plástico."],
+  opts:[["Mover y proteger las preformas, separar las mojadas para que calidad las evalúe y reportar el techo",1,"Correcto. Las preformas húmedas o sucias pueden dar defectos en el soplado y contaminar las botellas."],
+   ["Taparlas con plástico y seguir",.5,"Protege desde ahora, pero las ya mojadas pueden pasar a la sopladora."],
+   ["Usarlas: el horno de la sopladora las calienta y evapora el agua",0,"La humedad y la suciedad terminan dentro de la botella."],
+   ["Secar con aire comprimido las preformas mojadas y usarlas",0,"Secas por fuera, pero el agua del techo trae suciedad. Calidad debe evaluarlas antes de usarlas."]],
+  dl:2.5}];
+const DILS=[
+ {id:"d_mora",who:"mora",u:"ofi",t:"El gerente llama a las 3 de la mañana",tag:"Dilema · Presión",say:"Disculpe la hora. Mañana llega el pedido grande del supermercado. Necesito que no pare la línea por nada, ¿me entiende? Por nada.",data:()=>`Tienes producto retenido por calidad y un problema de seguridad pendiente.`,
+  opts:[["Explicarle con datos qué está detenido y por qué, y proponer cómo recuperar producción sin saltarse calidad ni seguridad",{m:0,seg:3,conf:5},"Decir «no» con un plan es lo que hace un superintendente. El gerente necesita la verdad, no promesas."],
+   ["Comprometerte a cumplir el pedido completo y ver en la mañana cómo se recupera lo retenido",{m:600,seg:-6,conf:-3},"Ganas tranquilidad hoy, pero si algo sale mal, la responsabilidad es tuya."],
+   ["Liberar las tarimas retenidas cuyo control salió en el límite para completar el pedido",{m:900,seg:-4,conf:-8,cal:-15},"Cumples el pedido con producto fuera de especificación. Si el cliente lo detecta, el daño es mucho mayor."]]},
+ {id:"d_permiso",who:"lalo",u:"llen",t:"Lalo pide irse temprano",tag:"Dilema · Personas",say:"Ingeniero, me llamaron de la casa: mi hija tiene fiebre alta y mi esposa no tiene carro. ¿Me puedo ir?",data:()=>`Lalo es tu operador más experimentado de la llenadora.`,
+  opts:[["Dejarlo ir y reorganizar: Marisol cubre la llenadora y se baja un poco la velocidad",{m:-300,seg:0,conf:10},"Las personas primero. Pierdes algo de producción, pero ganas un equipo que confía en ti."],
+   ["Pedirle que espere al relevo de las 6",{m:0,seg:-3,conf:-10},"Un operador angustiado no está concentrado, y la confianza se rompe."],
+   ["Dejarlo ir y operar tú la llenadora",{m:0,seg:-4,conf:6},"Bien por Lalo, pero la planta se queda sin quien tome decisiones."]],fx:[()=>{S.slowP=.9},null,null]},
+ {id:"d_lote",who:"caro",u:"labq",t:"¿Retener o liberar un lote en el límite?",tag:"Dilema · Calidad",say:"El lote de las 22:00 dio 3,55 volúmenes de CO₂. La especificación es 3,6. Está en el límite. ¿Qué hago?",data:()=>`Son 900 cajas. El resto de los parámetros está bien.`,
+  opts:[["Retenerlo, repetir el análisis con más muestras y decidir con datos",{m:0,seg:0,conf:4,cal:6},"Correcto en calidad: una muestra en el límite no basta para decidir. Más datos, mejor decisión."],
+   ["Liberarlo: la diferencia está dentro de la incertidumbre del método de medición",{m:400,seg:0,conf:-4,cal:-10},"«Casi» no es especificación. Si se acepta una vez, el límite deja de existir."],
+   ["Descartar el lote completo para no correr ningún riesgo",{m:-500,seg:0,conf:0,cal:2},"Muy seguro, pero caro: con un análisis adicional podías salvarlo."]]},
+ {id:"d_cip",who:"tito",u:"cip",t:"¿Saltarse el CIP intermedio?",tag:"Dilema · Inocuidad",say:"Si nos saltamos el CIP de medianoche recuperamos dos horas de producción. Nadie se va a dar cuenta.",data:()=>`El procedimiento pide CIP cada 24 horas de producción continua.`,
+  opts:[["No: el CIP se hace. Buscar otras formas de recuperar tiempo",{m:-200,seg:0,conf:3,cal:6},"La inocuidad no se negocia. Un brote de contaminación cuesta muchísimo más que dos horas."],
+   ["Pasar el CIP de medianoche al cambio de turno, cuando la línea igual se detiene",{m:500,seg:0,conf:-2,cal:-12},"Es exactamente así como empiezan los problemas microbiológicos."],
+   ["Hacer ahora un enjuague con agua caliente y el CIP completo en la mañana",{m:250,seg:0,conf:-1,cal:-6},"Un enjuague no limpia ni desinfecta."]]},
+ {id:"d_error",who:"nico",u:"cod",t:"Un error que nadie vio",tag:"Dilema · Integridad",say:"Ingeniero… creo que me equivoqué. Puse mal la fecha en la codificadora hace una hora. Nadie se dio cuenta.",data:()=>`Unas 1 000 cajas con fecha de vencimiento equivocada.`,
+  opts:[["Agradecerle que lo dijera, retener las cajas, corregir y reportarlo en la entrega de turno",{m:-200,seg:2,conf:10,cal:6},"Reportar un error propio requiere valor. Si se agradece, la gente seguirá diciendo la verdad."],
+   ["Corregir la codificadora desde ahora sin retener: la fecha quedó corrida apenas un día",{m:0,seg:0,conf:-6,cal:-12},"Una fecha equivocada es un incumplimiento legal y rompe la trazabilidad."],
+   ["Reportarlo y abrirle a Nico una amonestación para que no se repita",{m:-200,seg:0,conf:-8,cal:4},"El problema se corrige, pero la próxima vez nadie va a avisar."]]},
+ {id:"d_formato",who:"lalo",u:"llen",t:"Toca el cambio de formato",tag:"Evento · Planificación",say:"Ingeniero, según el plan a las 22:00 pasamos de 600 ml a 2 litros. ¿Cómo lo hacemos?",data:()=>`El cambio con checklist toma unos 45 minutos de línea parada. A la carrera, unos 20.`,
+  opts:[["Hacerlo con el checklist completo: guías, válvulas, tapas, inspector y primera botella aprobada por calidad",{m:-650,seg:2,conf:4,cal:5},"Así se hace: más lento, pero la línea arranca bien a la primera. El checklist existe porque alguien ya aprendió por las malas."],
+   ["Hacerlo rápido con Lalo, que lo ha hecho cientos de veces, y verificar solo la primera botella",{m:-280,seg:-2,conf:0,cal:-2},"Ganas 25 minutos… si nada se quedó mal ajustado. Habrá que ver en un rato."],
+   ["Posponerlo y dejárselo al turno de día",{m:0,seg:0,conf:-6,cal:0},"La producción de hoy no se toca, pero el plan se atrasa y el turno de día hereda tu problema."]],fx:[null,()=>{if(rnd()<.6)(S.pend||(S.pend=[])).push({t:S.t+35,id:rnd()<.5?"nivel":"torque"})},null]},
+ {id:"d_cerca",who:"chepe",u:"porton",t:"Una sombra junto a la cerca",tag:"Evento · Seguridad física",say:"Ingeniero, en la cámara 4 veo a alguien caminando junto a la cerca de atrás, por la bodega de preformas.",data:()=>`Son las 02:45. Don Chepe está solo en el portón.`,
+  opts:[["Que Don Chepe no salga solo: seguirlo por cámaras, encender las luces del perímetro y llamar a la empresa de seguridad",{m:0,seg:4,conf:5},"Correcto: nadie se arriesga solo de noche. Con luces y una llamada, la persona se fue."],
+   ["Ir tú mismo con una linterna a ver qué es",{m:0,seg:-5,conf:1,en:-4},"Valiente, pero el ingeniero no es guarda de seguridad. Era un perro… esta vez."],
+   ["Decirle a Don Chepe que no se preocupe: seguro es un vecino que pasa por ahí",{m:0,seg:-3,conf:-4},"Don Chepe se queda solo con su preocupación. La seguridad física también es parte del turno."]]},
+ {id:"d_reporte",who:"caro",u:"ofi",t:"Preparar la entrega de turno",tag:"Evento · Comunicación",say:"Ingeniero, el ingeniero de día llega a las 6. ¿Le preparo los datos para el reporte?",data:()=>`Una buena entrega de turno evita que el siguiente turno repita tus problemas.`,
+  opts:[["Escribir el reporte con datos: pendientes, producto retenido, equipos que fallaron y qué quedó a medias",{m:0,seg:2,conf:4,en:-3},"Una entrega clara es la última decisión de seguridad del turno. El ingeniero de día empieza sabiendo qué vigilar."],
+   ["Contarlo de palabra a las 6",{m:0,seg:0,conf:0},"Algo es algo, pero a las 6 de la mañana, cansado, se olvidan cosas."],
+   ["Que lea la bitácora del SCADA",{m:0,seg:-2,conf:-4},"El SCADA dice qué pasó, pero no por qué ni qué quedó pendiente."]],fx:[()=>{S.rep=1},null,null]},
+ {id:"d_cafe",who:"mari",u:"cafe",t:"Estás muy cansado",tag:"Dilema · Tu salud",say:"Ingeniero, se le ve agotado. Váyase al comedor 20 minutos, yo le aviso si pasa algo.",data:()=>`Llevas muchas horas despierto y te cuesta concentrarte.`,
+  opts:[["Aceptar 20 minutos de descanso con el radio encendido",{m:0,seg:3,conf:4,en:30},"Descansar no es debilidad: un ingeniero agotado toma peores decisiones."],
+   ["Seguir: faltan menos de dos horas y la planta te necesita",{m:0,seg:-4,conf:0,en:-5},"La fatiga es una de las principales causas de errores en el turno de noche."],
+   ["Tomarte el tercer café",{m:0,seg:0,conf:0,en:10},"Ayuda un poco, pero el café no reemplaza el descanso."]]},
+ {id:"d_nuevo",who:"nico",u:"llen",t:"Nico quiere aprender el cambio de formato",tag:"Dilema · Personas",say:"Ingeniero, ¿me enseña a hacer el cambio de formato? Así la próxima vez lo hago yo.",data:()=>`Enseñarle toma 30 minutos más que hacerlo con Lalo.`,
+  opts:[["Enseñarle paso a paso con Lalo",{m:-200,seg:2,conf:8},"Invertir en las personas es lo que hace fuerte a un turno."],
+   ["Mejor otro día: esta noche el cambio tiene que salir rápido",{m:0,seg:0,conf:-4},"Siempre hay mucho trabajo: así nunca aprende nadie."],
+   ["Que lo haga solo y pregunte si tiene dudas",{m:0,seg:-5,conf:2},"Sin acompañamiento, un cambio de formato mal hecho puede dañar la máquina o lastimar a alguien."]]}];
+for(const d of DILS){d.dil=true;d.dl=1.5;}
+
+// ---------- estado ----------
+const META=12000;
+const S={t:18*60,started:false,prod:0,hold:0,seg:70,cal:85,amb:85,conf:60,en:100,cafes:3,snk:2,pend:[],v:100,Tp:4,Pc:3.4,
+ log:[],ss:{ok:0,bad:0,ign:0,meas:0,part:0,acc:0},decBuf:[],outbox:[],player:null,dilDone:[],slowP:1,storm:0,done:false,ev:{}};
+let SPD=1,T=0,NIGHT=1,RAIN=0,FLASH=0;
+const AREAN={cal:"Calidad",pro:"Proceso",amb:"Ambiente",seg:"Seguridad",per:"Personas"};
+function co2v(){return .86*(S.Pc+1)*Math.exp(-.038*(S.Tp-4))}
+function foam(){return S.Tp>7||S.v>106||S.Pc>4}
+// ---------- senior: familiaridad (e = experiencia, d = datos, f = fuera de tu especialidad) y lineamientos ----------
+const FAM={co2:"e",brix:"e",nivel:"e",torque:"d",cuerpo:"e",codigo:"e",micro:"f",cip:"e",etiq:"d",sopla:"f",atasco:"e",frio:"f",aire:"d",agua:"f",jarabe:"e",apagon:"d",ph:"f",co2fuga:"d",amonia:"f",ruido:"d",derrame:"e",monta:"e",loto:"e",guarda:"e",confinado:"e",dormido:"e",ausente:"e",camion:"e",envuelta:"d",gotera:"d"};
+const LIN={
+ co2:["Procedimiento de calidad: producto fuera de especificación se <b>retiene</b> desde el último control bueno. Corregir la <b>causa</b> antes que el síntoma; no se ajustan instrumentos sin evidencia de falla.",[2]],
+ brix:["Procedimiento de calidad: no se libera producto fuera de especificación. <b>No se reprocesa</b> jarabe terminado sin autorización de calidad.",[2,3]],
+ nivel:["Práctica estándar: los sistemas de inspección <b>no se desajustan</b> para producir; se aísla el equipo que falla.",[2]],
+ torque:["Procedimiento de calidad: ante un defecto, retener desde el último control bueno y buscar si es <b>un cabezal o todos</b> antes de cambiar parámetros generales.",[3]],
+ cuerpo:["Procedimiento de cuerpos extraños: <b>detener</b>, identificar el origen, retener desde la última verificación y documentar.",[2]],
+ codigo:["Trazabilidad: todo producto debe tener un código <b>legible</b>; lo ilegible se recodifica o se retiene. El formato del código no se cambia en el turno.",[2,3]],
+ micro:["Inocuidad: ante un resultado microbiológico fuera de límite se <b>retiene el producto</b> y se actúa sobre la desinfección; no se espera la confirmación produciendo.",[2,3]],
+ cip:["Procedimiento CIP: un ciclo que no cumple tiempo, temperatura y concentración <b>se repite completo</b>. No se arranca sin verificar la limpieza.",[2,3]],
+ etiq:["Práctica estándar: revisar primero las <b>condiciones de operación</b> (temperatura del pegamento, superficie de la botella) antes de culpar al material. El producto no se calienta.",[3]],
+ sopla:["Seguridad y proceso: cualquier cambio de componentes en la sopladora se hace con <b>bloqueo de energía (LOTO)</b>. Verificar el perfil antes de culpar al proveedor.",[]],
+ atasco:["Seguridad: nunca se desactivan sensores ni se retiran guardas. Intervenir la máquina solo <b>bloqueada (LOTO)</b>.",[2,3]],
+ frio:["Práctica estándar: no se agrega nada al producto que no sea parte de la fórmula; no se hacen <b>bypass</b> en sistemas de refrigeración sin ingeniería.",[2,3]],
+ aire:["Práctica estándar: <b>no se opera fuera del rango</b> de diseño del compresor ni se quita el tratamiento de aire (el aire toca el producto).",[2,3]],
+ agua:["Inocuidad: el tratamiento de agua <b>nunca se puentea</b>. Las bombas no se llevan por encima de su rango.",[2]],
+ jarabe:["Procedimiento de calidad: ningún tanque se usa sin <b>aprobación de calidad</b>. El jarabe no se diluye fuera de la receta.",[2,3]],
+ apagon:["Procedimiento de arranque: verificar seguridades y producto en proceso; arrancar <b>en orden</b>, del final de la línea hacia el inicio.",[2]],
+ ph:["Permiso ambiental: no se descarga fuera de rango. No se agregan químicos a la red pública.",[2,3]],
+ co2fuga:["Seguridad: <b>nunca se interviene una línea presurizada</b>. El CO₂ desplaza el oxígeno y se acumula en zonas bajas.",[2,3]],
+ amonia:["Plan de emergencia de amoníaco: evacuar, ventilación de emergencia y solo personal con <b>equipo autónomo</b>. La mascarilla de polvo no protege de gases.",[2,3]],
+ ruido:["Relación con la comunidad: escuchar y <b>atender la causa</b>. El permiso no exime de ser buen vecino.",[2,3]],
+ derrame:["Hoja de seguridad (SDS) de la soda: EPP para químicos, contener y neutralizar. <b>Nunca</b> se lava hacia el desagüe ni se manipula sin guantes.",[2,3]],
+ monta:["Seguridad: separación de <b>peatones y montacargas</b>. Ante un casi accidente se detiene, se corrige la condición y se comunica.",[2]],
+ loto:["Seguridad: <b>bloqueo y etiquetado (LOTO)</b> para cualquier intervención en partes móviles, sin excepción de tiempo.",[2,3]],
+ guarda:["Seguridad: los interruptores de guarda <b>nunca se puentean</b>. Una máquina sin guarda no opera.",[2,3]],
+ confinado:["Seguridad: entrar a un espacio confinado requiere <b>permiso, medición de O₂ continua, vigía y plan de rescate</b>.",[2,3]],
+ dormido:["Gestión de fatiga: una persona con sueño <b>no opera equipo crítico</b>. Se protege a la persona y se revisa la jornada.",[3]],
+ ausente:["Seguridad: solo opera un equipo quien está <b>entrenado</b>. El ingeniero no deja la planta sin supervisión.",[2,3]],
+ camion:["Procedimiento de despacho: solo sale <b>producto liberado por calidad</b> y con etiquetas verificadas.",[2,3]],
+ envuelta:["Seguridad en almacenamiento: no se despacha una carga inestable. Corregir el <b>parámetro de la máquina</b>, no solo el síntoma.",[2]],
+ gotera:["Calidad de materiales: material expuesto a agua o suciedad se <b>separa y lo evalúa calidad</b> antes de usarlo. Reportar la condición de la infraestructura.",[2,3]]};
+function hr(){return (S.t/60)%24}
+function clk(){const m=Math.floor(S.t)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
+function rate(){// cajas por hora
+ let a=1;for(const i of INC){if(i.c.stop)a=0;else if(i.c.slow)a*=i.c.slow;}
+ a*=S.slowP||1;const r=1300*S.v/100*a*(foam()?.93:1);const off=co2v()<3.6||co2v()>4.0;
+ let hold=off?1:0;for(const i of INC)if(i.c.hold)hold=Math.max(hold,i.c.hold);return {r,good:r*(1-hold),held:r*hold,off};}
+// ---------- mapa y unidades ----------
+const X0=-2,X1=38,Y0=-2,Y1=33;
+const U={};function unit(id,o){U[id]=Object.assign({id},o)}
+unit("sop",{x:4.8,y:10,nm:"Sopladora",ic:"🫧",info:"Calienta las preformas de PET en un horno infrarrojo y las estira con aire a alta presión dentro de un molde: así nace cada botella. El perfil de temperatura del horno define la forma de la botella."});
+unit("llen",{x:9.6,y:10,nm:"Carbonatador y llenadora",ic:"🍾",info:"El carbonatador disuelve CO₂ en el producto frío bajo presión (ley de Henry: más presión y menos temperatura, más gas). La llenadora isobárica presuriza cada botella con CO₂ antes de llenarla para que el gas no se escape."});
+unit("tap",{x:11.7,y:10.2,nm:"Taponadora",ic:"🔩",info:"Coloca y aprieta las tapas con un torque controlado. Muy flojo: la bebida pierde gas. Muy apretado: la tapa no abre o se daña la rosca."});
+unit("insp",{x:13.4,y:10,nm:"Inspectores",ic:"🔍",info:"Inspectores de nivel, tapa y visión rechazan automáticamente las botellas defectuosas. Son la última barrera, no la primera: la calidad se construye en el proceso."});
+unit("etiq",{x:15.2,y:10,nm:"Etiquetadora",ic:"🏷️",info:"Coloca la etiqueta envolvente con pegamento caliente. Las botellas frías condensan humedad y eso afecta el pegado."});
+unit("cod",{x:17.2,y:10,nm:"Codificadora",ic:"🖨️",info:"Imprime el lote y la fecha de vencimiento en cada botella. Es la base de la trazabilidad: sin código no se sabe qué retirar si hay un problema."});
+unit("emp",{x:19.8,y:10,nm:"Empacadora termoencogible",ic:"📦",info:"Agrupa las botellas, las envuelve en película y las pasa por un túnel caliente que encoge el plástico."});
+unit("pal",{x:24,y:10,nm:"Paletizadora y envolvedora",ic:"🧱",info:"Arma las tarimas por capas y las envuelve con película estirable. El preestiramiento de la película da la firmeza de la carga."});
+unit("bod",{x:29.5,y:10,nm:"Bodega de producto terminado",ic:"🏬",info:"Guarda las tarimas liberadas y separa las retenidas por calidad. Los montacargas y los peatones comparten espacio: los pasillos peatonales salvan vidas."});
+unit("muelle",{x:34.2,y:11,nm:"Andén de despacho",ic:"🚚",info:"Aquí se cargan los camiones. Solo sale producto liberado por calidad."});
+unit("jar",{x:5,y:3.4,nm:"Sala de jarabes",ic:"🍯",info:"Se disuelve el azúcar, se agregan saborizantes y se prepara el jarabe terminado. Cada tanque se aprueba por Brix y sabor antes de usarse."});
+unit("agua",{x:12.4,y:3.4,nm:"Tratamiento de agua",ic:"💧",info:"Filtros de arena, carbón activado (quita cloro y olores), ósmosis inversa y luz UV. El agua es más del 85 % de la bebida."});
+unit("co2",{x:17.6,y:3,nm:"Tanque de CO₂",ic:"🧊",info:"Guarda el CO₂ líquido a muy baja temperatura. Un vaporizador lo convierte en gas. Una fuga desplaza el oxígeno y se acumula en zonas bajas."});
+unit("nh3",{x:22,y:3,nm:"Refrigeración con amoníaco",ic:"❄️",info:"Compresores de amoníaco y un condensador evaporativo enfrían el glicol que enfría el producto. El amoníaco es muy eficiente, pero tóxico."});
+unit("aire",{x:27,y:3.2,nm:"Compresores de aire",ic:"🌬️",info:"Dan el aire comprimido para la sopladora, las válvulas y los actuadores. Un aire húmedo o con poca presión afecta a toda la línea."});
+unit("cip",{x:4,y:16.4,nm:"Estación CIP",ic:"🧼",info:"Limpieza en el lugar (Clean In Place): enjuague, soda caliente, enjuague, ácido y sanitizante, sin desarmar los equipos. Depende de tiempo, temperatura, concentración y flujo."});
+unit("labq",{x:8.8,y:16.2,nm:"Laboratorio de calidad",ic:"🧪",info:"Mide CO₂, Brix, torque, nivel, microbiología y agua. Cada lote se libera solo con resultados dentro de especificación."});
+unit("ofi",{x:12.4,y:16.4,nm:"Sala de control y oficina",ic:"🖥️",info:"Desde aquí ves el SCADA de toda la planta. Eres el único ingeniero en el turno: todo pasa por ti."});
+unit("cafe",{x:16,y:16.2,nm:"Comedor",ic:"☕",info:"Café, microondas y 20 minutos de descanso. En el turno de noche, descansar también es parte del trabajo seguro."});
+unit("pref",{x:21,y:17.2,nm:"Bodega de preformas y tapas",ic:"🧴",info:"Guarda las preformas de PET y las tapas. Deben estar secas, limpias y protegidas."});
+unit("ptar",{x:4.6,y:22,nm:"Planta de aguas residuales",ic:"♻️",info:"Neutraliza el pH (sobre todo la soda del CIP), separa sólidos y trata el agua antes de descargarla dentro de los límites del permiso."});
+unit("porton",{x:31,y:22.6,nm:"Portón y caseta del guarda",ic:"🚧",info:"Don Chepe controla quién entra y sale. Es el primero en saber si un camión llega temprano o si un vecino tiene una queja."});
+unit("barrio",{x:20,y:29.5,nm:"Barrio vecino",ic:"🏘️",info:"La planta funciona 24 horas a pocos metros de casas. Ruido, olores y luces afectan a los vecinos."});
+// líneas de producto (botellas) y rutas
+const BELT=[[6.4,10.4],[8.3,10.4]],BELT2=[[10.9,10.6],[12.8,10.6],[18.4,10.6]],CASE=[[21.8,10.6],[22.8,10.6]];
+const FROUTE=[[26.6,11.6],[28.4,12.6],[31,12.6],[31,8],[33.2,8],[33.2,12.8],[28.4,12.8]];
+const TRK=[[38,25],[34.8,25],[34.8,15.6],[36.4,15.6],[36.4,14],[38,14]];
+const ROADN=[[X0,25],[X1,25]];
+const WALK=[[3,12.6],[8,12.6],[13,12.6],[18,12.6],[23,12.6],[27,12.6],[8,14.4],[13,14.4],[17,14.4],[3,8],[3,14],[20,8],[26,8.2]];
+const PEOPLE=[];const VEST=["#2f6db5","#e2701c","#d4c21a","#2f9a4a"];for(let i=0;i<16;i++){const a=WALK[i%WALK.length];PEOPLE.push({x:a[0],y:a[1],tx:a[0],ty:a[1],sp:.6+rnd()*.4,v:VEST[i%4],h:["#f2f0e8","#f2c21b","#2f6db5"][i%3],wait:rnd()*3})}
+const FORK=[{s:0},{s:9}],TRUCKS=[{s:0},{s:11},{s:22}],HC=[];for(let i=0;i<5;i++)HC.push({x:X0+rnd()*40,d:i%2?1:-1,col:["#5b6770","#7a2e2e","#2e4a7a","#c9c3b5"][i%4]});
+const HOUSES=[];for(let x=1;x<37;x+=3.4)HOUSES.push([x,27.4,["#8a7f6e","#6f7a80","#8a6a5a","#7a7f66"][HOUSES.length%4],["#5a2a22","#3a3a3a","#4a3a2a"][HOUSES.length%3]]);for(let x=2.6;x<36;x+=3.8)HOUSES.push([x,30.6,["#7a7f66","#8a7f6e","#6f7a80"][HOUSES.length%3],["#3a3a3a","#5a2a22"][HOUSES.length%2]]);
+const LIGHTS=[[3,13.4],[9,13.4],[15,13.4],[21,13.4],[27,13.4],[33,13.4],[3,6.2],[11,6.2],[19,6.2],[27,6.2],[33,16],[25,20],[10,20],[31,24],[6,24.6],[16,24.6],[26,24.6],[36,24.6]];
+function pathLen(p){let L=0;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];L+=Math.hypot(b[0]-a[0],b[1]-a[1])}return L}
+function pathAt(p,s){const L=pathLen(p);s=((s%L)+L)%L;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length],l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(s<=l){const t=s/l;return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,Math.atan2(b[1]-a[1],b[0]-a[0])]}s-=l}return p[0].concat(0)}
+// ---------- suelo ----------
+let GROUND=null;const GO=[-(X0-Y1)*TW+40,-(X0+Y0)*TH+240];
+function buildGround(){const g=document.createElement("canvas");g.width=((X1-Y0)-(X0-Y1))*TW+80;g.height=((X1+Y1)-(X0+Y0))*TH+320;const c=g.getContext("2d");c.translate(GO[0],GO[1]);
+ const quad=(x,y,w,d,col,st)=>{const a=P(x,y),b=P(x+w,y),e=P(x+w,y+d),f=P(x,y+d);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.lineTo(e[0],e[1]);c.lineTo(f[0],f[1]);c.closePath();c.fillStyle=col;c.fill();if(st){c.strokeStyle=st;c.lineWidth=1;c.stroke()}};
+ for(let x=X0;x<X1;x++)for(let y=Y0;y<Y1;y++){let col=y>26?[44,52,40]:[52,54,52];const k=.88+rnd()*.15;quad(x,y,1,1,`rgb(${col[0]*k|0},${col[1]*k|0},${col[2]*k|0})`)}
+ quad(1.6,6.8,32.6,7.2,"#6d7376","rgba(0,0,0,.4)");// nave de producción
+ for(let x=2;x<34;x+=1)for(let y=7;y<14;y+=1){c.strokeStyle="rgba(255,255,255,.04)";const a=P(x,y),b=P(x+1,y);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}
+ quad(2,12.1,31.8,.7,"#3d7a4e");quad(2,12.1,31.8,.06,"#e9c31b");quad(2,12.75,31.8,.06,"#e9c31b");// pasillo peatonal
+ quad(1.6,1.4,28,4.6,"#5a5d5c","rgba(0,0,0,.35)");quad(1.6,14.8,22,4,"#5f6261","rgba(0,0,0,.35)");quad(1.8,19.8,7.4,4.4,"#55584f","rgba(0,0,0,.35)");quad(33.8,7,2.6,7,"#4d4f4e");
+ quad(24,20.4,6,3.6,"#3f4140");for(let i=0;i<6;i++){const a=P(24.2+i,20.6),b=P(24.2+i,22);c.strokeStyle="rgba(230,230,220,.35)";c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}
+ const road=(pts,w,col,dash,closed)=>{const n=closed?pts.length:pts.length-1;for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%pts.length];const pa=P(a[0],a[1]),pb=P(b[0],b[1]);c.strokeStyle=col;c.lineWidth=TW*w;c.lineCap="square";c.beginPath();c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);c.stroke();if(dash){c.strokeStyle=dash;c.lineWidth=1.4;c.setLineDash([8,10]);c.beginPath();c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);c.stroke();c.setLineDash([])}}};
+ road(ROADN,1.8,"#1f1e1b","rgba(240,230,200,.6)",0);road(TRK,1.1,"#24231f",null,1);road([[31,25],[31,19.6],[24,19.6],[24,14.4]],1,"#24231f","rgba(220,190,90,.4)",0);road([[1,14.2],[34,14.2]],.9,"#2a2925",null,0);
+ for(let i=0;i<160;i++){const x=rnd()*36,y=rnd()*25,[sx,sy]=P(x,y);const r=3+rnd()*12;c.fillStyle=`rgba(${rnd()<.5?"20,22,24":"60,70,80"},${.12+rnd()*.2})`;c.beginPath();c.ellipse(sx,sy,r*1.6,r*.8,0,0,7);c.fill();}
+ c.strokeStyle="rgba(150,150,140,.5)";const fz=[[0,0],[37,0],[37,25.6],[0,25.6],[0,0]];c.beginPath();fz.forEach((p,i)=>{const q=P(p[0],p[1]);i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1])});c.stroke();
+ GROUND=g;}
+// ---------- dibujo de equipos ----------
+function steelCyl(x,y,r,h,z0,o){return cyl(x,y,r,h,"#b9c0c4",z0||0,Object.assign({rust:0,bands:2},o||{}))}
+function bottles(pts,n,spd,col,on){const L=pathLen(pts.concat([pts[pts.length-1]]))/2||1;for(let i=0;i<n;i++){const s=((i/n)*L+(on?T*spd:0))%L;let acc=0,k=0;let x=pts[0][0],y=pts[0][1];
+  for(k=0;k<pts.length-1;k++){const a=pts[k],b=pts[k+1],l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(s<=acc+l){const t=(s-acc)/l;x=a[0]+(b[0]-a[0])*t;y=a[1]+(b[1]-a[1])*t;break}acc+=l}
+  const [sx,sy]=P(x,y,6);cx.fillStyle=col;cx.fillRect(sx-1.6,sy-7,3.2,7);cx.fillStyle="#d8261a";cx.fillRect(sx-1.2,sy-8.4,2.4,1.6);}}
+function drawables(){const L=[];const vw=VIEW();const add=(k,f,wx,wy)=>{if(wx!=null){const [sx,sy]=P(wx,wy);if(sx<vw[0]||sx>vw[2]||sy<vw[1]||sy>vw[3])return}L.push({k,f})};
+ const run=rate().r>1&&SPD>0;
+ // paredes del fondo de la nave
+ add(-1,()=>{box(1.6,6.6,32.6,.25,30,"#5d6468",0,{win:12,lit:1,lv:[.75],clean:1});box(1.4,6.6,.25,7.4,30,"#565c60",0,{clean:1});});
+ // servicios
+ add(3+5+1,()=>{for(let i=0;i<4;i++){const p=steelCyl(2.8+i*1.5,2.6,.6,34,0,{level:.4+.15*i});}box(2.4,4,4.6,1.2,10,"#8a9094",0,{clean:1});hitU("jar",P(5,3.4,20),150,60)},5,3.4);
+ add(3+12+1,()=>{for(let i=0;i<3;i++)cyl(10.2+i*1.1,2.4,.42,24,"#3f6b8a",0,{rust:0,bands:2});box(10,3.6,2.6,1,8,"#7d8487",0,{clean:1});steelCyl(14.4,3,1.1,40,0,{level:.6});box(13.2,4.4,.6,.3,4,"#7a5ab5",0,{clean:1});hitU("agua",P(12.4,3.2,20),150,60)},12.4,3.4);
+ add(3+17.6+1,()=>{const p=cyl(17.6,3,.75,72,"#e8e8e4",0,{rust:0,bands:3});const [a,b]=P(17.6,3,4);const g=cx.createRadialGradient(a,b,2,a,b,40);g.addColorStop(0,"rgba(230,240,255,.8)");g.addColorStop(1,"rgba(230,240,255,0)");cx.fillStyle=g;cx.fillRect(a-40,b-30,80,40);
+   for(let i=0;i<5;i++)box(18.8+i*.22,2.6,.12,1,26,"#cfd6da",0,{clean:1});hitU("co2",P(17.6,3,40),60,90)},17.6,3);
+ add(3+22+2,()=>{box(20.2,1.8,3.8,2.6,18,"#7a8084",0,{win:3,lit:1,lv:[.5],rust:2});box(20.6,2.2,2.8,1.6,8,"#5f6669",18,{clean:1});for(let i=0;i<2;i++){const [a,b]=P(21.4+i*1.2,3,27);cx.fillStyle="#2a2e30";cx.beginPath();cx.ellipse(a,b,12,6,0,0,7);cx.fill();
+   const on=!INC.find(x=>x.c.id==="frio")||i;if(on){cx.strokeStyle="#9aa";cx.save();cx.translate(a,b);cx.rotate(T*9+i);cx.beginPath();cx.moveTo(-10,0);cx.lineTo(10,0);cx.moveTo(0,-5);cx.lineTo(0,5);cx.stroke();cx.restore();}}
+   const [a,b]=P(20.6,4,16);cx.fillStyle="#f2c21b";cx.fillRect(a-10,b-8,20,10);cx.fillStyle="#111";cx.font="bold 7px system-ui";cx.fillText("NH₃",a-7,b);hitU("nh3",P(22,3,20),130,60)},22,3);
+ add(3+27+2,()=>{box(25.6,2.2,3,2,14,"#6d7376",0,{win:2,lit:1,lv:[.5]});steelCyl(29.2,3,.5,28);hitU("aire",P(27,3.2,12),100,50)},27,3.2);
+ // línea de producción
+ add(10+2.6+1,()=>{cyl(2.6,9.2,.6,28,"#4a6a8a",0,{rust:0,bands:2});box(3.6,8.8,2.6,2.4,22,"#8d969a",0,{clean:1});for(let i=0;i<4;i++){const [a,b]=P(6.2,9.1+i*.5,14);cx.fillStyle=`rgba(255,${110+40*Math.sin(T*3+i)|0},40,${INC.find(x=>x.c.id==="sopla")&&i===2?.15:.85})`;cx.fillRect(a-2,b-6,4,8);}hitU("sop",P(4.9,10,16),110,60)},4.9,10);
+ add(10+7+1,()=>{pipeLine([[6.2,10.4,14],[8.4,10.4,14]],"#9aa4a8",5);bottles([[6.2,10.4],[8.4,10.4]],10,1.3,"rgba(200,230,240,.8)",run);},7,10);
+ add(10+9.6+1.4,()=>{steelCyl(9.6,8.2,.55,46);const [cxx,cyy]=steelCyl(9.6,10.2,1.3,20);const n=16;for(let i=0;i<n;i++){const a=(run?T*1.6:0)+i/n*Math.PI*2;cx.fillStyle="#3a2014";cx.fillRect(cxx+Math.cos(a)*40-1.6,cyy+Math.sin(a)*20-7,3.2,7);cx.fillStyle="#d8261a";cx.fillRect(cxx+Math.cos(a)*40-1.2,cyy+Math.sin(a)*20-8,2.4,1.6);}
+   const tp=steelCyl(11.7,10.2,.55,24);for(let i=0;i<6;i++){const a=(run?T*2.4:0)+i/6*Math.PI*2;cx.fillStyle="#d8261a";cx.beginPath();cx.arc(tp[0]+Math.cos(a)*15,tp[1]+Math.sin(a)*7,2.2,0,7);cx.fill();}
+   hitU("llen",P(9.6,10.2,20),110,70);hitU("tap",P(11.7,10.2,16),50,40)},9.6,10.2);
+ add(10.6+13+1,()=>{pipeLine([[10.9,10.6,6],[18.6,10.6,6]],"#7d8487",4);bottles(BELT2[0]?[[10.9,10.6],[18.4,10.6]]:[],34,1.3,"#3a2014",run);
+   box(13,9.6,.9,1.2,14,"#4a5a64",0,{clean:1});const [a,b]=P(13.45,10.6,10);cx.fillStyle=`rgba(80,200,255,${.4+.3*Math.sin(T*8)})`;cx.fillRect(a-1,b-10,2,10);
+   box(14.6,9.4,1.4,.6,14,"#7d8487",0,{clean:1});for(let i=0;i<2;i++){const [c1,d1]=P(14.9+i*.8,9.6,16);cx.fillStyle="#f2f0e8";cx.beginPath();cx.ellipse(c1,d1,7,3.5,0,0,7);cx.fill();}
+   box(17,9.6,.5,.5,12,"#2a2e30",0,{clean:1});const [e,f]=P(17.25,9.85,12);cx.fillStyle=Math.sin(T*10)>0?"#3cff7a":"#1a3a22";cx.fillRect(e-1.5,f-2,3,3);
+   hitU("insp",P(13.4,10,10),40,40);hitU("etiq",P(15.2,9.8,10),50,40);hitU("cod",P(17.2,9.9,8),36,34)},14,10.4);
+ add(10+19.8+2,()=>{box(18.6,9.4,2.6,1.6,14,"#7d8487",0,{clean:1});box(21.2,9.5,1.4,1.4,12,"#5a5f62",0,{clean:1});const [a,b]=P(21.9,10.2,6);cx.fillStyle="rgba(255,120,40,.6)";cx.fillRect(a-12,b-6,24,5);
+   for(let i=0;i<4;i++){const x=21.8+((i*.4+(run?T*.4:0))%1.2);box(x,10.4,.3,.3,5,"#c9b48a",3,{clean:1});}hitU("emp",P(20,10.2,12),100,50)},20,10.2);
+ add(10+24+2,()=>{box(23,9,2.4,2.4,22,"#c8a23a",0,{clean:1});box(23.4,9.4,1.6,1.6,10,"#b08a5a",0,{clean:1});const [a,b]=P(26.2,10.4,2);cx.fillStyle="#3a3e40";cx.beginPath();cx.ellipse(a,b,22,11,0,0,7);cx.fill();box(25.8,10,.8,.8,12,"#b08a5a",2,{top:"rgba(220,230,240,.8)",clean:1});
+   const ang=run?T*2:0;cx.strokeStyle="#ddd";cx.lineWidth=2;cx.beginPath();cx.moveTo(a,b-20);cx.lineTo(a+Math.cos(ang)*20,b-20+Math.sin(ang)*10);cx.stroke();hitU("pal",P(24.4,10.2,14),120,60)},24.4,10.2);
+ // bodega
+ for(let r=0;r<3;r++)add(8+28+r*1.6+1,()=>{for(let k=0;k<4;k++){box(27.6+r*1.6+0,7.4+k*1.2,1,.9,3,"#5a3a2a",0,{clean:1});for(let lv=0;lv<3;lv++){if((r+k+lv)%4===3)continue;box(27.7+r*1.6,7.5+k*1.2,.8,.7,8,(r+k+lv)%5===0?"#c8261a":"#b08a5a",3+lv*10,{top:"rgba(220,230,240,.6)",clean:1});}}
+   box(27.5+r*1.6,7.3,.1,4.8,36,"#2f6db5",0,{clean:1});},28+r*1.6,9);
+ add(10+29.5,()=>hitU("bod",P(29.5,10,30),130,80));
+ for(const f of FORK){const [x,y,a]=pathAt(FROUTE,f.s);add(x+y+.5,()=>forklift(x,y,a),x,y)}
+ add(11+34.2+1,()=>{box(33.8,8,.4,5,6,"#4a4c4b",0,{clean:1});hitU("muelle",P(34.2,11,10),70,70)},34,11);
+ for(const t of TRUCKS){const [x,y,a]=pathAt(TRK,t.s);add(x+y+.5,()=>truckBig(x,y,a),x,y)}
+ // edificios de servicio
+ add(17+4+2,()=>{for(let i=0;i<3;i++)steelCyl(2.8+i*1.2,16,.5,24);box(2.4,17.2,3.6,.8,6,"#6d7376",0,{clean:1});hitU("cip",P(4,16.4,14),100,50)},4,16.4);
+ add(17+8.8+2,()=>{box(7.6,15.4,2.6,2,14,"#d8d3c7",0,{win:3,lit:1,lv:[.5]});box(7.6,15.4,2.6,2,2,"#2f6db5",14,{clean:1});hitU("labq",P(8.9,16.4,10),70,50)},8.8,16.4);
+ add(17+12.4+2,()=>{box(11,15.2,3,2.4,18,"#77746c",0,{win:4,lit:1,lv:[.35,.7]});const [a,b]=P(12.5,16.4,26);cx.fillStyle=`rgba(80,200,255,${.5+.4*Math.sin(T*2)})`;cx.beginPath();cx.arc(a,b-6,2,0,7);cx.fill();hitU("ofi",P(12.5,16.4,12),90,60)},12.4,16.4);
+ add(17+16+2,()=>{box(14.8,15.4,2.6,2,12,"#8a6a5a",0,{win:3,lit:1,lv:[.5]});const s=P(16.1,17.4,16);cx.fillStyle="#3a2a1c";cx.fillRect(s[0]-14,s[1]-8,28,10);cx.fillStyle="#ffd27a";cx.font="bold 8px system-ui";cx.fillText("☕ CAFÉ",s[0]-13,s[1]);hitU("cafe",P(16.1,16.4,8),70,50)},16,16.4);
+ add(17+21+3,()=>{box(18.6,15.4,5,3.2,18,"#6a6d68",0,{rust:3,win:2,lit:1,lv:[.6]});if(INC.find(x=>x.c.id==="gotera")){for(let i=0;i<3;i++){const [a,b]=P(20+i,16.6,18-((T*30+i*7)%18));cx.fillStyle="rgba(150,200,255,.8)";cx.fillRect(a,b,1.5,4);}}hitU("pref",P(21,17,12),130,60)},21,17);
+ add(22+4.6+2,()=>{for(const [x,y,r] of [[3.2,21.2,1.1],[6,21.2,1.1],[3.2,23.4,.9]]){const [a,b]=P(x,y,8);cx.fillStyle="#4a4c48";cx.beginPath();cx.ellipse(a,b,r*45,r*22.6,0,0,7);cx.fill();cx.fillStyle=INC.find(i=>i.c.id==="ph")&&x===6?"#8a7a3a":"#3a4a52";cx.beginPath();cx.ellipse(a,b,r*40,r*20,0,0,7);cx.fill();}box(6.6,23,1.4,1,8,"#6d7376",0,{clean:1});hitU("ptar",P(4.6,22,6),130,60)},4.6,22);
+ add(23+31+1,()=>{box(30.4,22.2,1.2,1,10,"#d8d3c7",0,{win:2,lit:1,lv:[.5]});const a=P(31.8,25,8),b=P(33.6,25,8);cx.strokeStyle="#e8c43a";cx.lineWidth=3;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();hitU("porton",P(31,22.6,8),60,40)},31,22.6);
+ for(const h of HOUSES)add(h[0]+h[1]+2,()=>house(h[0],h[1],h[2],h[3]),h[0],h[1]);
+ add(999-1,()=>hitU("barrio",P(20,29.5,8),300,60));
+ for(const c of HC){const y=c.d>0?24.7:25.3;add(c.x+y,()=>car(c.x,y,c.d>0?0:Math.PI,c.col),c.x,y)}
+ for(const p of PEOPLE)add(p.x+p.y+.2,()=>person(p),p.x,p.y);
+ for(const [x,y] of LIGHTS)add(x+y,()=>{const a=P(x,y),b=P(x,y,40);cx.strokeStyle="#3a3a36";cx.lineWidth=2;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();cx.fillStyle="#ffcf7a";cx.fillRect(b[0]-3,b[1]-2,6,3)},x,y);
+ add(9.6+16.2+.3,()=>{const [sx,sy]=P(YOU.x,YOU.y,0);person({x:YOU.x,y:YOU.y,v:"#7a2e9a",h:"#ffffff",mv:false});cx.fillStyle="#7a2e9a";cx.fillRect(sx-12,sy-38,24,12);cx.fillStyle="#fff";cx.font="bold 9px system-ui";cx.textAlign="center";cx.fillText("TÚ",sx,sy-29);cx.textAlign="left"});
+ return L;}
+const YOU={x:12.6,y:17.9};
+function forklift(x,y,a){const [sx,sy]=P(x,y,0);cx.save();cx.translate(sx,sy);const ex=(Math.cos(a)-Math.sin(a))*TW,ey=(Math.cos(a)+Math.sin(a))*TH;cx.rotate(Math.atan2(ey,ex));
+ cx.fillStyle="rgba(0,0,0,.35)";cx.fillRect(-10,-2,22,7);cx.fillStyle="#e8a020";cx.fillRect(-9,-8,14,9);cx.fillStyle="#222";cx.fillRect(-7,-14,2,6);cx.fillRect(1,-14,2,6);cx.fillRect(-7,-15,10,1.5);
+ cx.fillStyle="#555";cx.fillRect(5,-14,2,14);cx.fillStyle="#b08a5a";cx.fillRect(7,-9,8,7);cx.fillStyle=Math.sin(T*6)>0?"#ffb000":"#663";cx.fillRect(-2,-17,3,2);cx.restore();}
+function truckBig(x,y,a){const [sx,sy]=P(x,y,0);cx.save();cx.translate(sx,sy);const ex=(Math.cos(a)-Math.sin(a))*TW,ey=(Math.cos(a)+Math.sin(a))*TH;cx.rotate(Math.atan2(ey,ex));
+ cx.fillStyle="rgba(0,0,0,.35)";cx.fillRect(-34,-4,62,12);cx.fillStyle="#d8d3c7";cx.fillRect(-34,-16,46,16);cx.fillStyle="#2f6db5";cx.fillRect(-34,-10,46,3);cx.fillStyle="#c8261a";cx.fillRect(13,-14,14,14);cx.fillStyle="rgba(120,170,210,.8)";cx.fillRect(22,-12,4,5);cx.fillStyle="rgba(255,240,180,.9)";cx.fillRect(26,-3,3,3);cx.restore();}
+function VIEW(){const m=300;return [CAM.x-W/2/CAM.z-m,CAM.y-H/2/CAM.z-m*.6,CAM.x+W/2/CAM.z+m,CAM.y+H/2/CAM.z+m*1.6]}
+const HIT=[];
+// ---------- incidentes ----------
+const INC=[];let incId=1;
+function caseById(id){return CASES.find(c=>c.id===id)}
+function spawn(id){const c=caseById(id);if(!c||INC.find(i=>i.c.id===id))return;if(c.pre)c.pre();const i={id:incId++,c,t0:S.t,dl:c.dl*(S.conf>=70?1.3:S.conf<35?.75:1),seen:false};INC.push(i);beep(880,.08);updInc();toast(`❗ <b>${U[c.u].nm}:</b> ${c.t}`);return i;}
+function spawnDil(id){const pool=DILS.filter(d=>!INC.find(i=>i.c.id===d.id)&&!S.dilDone.includes(d.id)&&(!id||d.id===id)&&!["d_mora","d_cafe","d_formato","d_cerca","d_reporte"].includes(d.id)||(id&&d.id===id));const d=id?DILS.find(x=>x.id===id):pool[Math.floor(rnd()*pool.length)];if(!d||INC.find(i=>i.c.id===d.id))return;
+ INC.push({id:incId++,c:d,t0:S.t,dl:d.dl,seen:false});beep(660,.08);updInc();toast(`💬 <b>${CHARS[d.who].n}:</b> ${d.t}`);}
+function updInc(){const n=$("ninc");n.hidden=!INC.length;n.textContent=INC.length;}
+function meter(k,dv){S[k]=clamp((S[k]??60)+dv,0,100);}
+const CLN=[["🔁 Ya lo has visto antes","#9be08f"],["📊 Necesitas datos","#ffd27a"],["❓ Fuera de tu especialidad","#ff9a70"]];
+function clar(c){let l={e:0,d:1,f:2}[FAM[c.id]||"d"];const h=hr();if(h>=2&&h<6&&rnd()<.4)l++;if(S.en<30&&rnd()<.5)l++;return Math.min(2,l)}
+function instP(i){return clamp([.9,.72,.5][i.cl]+Math.min(.1,(S.ss.ok||0)*.02)-(S.en<30?.15:0),.3,.95)}
+function hunch(i){if(i.inst!=null)return;const c=i.c,all=c.opts.map((o,k)=>({o,k}));const best=all.find(x=>x.o[1]===1);let k=best.k;
+ if(rnd()>instP(i)){const acc=all.filter(x=>x.o[1]===.5),bad=all.filter(x=>x.o[1]===0);const pool=acc.length&&rnd()<.6?acc:bad;k=pool[Math.floor(rnd()*pool.length)].k}
+ i.inst=k;S.ss.inst=(S.ss.inst||0)+1;S.t+=1;beep(520,.08);incDlg(i);}
+function guide(i){if(i.lin)return;i.lin=true;i.t0-=5;S.t+=1.5;S.ss.lin=(S.ss.lin||0)+1;beep(700,.06);incDlg(i);}
+function incDlg(i){i.seen=true;const c=i.c,u=U[c.u];if(c.dil)return dilDlg(i);
+ if(i.cl==null)i.cl=clar(c);if(i.mOk==null)i.mOk=i.cl<2||rnd()<.7;const cl=i.cl;
+ const ops=i.ops||(i.ops=c.opts.map((o,k)=>({o,k})).sort(()=>rnd()-.5));const m=c.meas;const L=LIN[c.id]||["",[]];
+ const sug=cl===0?m[0]:null;
+ const tools=`<div class="mut" style="margin-top:8px">🔍 Investiga (cada medición consume tiempo)${sug?" · <span style='color:#9be08f'>por experiencia, empezarías por la marcada</span>":""}:</div><div class="tbs">${Object.keys(TOOLS).map(k=>`<button class="tb${(i.tried||[]).includes(k)?" on":""}${k===sug?" sug":""}" data-t="${k}">${TOOLS[k].n}</button>`).join("")}</div>`;
+ const aids=`<div class="mut" style="margin-top:6px">🧭 Tu criterio de ingeniero senior:</div><div class="tbs"><button class="tb${i.lin?" on":""}" id="b_lin">📘 Lineamientos y práctica estándar <span class="mut">(5 min)</span></button><button class="tb${i.inst!=null?" on":""}" id="b_ins">🧠 Corazonada</button></div>`;
+ const lin=i.lin?`<div class="data" style="border-left:3px solid #5aa9e0">📘 ${L[0]}${L[1].length?"<br><span class='mut'>Las opciones marcadas con ⚠️ van contra este lineamiento.</span>":"<br><span class='mut'>Ninguna opción viola directamente el lineamiento: aquí decide tu criterio.</span>"}</div>`:"";
+ const ins=i.inst!=null?`<div class="data" style="border-left:3px solid #c08aff">🧠 Tu corazonada apunta a la opción marcada. <span class="mut">${cl===0?"Lo has vivido muchas veces.":cl===1?"Te suena, pero no estás seguro.":"Es más instinto que conocimiento: puede fallar."} Una corazonada no es un dato.</span></div>`:"";
+ const res=(i.found||[]).map(x=>`<div class="data">${x}</div>`).join("");const wait=i.labAt&&!i.labDone?`<div class="data mut">🧪 Esperando resultados del laboratorio… (${Math.max(1,Math.ceil(i.labAt-S.t))} min)</div>`:"";
+ const tired=S.en<30?`<p class="mut">😵 Estás muy cansado: te cuesta concentrarte y el instinto falla más. Toma un ☕ o pide un descanso.</p>`:"";
+ const dat=cl===2&&c.x?c.x()+"<br><span class='mut'>No es tu especialidad y los datos no son concluyentes. Las mediciones pueden ayudar… o no.</span>":c.data()+(cl===1?"<br><span class='mut'>Sabes qué está pasando, pero no por qué: la causa está en las mediciones.</span>":"");
+ openD(`<span class="tag">${u.ic} ${u.nm} · ${c.tag}</span> <span class="tag" style="color:${CLN[cl][1]}">${CLN[cl][0]}</span><h2>${c.t}</h2>${bubble(c.who,(cl===2&&c.sayx)||c.say)}<div class="data${S.en<30?" blur":""}">${dat}</div>${tools}${res}${wait}${aids}${lin}${ins}${tired}<p style="margin:6px 0">¿Qué haces, ingeniero?</p>${ops.map(x=>{const v=i.lin&&L[1].includes(x.k),h=i.inst===x.k;return `<button class="opt" data-k="${x.k}" style="${v?"opacity:.6;border-color:#a8483a":""}${h?";border-color:#c08aff;box-shadow:0 0 0 2px rgba(192,138,255,.35)":""}">${h?"🧠 ":""}${v?"⚠️ ":""}${x.o[0]}</button>`}).join("")}
+ <p class="mut">Tiempo para actuar: ${Math.max(0,Math.round((i.dl-(S.t-i.t0)/60)*10)/10)} h.</p><button class="btn o" onclick="closeD()">Después</button>`);
+ document.querySelectorAll("#dlg .opt").forEach(b=>b.onclick=()=>resolve(i,+b.dataset.k));document.querySelectorAll(".tbs .tb[data-t]").forEach(b=>b.onclick=()=>useTool(i,b.dataset.t));
+ $("b_lin").onclick=()=>guide(i);$("b_ins").onclick=()=>hunch(i);}
+function useTool(i,k){const m=i.c.meas;i.tried=i.tried||[];if(i.tried.includes(k))return;i.tried.push(k);const tl=TOOLS[k];const tt=tl.t*(S.en<30?2:1);
+ if(k==="lab"){i.labAt=S.t+tt;i.labOk=m[0]==="lab";toast("🧪 Muestra enviada al laboratorio. Resultados en "+tt+" min.");closeD();return;}
+ i.t0-=tt;S.t+=tt*.3;i.found=i.found||[];if(m[0]===k&&i.mOk){i.meas=true;i.found.push("✅ <b>"+tl.n+":</b> "+m[1]);beep(1100,.06)}else if(m[0]===k){i.found.push("❔ <b>"+tl.n+":</b> La lectura es dudosa: algo hay, pero no alcanza para concluir. Vas a tener que decidir con lo que sabes.");beep(700,.06)}else{i.found.push("➖ <b>"+tl.n+":</b> "+tl.no);beep(400,.06)}incDlg(i);}
+function labCheck(){for(const i of INC)if(i.labAt&&!i.labDone&&S.t>=i.labAt){i.labDone=1;i.found=i.found||[];if(i.labOk&&i.mOk!==false){i.meas=true;i.found.push("✅ <b>🧪 Laboratorio:</b> "+i.c.meas[1])}else if(i.labOk)i.found.push("❔ <b>🧪 Laboratorio:</b> Resultado no concluyente; habría que repetir con más muestras.");else i.found.push("➖ <b>🧪 Laboratorio:</b> "+TOOLS.lab.no);toast(`🧪 Resultados listos: <b>${i.c.t}</b>`);}}
+function chips(o){const f=(v,ic,u)=>v?`<span style="display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:8px;background:${v>0?"#1f3a22":"#3a1f1a"};color:${v>0?"#9be08f":"#ff8a70"}">${ic} ${v>0?"+":""}${Math.round(v)}${u||""}</span>`:"";return `<div>${f(o.m,"📦"," cajas")}${f(o.cal,"✅")}${f(o.seg,"⛑️")}${f(o.amb,"🌿")}${f(o.conf,"🤝")}${f(o.en,"⚡")}</div>`;}
+function logDec(i,res,op){S.decBuf.push({caso:i.c.id,titulo:i.c.t,tema:i.c.tag,res,midio:!!i.meas,opcion:op||""});}
+function resolve(i,k){const ix=INC.indexOf(i);if(ix>=0)INC.splice(ix,1);updInc();if(i.c.dil)return resolveDil(i,k);const c=i.c;
+ if(k==null){S.ss.ign++;S.log.push({c,ok:null});logDec(i,"vencido");if(c.fix)c.fix();return;}
+ const o=c.opts[k],v=o[1],ok=v===1,part=v===.5;S.en=clamp(S.en-2,0,100);const e={};const ar=c.area,mk=ar==="per"?"conf":ar==="pro"?"cal":ar;
+ const L=LIN[c.id]||["",[]],viol=L[1].includes(k);let luck=0;
+ if(ok){S.ss.ok++;if(i.meas)S.ss.meas++;c.fix&&c.fix();e[mk]=i.meas?5:3;e.conf=(e.conf||0)+(i.meas?3:2);}
+ else if(part){S.ss.part++;if(i.meas)S.ss.meas++;c.fix&&c.fix();if(!c.safety&&rnd()<.35){luck=1;e[mk]=3;e.conf=1}else e[mk]=1;}
+ else if(!c.safety&&!viol&&rnd()<.25){S.ss.bad++;luck=2;e.conf=-1;}
+ else{S.ss.bad++;e[mk]=-(c.safety?10:6);e.conf=(e.conf||0)-3;if(c.safety&&rnd()<.4){S.ss.acc++;e.seg=(e.seg||0)-10;toast("🚑 Esa decisión terminó en un accidente.");}}
+ if(viol&&i.lin)e.conf=(e.conf||0)-2;if(!viol&&!ok&&i.lin)e.conf=(e.conf||0)+1;if(luck)S.ss.luck=(S.ss.luck||0)+1;
+ if(i.early&&(ok||part))e.conf=(e.conf||0)+2;for(const kk in e)meter(kk,e[kk]);S.log.push({c,ok:part?"part":ok});logDec(i,ok?"bien":part?"parcial":"mal",o[0]);
+ const good=c.opts.find(x=>x[1]===1);
+ const sof=luck===1?"Salió bien… ¿suerte o experiencia? Igual había una opción más segura.":luck===2?"Uf, no pasó nada. Pero creo que fue suerte, ¿verdad?":part?"Funcionó… pero había una opción mejor, ¿verdad?":ok&&i.meas?"¡Con datos en la mano! Lo voy a anotar.":ok&&i.inst===k?"¿Cómo supo sin medir? …Ah, años de turno. Algún día voy a tener ese instinto.":ok?"¿Experiencia o suerte? Sea lo que sea, salió bien.":viol?"Ingeniero… eso iba contra el procedimiento, ¿no?":"¿Qué se nos pasó? Lo anoto para aprender.";
+ const tit=luck===1?"🍀 Aceptable… y esta vez salió bien":luck===2?"🍀 No era lo correcto, pero esta vez no pasó nada":ok?"✅ ¡Bien resuelto!":part?"🟡 Aceptable, pero había algo mejor":"❌ No era lo mejor";
+ openD(`<span class="tag">${U[c.u].ic} ${U[c.u].nm}</span><h2 class="${ok?"ok":part||luck?"":"bad"}" style="${part||luck?"color:#ffd27a":""}">${tit}</h2><p>${o[2]}</p>${ok?"":`<div class="data"><b>Lo mejor:</b> ${good[0]}<br><span class="mut">${good[2]}</span></div>`}${viol||(!ok&&L[0])?`<div class="data mut" style="border-left:3px solid #5aa9e0">📘 ${L[0]}</div>`:""}${chips(e)}${bubble("nico",sof)}<button class="btn" onclick="closeD()">Seguir</button>`);}
+function dilDlg(i){const d=i.c;openD(`<span class="tag">💬 ${d.tag}</span><h2>${d.t}</h2>${bubble(d.who,d.say)}<div class="data">${d.data()}</div><p class="mut">No hay una sola respuesta correcta: cada opción mueve producción, calidad, seguridad, confianza o tu energía.</p>${(d._ord||(d._ord=d.opts.map((o,k)=>k).sort(()=>rnd()-.5))).map(k=>`<button class="opt" data-k="${k}">${d.opts[k][0]}</button>`).join("")}<button class="btn o" onclick="closeD()">Pensarlo</button>`);
+ document.querySelectorAll("#dlg .opt").forEach(b=>b.onclick=()=>resolve(i,+b.dataset.k));}
+function resolveDil(i,k){const d=i.c;if(k==null){meter("conf",-3);toast(`⏱️ No le respondiste a ${CHARS[d.who].n}.`);S.log.push({c:d,ok:"dil"});return;}
+ const o=d.opts[k],e=o[1];if(e.m)S.prod=Math.max(0,S.prod+e.m);for(const kk of ["seg","conf","cal","amb"])if(e[kk])meter(kk,e[kk]);if(e.en)S.en=clamp(S.en+e.en,0,100);if(d.fx&&d.fx[k])d.fx[k]();
+ S.dilDone.push(d.id);S.log.push({c:d,ok:"dil"});logDec(i,"dilema",o[0]);openD(`<span class="tag">💬 ${d.tag}</span><h2>Decidiste: ${o[0]}</h2><p>${o[2]}</p>${chips(e)}<button class="btn" onclick="closeD()">Seguir</button>`);}
+// ---------- café y descanso ----------
+function cafe(){if(S.cafes<=0){toast("☕ Ya no queda café en el comedor… solo te queda descansar si alguien te cubre.");return}S.cafes--;S.en=clamp(S.en+25,0,100);S.t+=12;beep(600,.1);toast(`☕ Café en el comedor: +25 de energía (quedan ${S.cafes}).`);hud();}
+// ---------- comedor, ronda, radio y bloques ----------
+function comedorDlg(){goUnit("cafe");const h=hr(),cenaOk=(h>=23||h<3)&&!S.cena;const pa=S.paAt==null||S.t-S.paAt>=120;
+ openD(`<span class="tag">☕ Comedor</span><h2>🍽️ El comedor del turno</h2><p class="mut">Un microondas, una máquina de café, una tele sin volumen y una ventana que da al parqueo. Aquí recuperas energía… mientras la planta sigue corriendo.</p>
+ <button class="opt" onclick="comer('cafe')">☕ Café de la máquina <span class="mut">· +25 ⚡ · 12 min · quedan ${S.cafes}</span></button>
+ <button class="opt" onclick="comer('cena')" ${cenaOk?"":"disabled style='opacity:.45'"}>🍲 Cenar <span class="mut">· +30 ⚡ · 30 min · ${S.cena?"ya cenaste":"de 23:00 a 03:00"}</span></button>
+ <button class="opt" onclick="comer('snack')" ${S.snk>0?"":"disabled style='opacity:.45'"}>🍪 Algo de la máquina de snacks <span class="mut">· +8 ⚡ · 5 min · quedan ${S.snk}</span></button>
+ <button class="opt" onclick="comer('pausa')" ${pa?"":"disabled style='opacity:.45'"}>🧘 Pausa activa: estirarse y respirar <span class="mut">· +6 ⚡ · 5 min · ${pa?"disponible":"cada 2 horas"}</span></button>
+ <button class="opt" onclick="radioDlg()">📻 Poner música <span class="mut">· ${RADIO.on?"suena: "+RADIO.name:"apagada"}</span></button>
+ <button class="btn o" onclick="closeD()">Volver a la planta</button>`);}
+function comer(k){if(k==="cafe"){closeD();return cafe()}
+ if(k==="cena"){S.cena=1;let g=30,m=30;if(rnd()<.35){g=15;m=15;toast("📻 A mitad de la cena te llama Lalo por radio. Cenaste en 15 minutos… como siempre.")}else toast("🍲 Cenaste tranquilo. Arroz, frijoles y algo de carne recalentada: +30 ⚡");S.en=clamp(S.en+g,0,100);S.t+=m;}
+ if(k==="snack"){S.snk--;S.en=clamp(S.en+8,0,100);S.t+=5;toast("🍪 Galletas de la máquina: +8 ⚡");}
+ if(k==="pausa"){S.paAt=S.t;S.en=clamp(S.en+6,0,100);S.t+=5;toast("🧘 Cinco minutos de estiramientos: +6 ⚡ y la espalda lo agradece.");}
+ beep(600,.08);closeD();hud();}
+const RONDA=[["lalo","Esta noche la llenadora suena bonita, ingeniero. Así me gusta."],["caro","Pasé por el laboratorio: todo calibrado. Le dejo los controles en la carpeta."],["tito","Le eché grasa a la transportadora de la empacadora. Ya no chilla."],["mari","La bodega está ordenada. Hoy hay espacio para todo lo que salga."],["chepe","Todo tranquilo en el portón. Solo el perro del vecino dando vueltas."],["nico","Ingeniero, ¿me explica qué hace el carbonatador? Lo veo y no entiendo."],["lalo","En 15 años de noche aprendí algo: si una máquina cambia de sonido, algo le pasa."],["tito","Si ve que una banda vibra raro, avíseme antes de que se rompa."]];
+function ronda(){if(S.ronAt!=null&&S.t-S.ronAt<45){toast("🚶 Acabas de hacer una ronda. Dale un rato a la planta.");return}
+ S.ronAt=S.t;S.ss.ron=(S.ss.ron||0)+1;S.t+=15;S.en=clamp(S.en+2,0,100);
+ if(rnd()<.55&&INC.length<5){const pool=CASES.filter(c=>!INC.find(i=>i.c.id===c.id)&&!["camion","gotera","apagon"].includes(c.id));const i=spawn(pool[Math.floor(rnd()*pool.length)].id);
+  if(i){i.dl*=1.6;i.early=1;S.nextInc=(S.nextInc||0)+20;goUnit(i.c.u);toast("🔎 En la ronda viste algo antes de que fuera un problema grande.");setTimeout(()=>incDlg(i),350);return;}}
+ const [w,t]=RONDA[Math.floor(rnd()*RONDA.length)];meter("conf",2);
+ openD(`<span class="tag">🚶 Ronda por la planta · 15 min</span><h2>Todo en orden… por ahora</h2><p class="mut">Caminaste la línea de punta a punta. Caminar te despierta un poco (+2 ⚡) y que te vean en el piso genera confianza (+2 🤝).</p>${bubble(w,t)}<button class="btn" onclick="closeD()">Seguir</button>`);}
+// radio
+const RADIO={on:false,name:"",el:null,gen:null,list:[],vol:.5};
+const RCAT=[["🇨🇷 Costa Rica","countrycode=CR"],["🇲🇽 México","countrycode=MX"],["🇬🇹 Guatemala","countrycode=GT"],["🇨🇴 Colombia","countrycode=CO"],["🇦🇷 Argentina","countrycode=AR"],["🇪🇸 España","countrycode=ES"],["🇯🇵 Japón","countrycode=JP"],["🇧🇷 Brasil","countrycode=BR"],["🎷 Jazz","tag=jazz"],["🎧 Lo-fi","tag=lofi"],["🎻 Clásica","tag=classical"],["💃 Salsa","tag=salsa"],["🎸 Rock","tag=rock"],["🌍 Sorpréndeme","rand"]];
+function radioDlg(){openD(`<span class="tag">📻 Radio del turno</span><h2>📻 Música para la noche</h2><p class="mut">Con música el cansancio pesa un poco menos (la energía baja más lento). Los sonidos de la planta siguen con 🔇/🔊.</p>
+ <div class="data"><b>Ahora:</b> ${RADIO.on?RADIO.name:"apagada"}<br><label class="mut">Volumen <input type="range" min="0" max="1" step=".05" value="${RADIO.vol}" oninput="radVol(+this.value)" style="vertical-align:middle;width:140px"></label></div>
+ <button class="opt" onclick="genOn()">🎹 Radio PES lo-fi <span class="mut">· música generada en el juego, funciona sin internet</span></button>
+ <p style="margin:10px 0 4px"><b>🌍 Emisoras del mundo en vivo</b> <span class="mut">(gratis, del directorio abierto radio-browser.info)</span></p>
+ <div class="tbs">${RCAT.map((c,k)=>`<button class="tb" onclick="radCat(${k})">${c[0]}</button>`).join("")}</div><div id="rlist"></div>
+ <p class="mut" style="margin-top:8px">¿Quieres explorar el planeta? <a href="https://radio.garden" target="_blank" rel="noopener" style="color:#ffc56b">Radio Garden</a> te deja girar el globo y escuchar emisoras de cualquier ciudad (se abre en otra pestaña).</p>
+ <button class="btn o" onclick="radOff()">⏹ Apagar música</button> <button class="btn" onclick="closeD()">Listo</button>`);if(RADIO.list.length)radList();}
+function radVol(v){RADIO.vol=v;if(RADIO.el)RADIO.el.volume=v;if(RADIO.gen)RADIO.gen.g.gain.value=v*.5;}
+function radOff(){if(RADIO.el){RADIO.el.pause();RADIO.el.src="";RADIO.el=null}if(RADIO.gen){clearInterval(RADIO.gen.iv);RADIO.gen.g.disconnect();RADIO.gen=null}RADIO.on=false;RADIO.name="";const e=$("rnow");if(e)e.textContent="";}
+async function rbFetch(q){for(const h of ["de1","de2","fi1","nl1","at1","all"]){try{const r=await fetch(`https://${h}.api.radio-browser.info/json/stations/search?${q}&hidebroken=true&limit=80`);if(r.ok){const j=await r.json();return j.filter(s=>/^https:/.test(s.url_resolved||""))}}catch(e){}}return null}
+async function radCat(k){const c=RCAT[k];const el=$("rlist");if(el)el.innerHTML=`<p class="mut">Buscando emisoras de ${c[0]}…</p>`;
+ const q=c[1]==="rand"?"order=random":`${c[1]}&order=clickcount&reverse=true`;const l=await rbFetch(q);
+ if(!l||!l.length){if($("rlist"))$("rlist").innerHTML=`<p class="mut">No pudimos conectar con el directorio de emisoras ahora. Prueba la 🎹 Radio PES lo-fi o abre Radio Garden.</p>`;return}
+ RADIO.list=(c[1]==="rand"?l:l).slice(0,10);radList();}
+function radList(){const el=$("rlist");if(!el)return;el.innerHTML=RADIO.list.map((s,k)=>`<button class="opt" onclick="radPlay(${k})">▶ ${(s.name||"Emisora").replace(/[<>]/g,"").slice(0,60)} <span class="mut">· ${(s.country||"").replace(/[<>]/g,"")}${s.tags?" · "+s.tags.split(",").slice(0,2).join(", ").replace(/[<>]/g,""):""}</span></button>`).join("");}
+function radPlay(k){const s=RADIO.list[k];if(!s)return;radOff();const a=new Audio();a.src=s.url_resolved;a.volume=RADIO.vol;RADIO.el=a;RADIO.on=true;RADIO.name=`${(s.name||"Emisora").replace(/[<>]/g,"").slice(0,40)} (${(s.countrycode||"").replace(/[<>]/g,"")})`;
+ a.play().then(()=>{toast(`📻 Suena: <b>${RADIO.name}</b>`);radioDlg()}).catch(()=>{toast("📻 Esa emisora no respondió. Prueba otra.");radOff()});a.onerror=()=>{if(RADIO.el===a){toast("📻 Se cayó la señal de la emisora. Prueba otra.");radOff()}};}
+function genOn(){radOff();try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();AC.resume&&AC.resume();}catch(e){return}
+ const g=AC.createGain();g.gain.value=RADIO.vol*.5;const lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1800;g.connect(lp);lp.connect(AC.destination);
+ const CH=[[57,60,64,67],[50,53,57,60],[55,59,62,65],[48,52,55,59]],PEN=[69,72,74,76,79,81];const f=n=>440*Math.pow(2,(n-69)/12);const beat=.75;let nt=AC.currentTime+.1,b=0;
+ const note=(fr,t,d,v,tp)=>{const o=AC.createOscillator(),e=AC.createGain();o.type=tp||"triangle";o.frequency.value=fr;e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(v,t+.04);e.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(e);e.connect(g);o.start(t);o.stop(t+d+.05);};
+ const hat=(t,v)=>{const n=AC.createBufferSource(),bf=AC.createBuffer(1,2205,44100),dd=bf.getChannelData(0);for(let i=0;i<dd.length;i++)dd[i]=(Math.random()*2-1)*(1-i/dd.length);n.buffer=bf;const hp=AC.createBiquadFilter();hp.type="highpass";hp.frequency.value=6000;const e=AC.createGain();e.gain.value=v;n.connect(hp);hp.connect(e);e.connect(g);n.start(t);};
+ const iv=setInterval(()=>{while(nt<AC.currentTime+.6){const ch=CH[Math.floor(b/8)%4];if(b%8===0){for(const n of ch)note(f(n),nt,beat*7.5,.05,"sine");note(f(ch[0]-24),nt,beat*3.5,.12,"sine")}if(b%8===4)note(f(ch[0]-24),nt,beat*3.5,.1,"sine");
+  if(b%4===0)note(55,nt,.25,.25,"sine");hat(nt+beat/2,.03);if(Math.random()<.45)note(f(PEN[Math.floor(Math.random()*PEN.length)]-12),nt+(Math.random()<.5?0:beat/2),beat*1.5,.045,"triangle");nt+=beat;b++;}},150);
+ RADIO.gen={g,iv};RADIO.on=true;RADIO.name="🎹 Radio PES lo-fi";toast("🎹 Radio PES lo-fi: música tranquila para la noche.");radioDlg();}
+// bloques del turno
+const BLKN=["","18:00 – 21:00 · Arranque","21:00 – 00:00 · Medianoche","00:00 – 03:00 · Madrugada","03:00 – 06:00 · Amanecer"];
+const BLKNEXT=["","Viene la medianoche: el cambio de formato… y dicen que va a llover fuerte.","Viene la madrugada, la hora más pesada. Cuida tu energía: cenar, café, una pausa.","Últimas tres horas: el cansancio acumulado, el despacho temprano y la entrega de turno."];
+function blk(){return Math.min(4,1+Math.floor((S.t-18*60)/180))}
+function blkDlg(n){save();const pr=Math.round(S.prod/META*100);
+ openD(`<span class="tag">🌙 Bloque ${n} de 4 completado</span><h2>Son las ${clk()}</h2><div class="data">📦 Producción: <b>${pr} %</b> de la meta · ⚡ Energía <b>${Math.round(S.en)}</b><br>✅ Calidad <b>${Math.round(S.cal)}</b> · ⛑️ Seguridad <b>${Math.round(S.seg)}</b> · 🌿 Ambiente <b>${Math.round(S.amb)}</b> · 🤝 Confianza <b>${Math.round(S.conf)}</b><br>❗ Pendientes abiertos: <b>${INC.length}</b></div>
+ <p><b>Lo que viene:</b> ${BLKNEXT[n]}</p><p class="mut">💾 Tu turno ya quedó guardado en este navegador. Puedes seguir ahora o volver otro día: continúas a las ${clk()}.</p>
+ <button class="btn" onclick="closeD()">Seguir el turno ▶</button> <button class="btn o" onclick="pausar()">💾 Seguir otro día</button>`);}
+function pausar(){save();setSpd(0);openD(`<h2>💾 Turno guardado</h2><p>Quedaste a las <b>${clk()}</b>. Puedes cerrar esta página: cuando vuelvas a abrir Turno Noche <b>en este mismo navegador</b>, continúas donde lo dejaste.</p><p class="mut">El reloj del turno solo avanza mientras juegas.</p><button class="btn" onclick="setSpd(1);closeD()">Mejor sigo ahora ▶</button> <a class="btn o" href="../index.html#juegos">Volver a PES Labs</a>`);}
+// eventos de ambiente (cada hora)
+function hourly(h){const co=co2v();const hh=String(h%24).padStart(2,"0");
+ if(h%2===1)toast(`🧪 Control de las ${hh}:00 · Carolina: CO₂ <b>${co.toFixed(2)}</b> vol ${co<3.6||co>4?"⚠️ fuera de especificación":"✓"} · Brix 11,0 ✓ · Torque ✓`);
+ else if(S.ronAt==null||S.t-S.ronAt>=170)toast("🚶 Hace rato no caminas la planta. Una <b>ronda</b> encuentra problemas antes de que crezcan.");
+ if(h===24)toast("📱 Mensaje de casa: «¿Ya cenaste? Cuídate mucho.» ❤️");}
+// ---------- eventos programados ----------
+const EVENTS=[[19.25,()=>spawn(rnd()<.5?"co2":"nivel")],[20.5,()=>spawnDil("d_nuevo")],[23.5,()=>{S.storm=1;FLASH=1;toast("⛈️ Empieza una tormenta fuerte.");beep(120,.5);setTimeout(()=>spawn("apagon"),400)}],[0.6,()=>spawn("gotera")],[3,()=>spawnDil("d_mora")],[4.2,()=>{if(S.en<55)spawnDil("d_cafe")}],[5.1,()=>spawn("camion")],[2.2,()=>{S.storm=0}],[22,()=>spawnDil("d_formato")],[23,()=>toast("🍲 La cena ya está en el comedor (de 23:00 a 03:00). Toca 🍽️ Comedor.")],[2.75,()=>spawnDil("d_cerca")],[5.5,()=>spawnDil("d_reporte")]];
+// ---------- bucle ----------
+let last=performance.now();
+function step(dt){T+=dt;const gm=dt*.2*SPD;
+ if(SPD>0&&S.started&&!S.done&&$("ov").hidden){const t0=S.lastT??S.t;S.t+=gm;const h=Math.min(60,S.t-t0)/60;const r=rate();S.prod+=r.good*h;S.hold+=r.held*h;
+  S.en=clamp(S.en-h*4.2*(RADIO.on?.85:1),0,100);if(S.en<10&&!S.ev.sleep){S.ev.sleep=1;S.t+=20;toast("😴 Cabeceaste 20 minutos sin darte cuenta. ¡Cuidado con la fatiga!");meter("seg",-4);}if(S.en>20)S.ev.sleep=0;
+  for(const i of INC){if(i.c.amb)meter("amb",-i.c.amb*h*.5);if(i.c.seg)meter("seg",-i.c.seg*h*.3);if(i.c.hold)meter("cal",-h*1.5);}
+  if(r.off){meter("cal",-h*2);S.offMin=(S.offMin||0)+gm;if(S.offMin>45&&!INC.find(i=>i.c.id==="co2")){S.offMin=0;spawn("co2");toast("⚠️ El CO₂ sigue fuera de especificación y todo se está reteniendo. Revisa 🎛️ Línea.")}}else S.offMin=0;
+  labCheck();
+  for(const i of INC){if((S.t-i.t0)/60>i.dl&&!i.esc){i.esc=true;if(!i.c.dil){if(i.c.esc){toast("💥 "+i.c.esc);beep(200,.3)}const ar=i.c.area;meter(ar==="per"?"conf":ar==="pro"?"cal":ar,-(i.c.safety?14:8));if(i.c.safety){S.ss.acc++;meter("seg",-6)}}resolve(i,null);break;}}
+  for(let hh=19;hh<=29;hh++){const tm=hh*60;if(t0<tm&&S.t>=tm&&!S.ev["h"+hh]){S.ev["h"+hh]=1;hourly(hh)}}
+  for(const n of [1,2,3]){const tm=(18+3*n)*60;if(t0<tm&&S.t>=tm&&!S.ev["b"+n]){S.ev["b"+n]=1;setTimeout(()=>blkDlg(n),60)}}
+  const pd=S.pend||(S.pend=[]);for(let q=pd.length-1;q>=0;q--)if(S.t>=pd[q].t){spawn(pd[q].id);pd.splice(q,1)}
+  for(const [eh,f] of EVENTS){const tm=(eh<12?eh+24:eh)*60;if(t0<tm&&S.t>=tm&&!S.ev[eh]){S.ev[eh]=1;f();}}
+  S.nextInc=(S.nextInc??10)-gm;if(S.nextInc<=0&&INC.length<4){const pool=CASES.filter(c=>!INC.find(i=>i.c.id===c.id)&&!["camion","gotera","apagon"].includes(c.id));if(rnd()<.18)spawnDil();else spawn(pool[Math.floor(rnd()*pool.length)].id);S.nextInc=(24+rnd()*30)*(hr()>=1&&hr()<5?.8:1);}
+  S.lastT=S.t;if(S.t>=30*60){S.done=true;S.t=30*60;setSpd(0);setTimeout(handover,300);}}
+ // vida
+ const spdv=Math.min(Math.max(SPD,0),2);for(const f of FORK)f.s+=dt*1.1*spdv;for(const t of TRUCKS)t.s+=dt*.9*spdv;for(const c of HC){c.x+=c.d*dt*2.2*spdv;if(c.x>X1)c.x=X0;if(c.x<X0)c.x=X1}
+ for(const p of PEOPLE){if(p.wait>0){p.wait-=dt*spdv;p.mv=0;continue}const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy);if(d<.05){const n=WALK[Math.floor(rnd()*WALK.length)];if(rnd()<.5){p.tx=n[0];p.ty=p.y}else{p.tx=p.x;p.ty=n[1]}p.wait=rnd()*2}else{const s=Math.min(d,p.sp*dt*spdv);if(Math.abs(dx)>.01)p.x+=Math.sign(dx)*s;else p.y+=Math.sign(dy)*s;p.mv=SPD>0}}
+ if(rnd()<dt*8)emit(22+rnd()*1.4,3,30,"st",1);if(rnd()<dt*3)emit(29.2,3,30,"st",1);if(rate().r>1&&rnd()<dt*5)emit(21.9,10.2,14,"st",1);
+ for(let i=PART.length-1;i>=0;i--){const q=PART[i];q.l+=dt;if(q.l>q.L){PART.splice(i,1);continue}q.z+=q.vz*dt;q.x+=dt*.15;}
+ const h2=hr();NIGHT=h2>=18&&h2<19?.6+.4*(h2-18):h2>=5.2&&h2<6?1-.6*(h2-5.2)/.8:h2>=6&&h2<18?.3:1;RAIN+=((S.storm?1:0)-RAIN)*dt*.5;FLASH=Math.max(0,FLASH-dt*1.5);if(S.storm&&rnd()<dt*.08)FLASH=.8;}
+const PART=[];function emit(x,y,z,k,n){for(let j=0;j<n;j++){if(PART.length>200)return;PART.push({x,y,z,k,l:0,L:4+rnd()*3,vz:12+rnd()*8,r:5+rnd()*4})}}
+const DROPS=[];for(let i=0;i<220;i++)DROPS.push([Math.random(),Math.random(),.6+Math.random()*.6]);
+function draw(){cx.setTransform(DPR,0,0,DPR,0,0);const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#06090f");g.addColorStop(1,"#141a24");cx.fillStyle=g;cx.fillRect(0,0,W,H);
+ cx.fillStyle="rgba(240,240,220,.9)";cx.beginPath();cx.arc(W-90,70,18,0,7);cx.fill();cx.fillStyle="#0a0e16";cx.beginPath();cx.arc(W-82,64,16,0,7);cx.fill();
+ for(let i=0;i<40;i++){cx.fillStyle=`rgba(255,255,255,${.3+.3*Math.sin(T+i)})`;cx.fillRect((i*137)%W,(i*71)%(H*.35),1.5,1.5);}
+ cx.setTransform(DPR*CAM.z,0,0,DPR*CAM.z,DPR*(W/2-CAM.x*CAM.z),DPR*(H/2-CAM.y*CAM.z));cx.drawImage(GROUND,-GO[0],-GO[1]);
+ HIT.length=0;const L=drawables();L.sort((a,b)=>a.k-b.k);for(const d of L)d.f();
+ for(const q of PART){const [sx,sy]=P(q.x,q.y,q.z),f=q.l/q.L;cx.fillStyle=`rgba(170,180,190,${.25*(1-f)})`;cx.beginPath();cx.arc(sx,sy,q.r*(1+f*2),0,7);cx.fill();}
+ cx.setTransform(DPR,0,0,DPR,0,0);cx.fillStyle=`rgba(4,6,18,${NIGHT*.45+RAIN*.12})`;cx.fillRect(0,0,W,H);
+ cx.setTransform(DPR*CAM.z,0,0,DPR*CAM.z,DPR*(W/2-CAM.x*CAM.z),DPR*(H/2-CAM.y*CAM.z));cx.globalCompositeOperation="lighter";
+ const glow=(x,y,r,c,a)=>{const g2=cx.createRadialGradient(x,y,0,x,y,r);g2.addColorStop(0,`rgba(${c},${a})`);g2.addColorStop(1,`rgba(${c},0)`);cx.fillStyle=g2;cx.fillRect(x-r,y-r,2*r,2*r)};
+ for(const [x,y] of LIGHTS){const [a,b]=P(x,y,40);glow(a,b,58,"255,190,100",.22*NIGHT);const [c2,d2]=P(x,y,0);glow(c2,d2,48,"255,170,80",.12*NIGHT);}
+ for(let x=4;x<33;x+=4){const [a,b]=P(x,10,30);glow(a,b,80,"200,220,255",.1*NIGHT);}
+ cx.globalCompositeOperation="source-over";
+ for(const i of INC){const h=HIT.find(z=>z.u===i.c.u);if(!h)continue;const bx=h.x+h.w/2,by=h.y-18+Math.sin(T*4+i.id)*4;i.bx=bx;i.by=by;const age=(S.t-i.t0)/60/i.dl;
+  cx.fillStyle="rgba(0,0,0,.45)";cx.beginPath();cx.arc(bx+1.5,by+2,15,0,7);cx.fill();cx.fillStyle=i.c.dil?"#4f7fd9":age>.66?"#e0412b":"#f2b51b";cx.beginPath();cx.arc(bx,by,15,0,7);cx.fill();cx.strokeStyle="#fff";cx.lineWidth=2;cx.stroke();
+  cx.strokeStyle="rgba(255,255,255,.9)";cx.lineWidth=3;cx.beginPath();cx.arc(bx,by,19,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-Math.min(1,age)));cx.stroke();cx.fillStyle=i.c.dil?"#fff":"#1a1206";cx.font="bold 19px system-ui";cx.textAlign="center";cx.fillText(i.c.dil?"?":"!",bx,by+7);cx.textAlign="left";}
+ cx.setTransform(DPR,0,0,DPR,0,0);
+ if(RAIN>.02){cx.strokeStyle=`rgba(170,190,220,${.35*RAIN})`;cx.lineWidth=1;cx.beginPath();for(const d of DROPS){const x=((d[0]*W+T*60*d[2])%W),y=((d[1]*H+T*700*d[2])%H);cx.moveTo(x,y);cx.lineTo(x-4,y+14);}cx.stroke();}
+ if(FLASH>0){cx.fillStyle=`rgba(220,230,255,${FLASH*.35})`;cx.fillRect(0,0,W,H);}
+ const vg=cx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.55)");cx.fillStyle=vg;cx.fillRect(0,0,W,H);}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(CT){CAM.x+=(CT.x-CAM.x)*.08;CAM.y+=(CT.y-CAM.y)*.08;CAM.z+=(CT.z-CAM.z)*.08;if(Math.abs(CT.x-CAM.x)<1&&Math.abs(CT.y-CAM.y)<1)CT=null}step(dt);draw();if(((T*4)|0)!==((T*4-dt*4)|0))hud();requestAnimationFrame(loop);}
+// ---------- HUD ----------
+function bar(v,c){return `<div class="bar"><i style="width:${clamp(v,0,100)}%;background:${c}"></i></div>`}
+const mc=v=>v>=70?"#9be08f":v>=40?"#ffd27a":"#ff8a70";
+function hud(){$("clk").textContent=clk();const left=Math.max(0,30*60-S.t);$("left").textContent=` · bloque ${blk()}/4 · faltan ${Math.floor(left/60)} h ${String(Math.floor(left%60)).padStart(2,"0")} min`;
+ $("pr").textContent=Math.round(S.prod).toLocaleString("es-CR");$("en").textContent=Math.round(S.en);$("en").style.color=mc(S.en);$("cf").textContent=S.cafes;
+ const r=rate(),co=co2v();
+ let h=`<div class="row" style="cursor:pointer" onclick="playerDlg()"><span>👤 <b>${S.player?S.player.nick:"—"}</b></span><span class="mut">${S.player&&S.player.room?"🏫 "+S.player.room:"sin sala"}</span></div>`;
+ h+=`<div class="row"><span>📦 Producción</span><span>${Math.round(S.prod/META*100)} % de la meta</span></div>${bar(S.prod/META*100,"#5aa9e0")}`;
+ h+=`<div class="row"><span>Ritmo</span><b style="color:${r.r<600?"#ff8a70":"#9be08f"}">${Math.round(r.r)} cajas/h</b></div><div class="row mut"><span>Retenidas</span><span>${Math.round(S.hold)} cajas</span></div>`;
+ for(const [k,n,c] of [["cal","✅ Calidad"],["seg","⛑️ Seguridad"],["amb","🌿 Ambiente"],["conf","🤝 Confianza"]])h+=`<div class="row"><span>${n}</span><span>${Math.round(S[k])}</span></div>${bar(S[k],mc(S[k]))}`;
+ h+=`<div class="row mut"><span>CO₂ ${co.toFixed(2)} vol ${co<3.6||co>4?"⚠️":"✓"}</span><span>${S.Tp.toFixed(1)} °C</span></div>`;
+ $("kpb").innerHTML=h;}
+// ---------- diálogos ----------
+function openD(html){$("dlg").innerHTML=html;$("ov").hidden=false;$("dlg").scrollTop=0;}
+function closeD(){$("ov").hidden=true;}
+$("ov").addEventListener("pointerdown",e=>{if(e.target.id==="ov")closeD()});
+function unitDlg(id){const u=U[id];const inc=INC.filter(i=>i.c.u===id);openD(`<span class="tag">Operación de la planta</span><h2>${u.ic} ${u.nm}</h2><p>${u.info}</p>${inc.map(i=>`<div class="li" onclick="incDlg(INC.find(x=>x.id==${i.id}))">${i.c.dil?"💬":"❗"} <b>${i.c.t}</b></div>`).join("")}${id==="cafe"?`<button class="btn" onclick="comedorDlg()">🍽️ Entrar al comedor</button>`:""}<button class="btn o" onclick="closeD()">Cerrar</button>`);}
+function lineDlg(){const sl=(k,lab,mn,mx,st,u)=>`<div class="sl"><label>${lab}<b id="v_${k}">${S[k]}${u}</b></label><input type="range" min="${mn}" max="${mx}" step="${st}" value="${S[k]}" oninput="S['${k}']=+this.value;$('v_${k}').textContent=(+this.value)+'${u}';lineInfo()"></div>`;
+ openD(`<span class="tag">🎛️ SCADA · Línea 1</span><h2>Ajustes de la línea</h2>${sl("v","Velocidad de la línea ",70,110,1," %")}${sl("Tp","Temperatura del producto ",2,10,.5," °C")}${sl("Pc","Presión del carbonatador ",2.6,4.4,.1," bar")}<div class="data" id="li"></div><button class="btn" onclick="closeD()">Listo</button>`);lineInfo();}
+function lineInfo(){const e=$("li");if(!e)return;const co=co2v(),r=rate();let w=[];if(co<3.6)w.push("⚠️ CO₂ bajo: el producto sale «muerto» y se retiene.");if(co>4)w.push("⚠️ CO₂ alto: espuma y botellas sobrepresurizadas.");if(foam())w.push("⚠️ Espuma en la llenadora: más rechazos por nivel.");if(S.v>104)w.push("Velocidad alta: más producción, pero los equipos van al límite.");
+ e.innerHTML=`CO₂ disuelto (ley de Henry): <b>${co.toFixed(2)} volúmenes</b> · especificación 3,6–4,0<br>Ritmo: <b>${Math.round(r.r)} cajas/h</b> · meta del turno: ${META.toLocaleString("es-CR")} cajas${w.length?"<br><br>"+w.join("<br>"):""}`;}
+function listDlg(){openD(`<h2>❗ Pendientes</h2>${INC.length?INC.map(i=>`<div class="li" onclick="goUnit('${i.c.u}');incDlg(INC.find(x=>x.id==${i.id}))">${i.c.dil?"💬":U[i.c.u].ic} <div><b>${i.c.t}</b><br><span class="mut">${i.c.dil?CHARS[i.c.who].n:AREAN[i.c.area]} · quedan ${Math.max(0,i.dl-(S.t-i.t0)/60).toFixed(1)} h</span></div></div>`).join(""):"<p>Todo en orden… por ahora. 🌙</p>"}<button class="btn" onclick="closeD()">Cerrar</button>`);}
+function helpDlg(){openD(`<h2>🌙 Turno Noche</h2><p>Eres el <b>ingeniero superintendente</b> de una planta envasadora de bebida gaseosa. Son las 18:00 y eres el único ingeniero hasta las 06:00. Todo lo que pase es tu responsabilidad: calidad, proceso, ambiente, seguridad y personas.</p>
+ <ul><li><b>❗ Toca los signos:</b> tu equipo te reporta problemas. Usa las <b>🔍 herramientas</b> para medir antes de decidir.</li><li><b>💬 Dilemas:</b> sin una sola respuesta correcta.</li><li><b>🎛️ Línea:</b> velocidad, temperatura y presión de carbonatación. El CO₂ disuelto sigue la ley de Henry.</li><li><b>⏱️ Tiempo:</b> 1 minuto real ≈ 12 minutos de turno. Son 4 bloques de 3 horas (≈15 min cada uno) y se guarda al final de cada bloque.</li><li><b>🚶 Ronda:</b> camina la planta (15 min). A veces encuentras un problema antes de que crezca; si no, ganas confianza y te despiertas un poco.</li><li><b>🍽️ Comedor:</b> café, cena (23:00–03:00), snacks y pausa activa. <b>📻 Radio:</b> música lo-fi del juego o emisoras en vivo de todo el mundo; con música el cansancio pesa menos.</li><li><b>⚡ Energía:</b> baja con las horas y con cada problema. Con poca energía los datos se te nublan y las mediciones tardan el doble. ☕ Hay 3 cafés en el comedor.</li><li><b>Eres un ingeniero senior, no un experto en todo.</b> Algunos problemas 🔁 <b>ya los has visto</b>; otros 📊 <b>necesitan datos</b>; y otros ❓ <b>no son tu especialidad</b> (datos ambiguos, mediciones que a veces no concluyen). En la madrugada y con cansancio, todo se ve menos claro.</li><li><b>📘 Lineamientos:</b> consulta la práctica estándar (5 min). No te da la respuesta, pero marca con ⚠️ lo que va contra el procedimiento.</li><li><b>🧠 Corazonada:</b> tu instinto apunta a una opción. Casi siempre acierta en lo que conoces… no tanto en lo que no.</li><li><b>🍀 Suerte:</b> a veces una decisión no ideal sale bien. Nunca en seguridad.</li><li>A las <b>06:00</b> entregas el turno: producción, producto retenido, calidad, seguridad, ambiente y confianza del equipo.</li></ul>
+ <h3 style="color:#ffc56b;font-size:16px">Tu equipo</h3>${Object.keys(CHARS).map(k=>`<div style="display:flex;gap:10px;align-items:center;margin:6px 0">${face(k,40)}<div><b>${CHARS[k].n}</b><br><span class="mut">${CHARS[k].r}</span></div></div>`).join("")}
+ <p class="mut">Planta y datos genéricos con fines educativos, sin marcas reales. Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · PES Labs · CC BY-NC 4.0.</p><button class="btn" onclick="closeD()">Entendido</button> <a class="btn o" href="../index.html#juegos">Volver a PES Labs</a>`);}
+// ---------- entrega de turno ----------
+function handover(){if(S.rep&&!S.repDone){S.repDone=1;meter("conf",4)}for(const i of INC.slice()){if(!i.c.dil){S.ss.ign++;S.log.push({c:i.c,ok:null});logDec(i,"vencido")}}INC.length=0;updInc();const pr=S.prod/META;const st=pr>=.9&&S.seg>=70&&S.cal>=70&&S.amb>=70?3:pr>=.7&&S.seg>=50&&S.cal>=50?2:1;
+ const tit=st===3?"Superintendente de noche 🌙":st===2?"Sobreviviste al turno":"Sobreviviste… a duras penas";
+ const L=S.log;const ok=S.ss.ok,bad=S.ss.bad,ign=S.ss.ign;
+ sendRes("noche",{turno:"Turno noche",titulo:"Turno Noche · Envasadora",estrellas:st,margen:Math.round(S.prod),seg:Math.round(S.seg),conf:Math.round(S.conf),ok,bad,ign,meas:S.ss.meas},S.decBuf);S.decBuf=[];
+ openD(`<span class="tag">📋 Entrega de turno · 06:00</span><h2>${"⭐".repeat(st)}${"☆".repeat(3-st)} ${tit}</h2>${bubble("mora",st>=2?"Buenos días. Revisé el reporte: buena noche, ingeniero. Gracias.":"Buenos días. Fue una noche difícil. Revisemos juntos qué podemos mejorar.")}
+ <div class="data">📦 Producción: <b>${Math.round(S.prod).toLocaleString("es-CR")}</b> de ${META.toLocaleString("es-CR")} cajas (<b>${Math.round(pr*100)} %</b>)<br>🔒 Retenidas por calidad: <b>${Math.round(S.hold).toLocaleString("es-CR")}</b> cajas<br>✅ Calidad <b>${Math.round(S.cal)}</b> · ⛑️ Seguridad <b>${Math.round(S.seg)}</b> · 🌿 Ambiente <b>${Math.round(S.amb)}</b> · 🤝 Confianza <b>${Math.round(S.conf)}</b><br>Bien resueltos <b>${ok}</b> · Aceptables <b>${S.ss.part}</b> · Mal <b>${bad}</b> · Vencidos <b>${ign}</b> · Midiendo primero <b>${S.ss.meas}</b> · 📘 Lineamientos <b>${S.ss.lin||0}</b> · 🧠 Corazonadas <b>${S.ss.inst||0}</b> · 🍀 Suerte <b>${S.ss.luck||0}</b> · Accidentes <b>${S.ss.acc}</b> · 🚶 Rondas <b>${S.ss.ron||0}</b><br>⚡ Energía al final: <b>${Math.round(S.en)}</b></div>
+ ${L.length?"<p><b>Bitácora de la noche:</b></p>"+L.map(x=>`<div class="mut">${x.ok==="dil"?"💬":x.ok==="part"?"🟡":x.ok===true?"✅":x.ok===false?"❌":"⏱️"} ${x.c.t} <i>(${x.c.tag})</i></div>`).join(""):""}
+ ${bubble("nico","Aprendí un montón esta noche. Lo más importante: medir cuando se puede, seguir los lineamientos y, cuando no hay datos, tomar la decisión que no le haga daño a nadie… y cuidar a la gente, incluido usted.")}
+ <button class="btn" onclick="localStorage.removeItem(SK);location.reload()">🌙 Jugar otra noche</button> <a class="btn o" href="../index.html#juegos">Volver a PES Labs</a>`);try{localStorage.removeItem(SK)}catch(e){}}
+// ---------- sala del profesor ----------
+const apiOn=()=>window.PES_API&&!/PEGAR/.test(PES_API);
+async function checkRoom(rc){if(!apiOn())return;try{const r=await fetch(PES_API,{method:"POST",body:JSON.stringify({a:"check",code:rc})});const j=await r.json();toast(j.ok?`🏫 Conectado a la sala <b>${rc}</b> · ${j.curso}`:`⚠️ No encontramos la sala <b>${rc}</b>.`)}catch(e){}}
+function sendRes(kind,r,dec){if(!S.player||!S.player.room)return;S.outbox.push({a:"submit",code:S.player.room,nick:S.player.nick,kind,r,dec:dec||[]});flushOut();}
+let FLUSH=false;async function flushOut(){if(FLUSH||!S.outbox.length||!apiOn())return;FLUSH=true;try{while(S.outbox.length){const b=S.outbox[0];const res=await fetch(PES_API,{method:"POST",body:JSON.stringify(b)});const j=await res.json();if(!j.ok&&!/no encontrada/i.test(j.err||""))break;S.outbox.shift();if(j.ok)toast("📤 Resultados enviados a tu profesor.")}}catch(e){}FLUSH=false;try{localStorage.setItem(SK+"-out",JSON.stringify(S.outbox))}catch(e){}}
+setInterval(flushOut,30000);
+function playerDlg(){openD(`<h2>👤 Jugador</h2><label for="nk">Tu nickname</label><input id="nk" maxlength="24" value="${S.player?S.player.nick:""}"><label for="rc">Código de sala</label><input id="rc" maxlength="12" style="text-transform:uppercase" value="${S.player?S.player.room:""}"><p id="perr" class="bad"></p><button class="btn" onclick="const nk=$('nk').value.trim().slice(0,24),rc=$('rc').value.trim().toUpperCase().slice(0,12);if(rc&&!nk){$('perr').textContent='Escribe tu nickname.';return}S.player={nick:nk||'Ingeniero',room:rc};if(rc)checkRoom(rc);closeD()">Guardar</button><button class="btn o" onclick="closeD()">Cancelar</button>`);}
+// ---------- cámara, toques y guardado ----------
+const CAM={x:0,y:0,z:1};function fitCam(){const c=P(W<700?11:17,W<700?11:11);CAM.x=c[0];CAM.y=c[1]-40;CAM.z=W<700?.72:clamp(Math.min(W/1250,H/760),.5,1.2);}
+function s2w(px,py){return [(px-W/2)/CAM.z+CAM.x,(py-H/2)/CAM.z+CAM.y]}
+function tap(px,py){const [wx,wy]=s2w(px,py);for(const i of INC){if(i.bx!=null&&Math.hypot(wx-i.bx,wy-i.by)<24){incDlg(i);return}}let best=null;for(const h of HIT){if(wx>=h.x&&wx<=h.x+h.w&&wy>=h.y&&wy<=h.y+h.h)best=h}if(best)unitDlg(best.u);}
+const SK="pes-turno-noche-v1";
+function save(){if(S.done)return;try{localStorage.setItem(SK,JSON.stringify({S,INC:INC.map(i=>({id:i.c.id,t0:i.t0,dl:i.dl}))}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(SK)||"null");if(d&&d.S&&!d.S.done){Object.assign(S,d.S);for(const q of d.INC||[]){const c=caseById(q.id)||DILS.find(x=>x.id===q.id);if(c)INC.push({id:incId++,c,t0:q.t0,dl:q.dl})}return true}}catch(e){}return false}
+setInterval(()=>{if(S.started&&!S.done)save()},15000);
+
+function toast(m){const d=document.createElement("div");d.innerHTML=m;$("toast").appendChild(d);setTimeout(()=>d.remove(),4800);while($("toast").children.length>3)$("toast").firstChild.remove();}
+let AC=null,muted=true,hum=null;
+function toggleSnd(){muted=!muted;$("snd").textContent=muted?"🔇":"🔊";if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),n=AC.createBiquadFilter(),g=AC.createGain();o.type="sawtooth";o.frequency.value=48;n.type="lowpass";n.frequency.value=180;g.gain.value=0;o.connect(n);n.connect(g);g.connect(AC.destination);o.start();hum=g;}catch(e){}}
+ if(hum)hum.gain.value=muted?0:.035;}
+function beep(f,d){if(!AC||muted)return;const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=.06;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d);}
+// ---------- velocidad ----------
+function setSpd(s){SPD=s;document.querySelectorAll(".spd button").forEach(b=>b.classList.toggle("on",+b.dataset.s===s));}
+// ---------- entrada: arrastrar, zoom y toques ----------
+const PTR=new Map();let drag=null,pinch=null,moved=0;
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);PTR.set(e.pointerId,[e.clientX,e.clientY]);moved=0;
+ CT=null;if(PTR.size===1)drag={x:e.clientX,y:e.clientY,cx:CAM.x,cy:CAM.y};else if(PTR.size===2){const [a,b]=[...PTR.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),z:CAM.z};drag=null;}});
+cv.addEventListener("pointermove",e=>{if(!PTR.has(e.pointerId))return;PTR.set(e.pointerId,[e.clientX,e.clientY]);
+ if(pinch&&PTR.size===2){const [a,b]=[...PTR.values()];CAM.z=clamp(pinch.z*Math.hypot(a[0]-b[0],a[1]-b[1])/pinch.d,.25,2.6);moved=99;}
+ else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;moved=Math.max(moved,Math.hypot(dx,dy));CAM.x=drag.cx-dx/CAM.z;CAM.y=drag.cy-dy/CAM.z;clampCam();}});
+function endPtr(e){const was=PTR.size;PTR.delete(e.pointerId);if(PTR.size<2)pinch=null;if(was===1&&moved<7)tap(e.clientX,e.clientY);if(!PTR.size)drag=null;}
+cv.addEventListener("pointerup",endPtr);cv.addEventListener("pointercancel",e=>{PTR.delete(e.pointerId);drag=null;pinch=null});
+cv.addEventListener("wheel",e=>{e.preventDefault();CT=null;CAM.z=clamp(CAM.z*(e.deltaY<0?1.12:.89),.25,2.6)},{passive:false});
+function clampCam(){CAM.x=clamp(CAM.x,(X0-Y1)*TW,(X1-Y0)*TW);CAM.y=clamp(CAM.y,(X0+Y0)*TH-150,(X1+Y1)*TH+50);}
+let CT=null;function camTo(x,y,z){const c=P(x,y);CT={x:c[0],y:c[1]-40,z:z||CAM.z}}
+function goUnit(u){const q=U[u];if(q)camTo(q.x,q.y,Math.max(CAM.z,W<700?.75:.85))}
+document.querySelectorAll(".spd button").forEach(b=>b.onclick=()=>setSpd(+b.dataset.s));
+buildGround();fitCam();
+const had=load();try{S.outbox=JSON.parse(localStorage.getItem(SK+"-out")||"[]")}catch(e){}
+function start(){const nk=($("nk")?$("nk").value:"").trim().replace(/[<>"'`]/g,"").slice(0,24),rc=($("rc")?$("rc").value:"").trim().toUpperCase().slice(0,12);if(rc&&!nk){$("perr").textContent="Escribe tu nickname para que tu profesor te reconozca.";return}
+ S.player={nick:nk||"Ingeniero",room:rc};if(rc)checkRoom(rc);S.started=true;closeD();if(!had){S.nextInc=6;toast("🌙 18:00. El turno de la tarde se va. Desde ahora, todo es tu responsabilidad.");}setSpd(1);}
+openD(`<span class="tag">PES Labs · Juego de ingeniería de planta</span><h2>🌙 Turno Noche</h2>
+<p>Son las <b>18:00</b>. El ingeniero de la tarde te entrega la planta envasadora de bebida gaseosa y se va a su casa. Desde ahora hasta las <b>06:00</b> eres el <b>ingeniero superintendente</b>… y el único ingeniero en la planta.</p>
+<p class="mut">⏱️ El turno dura cerca de <b>1 hora real</b>, en <b>4 bloques de unos 15 minutos</b>. Se guarda solo: puedes jugar un bloque por día. El reloj avanza solo mientras juegas (▶▶ para acelerar los ratos tranquilos).</p>
+<p>Calidad, proceso, ambiente, seguridad y personas: todo pasa por ti. La meta es <b>${META.toLocaleString("es-CR")} cajas</b> sin lastimar a nadie, sin contaminar y sin despachar producto malo. ¿Sobrevives al turno?</p>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${Object.keys(CHARS).map(k=>face(k,40)).join("")}</div>
+<div class="data"><b>👤 Jugador</b><br><label for="nk">Tu nickname</label><input id="nk" maxlength="24" placeholder="Ej.: JR-07"><label for="rc">Código de sala (solo si tu profesor te dio uno)</label><input id="rc" maxlength="12" placeholder="Ej.: QUIM-4821" style="text-transform:uppercase"></div><p id="perr" class="bad"></p>
+<p class="mut">💻 Se disfruta más en computadora. Planta y datos genéricos con fines educativos.</p>
+<button class="btn" onclick="start()">${had?`Continuar el turno (${clk()}) ▶`:"Empezar el turno ▶"}</button>${had?` <button class="btn o" onclick="localStorage.removeItem(SK);location.reload()">Empezar de cero</button>`:""} <button class="btn o" onclick="helpDlg()">❓ Cómo se juega</button>`);
+if(W<700)$("kp").classList.add("min");hud();requestAnimationFrame(loop);
+</script>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>
