@@ -117,7 +117,7 @@ function findPath(a,b){if(los(a,b))return [b];const nx=Math.ceil(MW/GS),ny=Math.
 const SEALW={T:[140,160],P:[40,60],d:[1,1.5]};
 let G;function newGame(lv){lv=lv||1;loadLevel(lv);G={lv,phase:"menu",t:0,LEN:LV.LEN,takt:LV.takt,pl:{x:7,y:MODE==="line"?6.6:6.4,path:[],tx:null,ty:null,goal:null,hold:null,run:false,dir:1,walk:0},
  seal:{T:128,P:50,d:1.2,ok:false,drift:0},calOk:true,stop:0,P:12,pBase:0,gownErr:0,clutter:[],served:0,missed:0,total:0,docs:[],stock:[],
- nc:[],scrap:0,scrapGood:0,alarms:0,dist:0,trail:[],busy:{},working:null,sopSeen:{},ev:{},nextDoc:22,docN:0,dec:[],contained:0,rep:false,pts:0,cd:0,shake:0,
+ nc:[],scrap:0,scrapGood:0,alarms:0,dist:0,trail:[],busy:{},working:null,sopSeen:{},ev:{},nextDoc:LV.first||30,docN:0,dec:[],contained:0,rep:false,pts:0,cd:0,shake:0,
  coat:0,spc:[],spcAl:false,ovenRuns:0,ovenLoad:0,boss:null,
  line:{u:Array(LV.LINE?LV.LINE.length:0).fill(null),feed:{rollo:10,spike:10,camara:10,regul:10,bolsa:10},jam:{},rej:0,boxes:[],pack:[],tc:0,on:false,run:0,down:0,why:{},made:0,good:0,bad:0,ph:0}};
  for(const k in ST){const s=ST[k];s.p=null;s.prog=0;s.done=false;s.lock=0;s.wait=false;s.q=[];s.run=false;if(s.in||s.line)G.busy[k]=0;}
@@ -255,7 +255,7 @@ function drawStation(s,hi){s.h=s.id==="scrap"?.25:s.shelf?.5:s.line?.3:SH;const 
  if(s.p){drawPiece(rx+rw*.68,ry+rh*.62,s.p,TS*.36);}
  // barra de progreso / estados
  const bx=s.batch?rx+rw/2:rx+rw*.78,by=s.batch?ry-TS*.45:ry-TS*.32;
- if(s.batch){if(s.run)bar(bx,by,TS*1.2,s.prog/s.tm,"#ff8a3d");else if(s.done&&s.q.length){const b=Math.abs(Math.sin(AT*5))*TS*.08;ell(bx,by+TS*.05-b,TS*.2,TS*.2,"#3ec46d",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.2}px system-ui`;cx.textAlign="center";cx.fillText(s.q.length,bx,by+TS*.12-b)}else if(s.q.length){cx.fillStyle="#ffd23f";cx.strokeStyle=OUT;cx.lineWidth=lw();rr(bx-TS*.5,by-TS*.08,TS*1,TS*.34,TS*.15);cx.fill();cx.stroke();cx.fillStyle=OUT;cx.font=`900 ${TS*.17}px system-ui`;cx.textAlign="center";cx.fillText(`▶ ${s.q.length}/${s.cap}`,bx,by+TS*.15);}}
+ if(s.batch){if(s.run)bar(bx,by,TS*1.2,s.prog/s.tm,"#ff8a3d");else if(s.q.some(x=>x.st===s.out)){const b=Math.abs(Math.sin(AT*5))*TS*.08;ell(bx,by+TS*.05-b,TS*.2,TS*.2,"#3ec46d",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.2}px system-ui`;cx.textAlign="center";cx.fillText(s.q.filter(x=>x.st===s.out).length,bx,by+TS*.12-b)}else if(s.q.length){cx.fillStyle="#ffd23f";cx.strokeStyle=OUT;cx.lineWidth=lw();rr(bx-TS*.5,by-TS*.08,TS*1,TS*.34,TS*.15);cx.fill();cx.stroke();cx.fillStyle=OUT;cx.font=`900 ${TS*.17}px system-ui`;cx.textAlign="center";cx.fillText(`▶ ${s.q.length}/${s.cap}`,bx,by+TS*.15);}}
  if(s.line&&G.line.jam[s.id]){const b=Math.sin(AT*8)*TS*.05;cx.fillStyle="#000";cx.font=`${TS*.42}px system-ui`;cx.textAlign="center";cx.fillText("⚠️",bx,by+TS*.18+b);if(s.prog>0)bar(bx,by-TS*.25,TS*.9,s.prog/2.5,"#3ec46d");}
  if(ST[s.id].in&&s.p){if(s.wait){cx.font=`${TS*.42}px system-ui`;cx.textAlign="center";cx.fillStyle="#000";cx.fillText("❓",bx,by+TS*.2+Math.sin(AT*6)*3)}else if(s.done){cx.fillStyle="#3ec46d";cx.strokeStyle=OUT;cx.lineWidth=lw();const b=Math.abs(Math.sin(AT*5))*TS*.08;ell(bx,by+TS*.05-b,TS*.2,TS*.2,"#3ec46d",OUT);cx.fillStyle="#fff";cx.font=`900 ${TS*.26}px system-ui`;cx.textAlign="center";cx.fillText("✓",bx,by+TS*.14-b)}else bar(bx,by,TS*.75,s.prog/s.tm,s.mach?"#9b6bf0":"#3ec46d");}
  if(s.id==="fuga"&&(G.phase==="prod")){const ok=G.calOk&&!(G.ev.cal&&!G.ev.calDone);cx.fillStyle=ok?"#3ec46d":"#e0493c";cx.strokeStyle=OUT;cx.lineWidth=lw(.025);rr(rx+TS*.06,fy-TS*.02,TS*.42,TS*.2,4);cx.fill();cx.stroke();cx.fillStyle="#fff";cx.font=`900 ${TS*.12}px system-ui`;cx.textAlign="center";cx.fillText(ok?"CAL ✓":"CAL ✗",rx+TS*.27,fy+TS*.12);}
@@ -340,17 +340,17 @@ function bigText(t,col,sz){cx.font=`900 ${sz}px system-ui`;cx.textAlign="center"
 // ---------- niveles ----------
 const SEALSOP="Bolsa médica de película y papel grado médico. Sella SOLO dentro de la ventana validada: 140–160 °C, 40–60 psi, 1,0–1,5 s.";
 const LEVELS={
-1:{id:1,name:"Catéter",ic:"🩺",mode:"cell",prod:"cat",unit:"catéter",units:"catéteres",LEN:300,takt:35,
+1:{id:1,name:"Catéter",ic:"🩺",mode:"cell",prod:"cat",unit:"catéter",units:"catéteres",LEN:300,takt:40,pat:150,first:38,
  env:{room:"CUARTO LIMPIO ISO 7 · CÉLULA DE CATÉTERES",hall:"PASILLO DEL HOSPITAL → HEMODINAMIA",sign:"HEMODINAMIA →",signCol:"#2f8fd0",fa:"#e3f3f4",fb:"#f6fcfc",ca:"#efe3cc",cb:"#f2e8d4",wall:"#cfe0d8",wall2:"#b7cfc4",bg:"#bfd8e2",night:0},
  STG:{tubo:"tubo extruido",cortado:"tubo cortado",punta:"tubo con punta",unido:"catéter unido",probado:"catéter probado",inspeccionado:"catéter inspeccionado",sellado:"catéter sellado",listo:"catéter listo",rechazado:"pieza rechazada"},
  st:{rack:{n:"Tubos",ic:"🧵",fx:1,x:1.45,y:3.05,col:"#4a86c5",give:"tubo"},
-  corte:{n:"Corte",ic:"✂️",in:"tubo",out:"cortado",man:1,tm:2,col:"#3a9be0",sop:"Coloca el tubo en la plantilla y corta a 120 mm. Verifica la longitud con la regla de la estación."},
-  punta:{n:"Punta",ic:"🔥",in:"cortado",out:"punta",man:1,tm:2.5,col:"#e8743f",sop:"Forma la punta en el molde caliente sin forzar. Una punta con rebaba puede lastimar un vaso sanguíneo."},
-  uv:{n:"Unión UV",ic:"💡",in:"punta",out:"unido",mach:1,tm:6,col:"#8b5ad8",sop:"Aplica el adhesivo al conector y cura con luz UV durante 6 s. No retires la pieza antes de que termine el ciclo."},
+  corte:{n:"Corte",ic:"✂️",in:"tubo",out:"cortado",man:1,tm:1.5,col:"#3a9be0",sop:"Coloca el tubo en la plantilla y corta a 120 mm. Verifica la longitud con la regla de la estación."},
+  punta:{n:"Punta",ic:"🔥",in:"cortado",out:"punta",man:1,tm:2,col:"#e8743f",sop:"Forma la punta en el molde caliente sin forzar. Una punta con rebaba puede lastimar un vaso sanguíneo."},
+  uv:{n:"Unión UV",ic:"💡",in:"punta",out:"unido",mach:1,tm:5,col:"#8b5ad8",sop:"Aplica el adhesivo al conector y cura con luz UV durante 5 s. No retires la pieza antes de que termine el ciclo."},
   fuga:{n:"Fuga",ic:"🫧",in:"unido",out:"probado",mach:1,tm:4,col:"#25a9c0",sop:"Presuriza a 30 psi durante 4 s. Si falla, la pieza va al 🗑️ scrap. El equipo debe tener la calibración vigente."},
-  insp:{n:"Inspección",ic:"🔍",in:"probado",out:"inspeccionado",man:1,tm:2,col:"#e0a51c",sop:"Revisa punta, unión y marcas con la lupa. Si tienes duda, mira con más aumento antes de decidir."},
+  insp:{n:"Inspección",ic:"🔍",in:"probado",out:"inspeccionado",man:1,tm:1.5,col:"#e0a51c",sop:"Revisa punta, unión y marcas con la lupa. Si tienes duda, mira con más aumento antes de decidir."},
   sell:{n:"Selladora",ic:"♨️",in:"inspeccionado",out:"sellado",mach:1,tm:3,col:"#e04a7c",sop:SEALSOP},
-  etiq:{n:"Etiqueta UDI",ic:"🏷️",in:"sellado",out:"listo",man:1,tm:1.5,col:"#3fae62",sop:"Etiqueta con lote, vencimiento y código UDI. Revisa que el sello no tenga canales, arrugas ni partes sin sellar."},
+  etiq:{n:"Etiqueta UDI",ic:"🏷️",in:"sellado",out:"listo",man:1,tm:1,col:"#3fae62",sop:"Etiqueta con lote, vencimiento y código UDI. Revisa que el sello no tenga canales, arrugas ni partes sin sellar."},
   scrap:{n:"Scrap",ic:"🗑️",fx:1,x:7,y:5.25,col:"#d0453a"},
   win:{n:"Entrega",ic:"🔔",fx:1,x:12.15,y:2.75,col:"#2f8fd0"}},
  PROC:["corte","punta","uv","fuga","insp","sell","etiq"],SCRAMBLE:["fuga","etiq","corte","sell","punta","insp","uv"],
@@ -360,7 +360,7 @@ const LEVELS={
   {ic:"📄",n:"Papeles sueltos",x:3.7,y:3.7,p:.8,why:"Solo se usa papel para cuarto limpio y documentos controlados, en su lugar."},
   {ic:"🔧",n:"Llave fuera de su lugar",x:8.6,y:7,p:.2,keep:1,why:"Esta sí se necesita: va a su lugar en el tablero de sombras (Seiton: un lugar para cada cosa)."}],
  ev:{cal:70,drift:125,aud:182,boss:212}},
-2:{id:2,name:"Guía metálica",ic:"🧵",mode:"cell",prod:"guia",unit:"guía",units:"guías",LEN:300,takt:38,
+2:{id:2,name:"Guía metálica",ic:"🧵",mode:"cell",prod:"guia",unit:"guía",units:"guías",LEN:300,takt:42,pat:140,first:42,
  env:{room:"CUARTO LIMPIO ISO 8 · CÉLULA DE GUÍAS",hall:"PASILLO DEL HOSPITAL → RADIOLOGÍA INTERVENCIONISTA",sign:"RADIOLOGÍA →",signCol:"#8b5ad8",fa:"#f3ead8",fb:"#fbf6ec",ca:"#c9c3dc",cb:"#d6d1e6",wall:"#5d5f86",wall2:"#4b4d70",bg:"#3b3d5c",night:1},
  STG:{alambre:"alambre",recto:"alambre enderezado",afilado:"punta rectificada",recubierto:"guía recubierta",curado:"recubrimiento curado",medido:"guía medida",enrollado:"guía enrollada",sellado:"guía sellada",listo:"guía lista",rechazado:"pieza rechazada"},
  st:{rack:{n:"Alambre",ic:"🌀",fx:1,x:1.45,y:3.05,col:"#7f8c99",give:"alambre"},
@@ -381,7 +381,7 @@ const LEVELS={
   {ic:"📦",n:"Caja de cartón",x:3.6,y:5.9,p:1.2,why:"El cartón suelta fibras: el material entra en contenedores plásticos limpios."},
   {ic:"🧰",n:"Kit de herramientas",x:8.8,y:3.9,p:.2,keep:1,why:"Esta sí se necesita: va a su lugar marcado, no en el piso (Seiton)."}],
  ev:{coat:58,drift:128,aud:175,boss:210}},
-3:{id:3,name:"Set de infusión",ic:"💧",mode:"line",prod:"set",unit:"caja de sets",units:"cajas",LEN:300,takt:27,CT:2.3,BOX:5,
+3:{id:3,name:"Set de infusión",ic:"💧",mode:"line",prod:"set",unit:"caja de sets",units:"cajas",LEN:300,takt:30,pat:120,first:30,CT:2.3,BOX:5,
  env:{room:"SALA DE PRODUCCIÓN ISO 8 · LÍNEA DE SETS DE INFUSIÓN",hall:"PASILLO DEL HOSPITAL → EMERGENCIAS",sign:"EMERGENCIAS →",signCol:"#e0493c",fa:"#e4e9ec",fb:"#eef2f4",ca:"#e8e2dc",cb:"#f1ece6",wall:"#e7d6d3",wall2:"#d9bdb8",bg:"#c9d3da",night:0,lanes:1},
  STG:{bandeja:"bandeja de componentes",caja:"caja de 5 sets",rechazado:"bolsa de rechazos"},
  st:{m1:{n:"Corte de tubo",ic:"✂️",line:1,x:2.2,y:4.9,w:1.2,d:.95,col:"#3a9be0",comp:"rollo",apd:[0,1],sop:"Corta el tubo a la longitud del set. Consume 1 metro de tubo por set."},
@@ -433,18 +433,18 @@ function hud(){const left=G.phase==="prod"?G.LEN-G.t:G.LEN;$("clk").textContent=
  $("pts").textContent=G.pts;const b=$("pbar").firstChild;b.style.width=clamp(G.P,0,100)+"%";b.style.background=G.P>80?"#d64532":G.P>55?"#d98a00":"#1f9a55";
  const sv=G.phase==="menu"||G.phase==="gown"||G.phase==="5s"?"—":`${Math.round(G.seal.T)} °C`;$("sealT").textContent=sv;$("sealhud").classList.toggle("al",G.phase==="prod"&&!inWin());}
 // ---------- vestimenta ----------
-const GOWN=[["💍","Quitarse joyas y reloj, y guardar el celular en el casillero"],["🧼","Lavarse y secarse las manos"],["🧢","Cofia: cubrir todo el cabello"],["😷","Cubrebocas"],["👟","Cubrecalzado, uno a la vez al cruzar la banca"],["🥼","Bata de cuarto limpio, sin que toque el piso"],["🧤","Guantes y desinfección con alcohol"]];
+const GOWN=[["💍","Quitarse joyas y reloj, y guardar el celular en el casillero"],["🧼","Lavarse y secarse las manos"],["🧢","Cofia: cubrir todo el cabello"],["👟","Cubrecalzado, uno a la vez al cruzar la banca"],["😷","Cubrebocas"],["🥼","Bata de cuarto limpio, sin que toque el piso"],["🧤","Guantes y desinfección con alcohol"]];
 const GOWNX=[["💄","Retocarse el maquillaje antes de entrar","El maquillaje y los perfumes desprenden partículas: se entra sin maquillaje."],["🍬","Comerse un confite en la esclusa","No se come ni se mastica chicle en el área de vestimenta ni en el cuarto limpio."]];
-let GW={i:0,opts:[]};
-function gownDlg(){G.phase="gown";if(!GW.opts.length){GW.i=0;GW.opts=GOWN.map((g,k)=>({k,g})).concat(GOWNX.map((g,k)=>({x:k,g}))).sort(()=>rnd()-.5);}
- openD(`<span class="tag">Paso 1 de 4 · Esclusa de vestimenta</span><h2>👕 Vístete para entrar al cuarto limpio</h2><p>Toca los pasos <b>en el orden correcto</b>. La regla general es <b>de arriba hacia abajo</b> y lo que toca el producto (los guantes) va de último.</p>
- <div class="data">${GOWN.slice(0,GW.i).map(g=>`<span class="chip">✅ ${g[0]} ${g[1].split(":")[0].split(",")[0]}</span>`).join("")||"<span class='mut'>Todavía nada…</span>"}</div>
- ${GW.opts.map((o,j)=>{const done=o.k!=null&&o.k<GW.i;return `<button class="opt${done?" done":""}" data-j="${j}" ${done?"disabled":""}>${o.g[0]} ${o.g[1]}</button>`}).join("")}
- <p class="mut">El orden exacto cambia según el procedimiento de cada planta; aquí usamos uno típico. Errores: <b>${G.gownErr}</b></p>`);
+let GW={i:0,opts:[],done:[]};const GGRP=[0,1,2,2,3,4,5];function gNext(){const d=GW.done||[];let m=99;GOWN.forEach((g,k)=>{if(!d.includes(k))m=Math.min(m,GGRP[k])});return m}
+function gownDlg(){G.phase="gown";if(!GW.opts.length){GW.i=0;GW.done=[];GW.opts=GOWN.map((g,k)=>({k,g})).concat(GOWNX.map((g,k)=>({x:k,g}))).sort(()=>rnd()-.5);}
+ openD(`<span class="tag">Paso 1 de 4 · Esclusa de vestimenta</span><h2>👕 Vístete para entrar al cuarto limpio</h2><p>Toca los pasos <b>en el orden correcto</b>. Primero lo que te ensucia las manos (el cabello y los zapatos), después el cubrebocas y la bata, y de último lo que toca el producto: los guantes.</p>
+ <div class="data">${(GW.done||[]).map(k=>GOWN[k]).map(g=>`<span class="chip">✅ ${g[0]} ${g[1].split(":")[0].split(",")[0]}</span>`).join("")||"<span class='mut'>Todavía nada…</span>"}</div>
+ ${GW.opts.map((o,j)=>{const done=o.k!=null&&(GW.done||[]).includes(o.k);return `<button class="opt${done?" done":""}" data-j="${j}" ${done?"disabled":""}>${o.g[0]} ${o.g[1]}</button>`}).join("")}
+ <p class="mut">El orden exacto cambia según el procedimiento de cada planta (en algunas el cubrecalzado va antes que la cofia: aquí se aceptan los dos). Errores: <b>${G.gownErr}</b></p>`);
  document.querySelectorAll("#dlg .opt").forEach(b=>b.onclick=()=>gownPick(+b.dataset.j,b));}
-function gownPick(j,b){const o=GW.opts[j];if(o.k===GW.i){GW.i++;beep(880,.07);if(GW.i>=GOWN.length)return showerDlg();return gownDlg();}
+function gownPick(j,b){const o=GW.opts[j];if(o.k!=null&&!(GW.done||[]).includes(o.k)&&GGRP[o.k]===gNext()){GW.done.push(o.k);GW.i++;beep(880,.07);if(GW.i>=GOWN.length)return showerDlg();return gownDlg();}
  G.gownErr++;G.pBase+=.35;beep(220,.15);b.classList.add("err");setTimeout(()=>b.classList.remove("err"),350);
- toast(o.x!=null?"❌ "+o.g[2]:`❌ Todavía no: antes va <b>${GOWN[GW.i][0]} ${GOWN[GW.i][1].split(":")[0].split(",")[0]}</b>. Cada error en la vestimenta suma partículas al cuarto limpio.`,5200);gownDlg();}
+ toast(o.x!=null?"❌ "+o.g[2]:`❌ Todavía no: antes va <b>${GOWN.filter((g,k)=>GGRP[k]===gNext()&&!GW.done.includes(k)).map(g=>g[0]+" "+g[1].split(":")[0].split(",")[0]).join(" o ")}</b>. Cada error en la vestimenta suma partículas al cuarto limpio.`,5200);gownDlg();}
 function showerDlg(){openD(`<span class="tag">Paso 1 de 4 · Esclusa</span><h2>🌬️ Ducha de aire</h2><p>Mantén presionado el botón mientras el aire filtrado te sopla las partículas de la ropa. Gira despacio con los brazos un poco abiertos.</p>
  <div class="hb" style="height:14px"><i id="shb" style="width:0;background:var(--tl)"></i></div><button class="btn" id="shw" style="width:100%">Mantén presionado 3 s</button><p class="mut">Las puertas tienen interbloqueo: no puedes abrir la del cuarto limpio hasta que se cierre la de la esclusa.</p>`);
  let t0=0,iv=null;const b=$("shw");const go=e=>{e.preventDefault();t0=performance.now();iv=setInterval(()=>{const f=(performance.now()-t0)/3000;$("shb").style.width=clamp(f*100,0,100)+"%";if(f>=1){clearInterval(iv);iv=null;beep(990,.1);log("vestimenta","Vestimenta para cuarto limpio","Cuarto limpio · Vestimenta",G.gownErr===0?1:G.gownErr<=2?.5:0,G.gownErr+" errores");setTimeout(fiveSDlg,250);}},50)};
@@ -478,8 +478,8 @@ function sealDefect(){const s=G.seal;if(s.T<140)return "Sello débil: se despega
 function testSeal(){G.tests=(G.tests||0)+1;beep(500,.15);const w=inWin();G.sealTestOk=w;const e=$("si");sealInfo();
  e.innerHTML+=w?"<br>🧪 <b>Sello de prueba:</b> ancho uniforme de 6 mm, sin canales ni arrugas. Desprendimiento: <b>4,1 lbf</b> (mínimo 2,5) ✅. Prueba de tinte: sin fugas ✅.":`<br>🧪 <b>Sello de prueba:</b> ❌ ${sealDefect()}`;if($("sgo"))$("sgo").disabled=!w;}
 function sealClose(){if(G.seal.drift&&inWin()){G.seal.drift=0;G.ev.driftFix=G.t;toast("♨️ Corregiste la temperatura. Lo sellado mientras estuvo fuera de ventana es <b>sospechoso</b>: anótalo para el cierre del lote.",6000);}closeD();hud();}
-function startProd(){log("arranque","Verificación de arranque de la selladora","Selladora · Ventana validada",G.tests===1?1:.5,G.tests+" sellos de prueba");closeD();G.phase="prod";G.t=0;G.pl.x=7;G.pl.y=MODE==="line"?6.6:7;G.P=10+G.gownErr*4;G.cd=3.6;hud();
- toast(MODE==="line"?"💧 La línea arranca sola. Tú la mantienes viva: surte componentes desde los estantes, destraba atascos ⚠️, vacía los rechazos y lleva las cajas 📦 a 🔔 entrega.":`${LV.ic} ¡Llegan los doctores! Toca ${ST.rack.ic} ${ST.rack.n.toLowerCase()} para empezar. Cada doctor necesita ${LV.unit==="guía"?"una":"un"} ${LV.unit} listo en 🔔 entrega.`,7000);}
+function startProd(){log("arranque","Verificación de arranque de la selladora","Selladora · Ventana validada",G.tests===1?1:.5,G.tests+" sellos de prueba");closeD();G.phase="prod";G.t=0;if(MODE!=="line"&&!G.stock.length)G.stock.push({st:"listo",prod:LV.prod});G.pl.x=7;G.pl.y=MODE==="line"?6.6:7;G.P=10+G.gownErr*4;G.cd=3.6;hud();
+ toast(MODE==="line"?"💧 La línea arranca sola. Tú la mantienes viva: surte componentes desde los estantes, destraba atascos ⚠️, vacía los rechazos y lleva las cajas 📦 a 🔔 entrega.":`${LV.ic} El turno anterior dejó ${LV.unit==="guía"?"una":"un"} ${LV.unit} en 🔔 entrega. Toca ${ST.rack.ic} ${ST.rack.n.toLowerCase()} para empezar. 💡 Truco: mientras una máquina trabaja sola, ve adelantando la siguiente pieza.`,7000);}
 // ---------- producción ----------
 function goTo(k){const a=ap(ST[k]);G.working=null;const p=G.pl;if(Math.hypot(p.x-a[0],p.y-a[1])<.15){p.tx=null;p.path=[];p.goal=null;faceTo(k);return interact(k)}p.tx=a[0];p.ty=a[1];p.goal=k;p.path=findPath([p.x,p.y],[a[0],a[1]]);}
 function faceTo(k){const s=ST[k];const d=(TR?s.y-G.pl.y:s.x-G.pl.x);if(Math.abs(d)>.05)G.pl.dir=Math.sign(d);}
@@ -498,7 +498,7 @@ function interact(k){const s=ST[k],p=G.pl;if(G.stop>0){toast("🌫️ La célula
   if(p.hold.st==="rechazado"){toast("🗑️ Las piezas rechazadas van al scrap.");return}
   if(p.hold.st!==s.in){const n=nextFor(p.hold.st);toast(`Esta estación recibe <b>${STG[s.in]}</b>. Tu pieza (${STG[p.hold.st]}) va a <b>${n?ST[n].n:"la ventanilla"}</b>.`);return}
   s.p=p.hold;p.hold=null;s.prog=0;s.done=false;beep(760,.05);if(!G.sopSeen[k]){G.sopSeen[k]=1;toast(`📋 <b>${s.n}:</b> ${s.sop}`,6000)}if(s.man)G.working=k;return}
- if(s.done&&!s.wait){if(p.hold){toast("Tienes las manos ocupadas: deja primero tu pieza.");return}p.hold=s.p;s.p=null;s.done=false;s.prog=0;beep(900,.05);if(p.hold.st==="rechazado")toast("❌ Pieza rechazada: llévala al 🗑️ scrap.");return}
+ if(s.done&&!s.wait){if(p.hold&&p.hold.st===s.in){const o=s.p;s.p=p.hold;p.hold=o;s.prog=0;s.done=false;beep(820,.05);if(s.man)G.working=k;if(o.st==="rechazado")toast("❌ Pieza rechazada: llévala al 🗑️ scrap.");return}if(p.hold){toast("Tienes las manos ocupadas: deja primero tu pieza.");return}p.hold=s.p;s.p=null;s.done=false;s.prog=0;beep(900,.05);if(p.hold.st==="rechazado")toast("❌ Pieza rechazada: llévala al 🗑️ scrap.");return}
  if(s.wait){G.working=k;return}
  if(s.man){G.working=k;return}
  if(k==="medi"&&G.spcAl&&!G.spcIgn){coatDlg();return}
@@ -513,7 +513,8 @@ function complete(s){const p=s.p;s.prog=s.tm;
  if(s.id==="insp"){s.wait=true;return}
  if(s.id==="sell"){if(!inWin()){p.sealBad=1;G.sealsOut=(G.sealsOut||0)+1}}
  if(s.id==="etiq"&&p.sealBad&&!p.sealSeen&&rnd()<.5){p.sealSeen=1;s.wait=true;return}
- p.st=s.out;s.done=true;beep(1040,.06);if(s.mach)floatTxt(s.x,s.y,"✓","#3ec46d");}
+ p.st=s.out;s.done=true;beep(1040,.06);if(s.mach)floatTxt(s.x,s.y,"✓","#3ec46d");else autoPick(s);}
+function autoPick(s){const pl=G.pl;if(pl.hold||G.working!==s.id)return;pl.hold=s.p;s.p=null;s.done=false;s.prog=0;G.working=null;}
 function inspPanel(){const ip=$("insp");const k=G.working;const s=k&&ST[k];const at=s&&Math.hypot(G.pl.x-ap(s)[0],G.pl.y-ap(s)[1])<.4;
  if(!(at&&s.wait&&s.p)){if(!ip.hidden){ip.hidden=true;ip.dataset.k=""}return}
  if(ip.dataset.k===k+(s.p.lupa?"L":""))return;ip.dataset.k=k+(s.p.lupa?"L":"");ip.hidden=false;const p=s.p;
@@ -523,25 +524,26 @@ function inspPanel(){const ip=$("insp");const k=G.working;const s=k&&ST[k];const
 function inspLupa(){const p=ST.insp.p;if(!p)return;p.lupa=1;G.lupas=(G.lupas||0)+1;ST.insp.prog-=0;beep(600,.05);inspPanel();}
 function inspDo(ok){const s=ST.insp,p=s.p;if(!p)return;s.wait=false;s.done=true;
  if(ok){p.st=s.out;if(p.vis){p.accVis=1;}}else{p.st="rechazado";if(!p.vis)G.scrapGood++;toast(p.vis?"✅ Bien visto: la rebaba podía lastimar al paciente.":"😬 La pieza estaba bien: rechazar de más también es desperdicio. Si dudas, usa la lupa.");}
- G.inspN=(G.inspN||0)+1;if(ok&&!p.vis||!ok&&p.vis)G.inspOk=(G.inspOk||0)+1;$("insp").hidden=true;$("insp").dataset.k="";}
-function etqDo(go){const s=ST.etiq,p=s.p;if(!p)return;s.wait=false;s.done=true;if(go){p.st="listo";p.accSeal=1}else{p.st="rechazado";toast("✅ Bien: un canal en el sello rompe la barrera estéril.")}$("insp").hidden=true;$("insp").dataset.k="";}
+ G.inspN=(G.inspN||0)+1;if(ok&&!p.vis||!ok&&p.vis)G.inspOk=(G.inspOk||0)+1;$("insp").hidden=true;$("insp").dataset.k="";autoPick(s);}
+function etqDo(go){const s=ST.etiq,p=s.p;if(!p)return;s.wait=false;s.done=true;if(go){p.st="listo";p.accSeal=1}else{p.st="rechazado";toast("✅ Bien: un canal en el sello rompe la barrera estéril.")}$("insp").hidden=true;$("insp").dataset.k="";autoPick(s);}
 function serve(d,p){const fr=clamp(1-(G.t-d.t0)/d.pat,0,1);
  const f=[];if(p.coatBad)f.push("Recubrimiento fuera de especificación (el medidor estaba ajustado)");if(p.quar)f.push("Set con un componente en cuarentena");
  if(d.boss){d.got=(d.got||0)+1;beep(900,.08);floatTxt(d.x,1.2,`${d.got}/${d.need}`,"#7b4fb8");if(d.got<d.need){for(const x of [p.bad&&"Unión con curado incompleto",p.accVis&&"Rebaba en la punta aceptada en inspección",p.sealBad&&"Bolsa sellada fuera de la ventana validada",p.unver&&"Probado con un equipo fuera de calibración"].filter(Boolean).concat(f))G.nc.push({t:x,doc:d.name});return}
   const pt=60+Math.round(fr*30);G.pts+=pt;d.st="happy";d.say="¡GRAAACIAS! ¡A QUIRÓFANO!";G.served++;G.bossOk=1;G.shake=.35;for(let i=0;i<3;i++)confetti(d.x+(i-1)*.6,1.8);floatTxt(d.x,1.2,"+"+pt,"#ffb020");beep(700,.15);setTimeout(()=>beep(1100,.2),120);setTimeout(()=>beep(1500,.3),260);}
  else{const pt=20+Math.round(fr*10)+(d.vip?15:0);G.pts+=pt;d.st="happy";d.say=YAY[d.g%YAY.length];G.served++;beep(1200,.12);setTimeout(()=>beep(1500,.12),90);confetti(d.x,1.6);floatTxt(d.x,.95,"+"+pt,"#ffb020");}if(p.bad)f.push("Unión con curado incompleto");if(p.accVis)f.push("Rebaba en la punta aceptada en inspección");if(p.sealBad)f.push("Bolsa sellada fuera de la ventana validada");if(p.unver)f.push("Probado con un equipo fuera de calibración");
  for(const x of f)G.nc.push({t:x,doc:d.name});}
-function spawnDoc(vip,boss){G.total++;G.docN++;const d={name:boss?"Dr. Ogro, jefe de cirugía":DOCN[(G.docN-1)%DOCN.length],t0:G.t,pat:boss?95:vip?55:95,x:-1.5,st:"q",g:G.docN,ph:rnd()*6,vip,boss,need:boss?3:1,got:0};
+function spawnDoc(vip,boss){G.total++;G.docN++;const d={name:boss?"Dr. Ogro, jefe de cirugía":DOCN[(G.docN-1)%DOCN.length],t0:G.t,pat:boss?Math.max(100,(LV.pat||95)-20):vip?55:(LV.pat||95),x:-1.5,st:"q",g:G.docN,ph:rnd()*6,vip,boss,need:boss?3:1,got:0};
  if(boss){const i=G.docs.findIndex(q=>q.st==="q");G.docs.splice(i<0?G.docs.length:i,0,d);G.shake=.4;beep(110,.5,.09);toast(`🧌 <b>¡Llegó el Dr. Ogro, jefe de cirugía!</b> Se metió de primero en la fila y necesita <b>3 ${LV.units} a la vez</b>. Hasta que lo atiendas, nadie más avanza.`,7000);}
  else{G.docs.push(d);if(vip)toast("🚨 <b>Emergencia:</b> un doctor necesita un dispositivo para un paciente que no puede esperar.",5200);else if(G.docN>1)beep(330,.1);}}
 // ---------- eventos ----------
 // ---------- horno por lotes ----------
-function ovenInteract(s){const p=G.pl;
- if(p.hold){if(p.hold.st!==s.in){toast(`El horno recibe <b>${STG[s.in]}</b>.`);return}if(s.run){toast("🔥 El horno está en ciclo: espera a que termine.");return}if(s.done&&s.q.length){toast("Saca primero el lote curado.");return}if(s.q.length>=s.cap){toast("El horno está lleno: arráncalo.");return}
-  s.done=false;s.q.push(p.hold);p.hold=null;beep(760,.05);floatTxt(s.x,s.y,`${s.q.length}/${s.cap}`,"#ff8a3d");if(!G.sopSeen.horno){G.sopSeen.horno=1;toast("📋 <b>Horno de curado:</b> "+s.sop+" Toca el horno con las manos libres para arrancarlo.",7000)}return}
- if(s.done&&s.q.length){p.hold=s.q.shift();if(!s.q.length)s.done=false;beep(900,.05);return}
+function ovenInteract(s){const p=G.pl;const cured=s.q.filter(x=>x.st===s.out),raw=s.q.filter(x=>x.st===s.in);
  if(s.run){toast(`🔥 Curando… faltan ${Math.ceil(s.tm-s.prog)} s.`);return}
- if(s.q.length){s.run=true;s.prog=0;G.ovenRuns++;G.ovenLoad+=s.q.length;beep(500,.2);toast(s.q.length<s.cap?`🔥 Horno arrancado con ${s.q.length} de ${s.cap}: más rápido para estas piezas, pero un ciclo con espacio vacío gasta igual energía y tiempo de horno.`:"🔥 Horno arrancado con carga completa.",5200);return}
+ if(p.hold){if(p.hold.st!==s.in){toast(`El horno recibe <b>${STG[s.in]}</b>.`);return}
+  if(s.q.length>=s.cap){if(cured.length){const o=cured[0];s.q.splice(s.q.indexOf(o),1);s.q.push(p.hold);p.hold=o;s.done=s.q.some(x=>x.st===s.out);beep(820,.05);return}toast("El horno está lleno: tócalo con las manos libres para arrancarlo.");return}
+  s.q.push(p.hold);p.hold=null;beep(760,.05);floatTxt(s.x,s.y,`${s.q.filter(x=>x.st===s.in).length}/${s.cap}`,"#ff8a3d");if(!G.sopSeen.horno){G.sopSeen.horno=1;toast("📋 <b>Horno de curado:</b> "+s.sop+" Tócalo con las manos libres para arrancarlo.",7000)}return}
+ if(cured.length){const o=cured[0];s.q.splice(s.q.indexOf(o),1);p.hold=o;s.done=s.q.some(x=>x.st===s.out);beep(900,.05);return}
+ if(raw.length){s.run=true;s.prog=0;G.ovenRuns++;G.ovenLoad+=raw.length;beep(500,.2);toast(raw.length<s.cap?`🔥 Horno arrancado con ${raw.length} de ${s.cap}: más rápido para estas piezas, pero un ciclo con espacio vacío gasta igual energía y tiempo de horno.`:"🔥 Horno arrancado con carga completa.",5200);return}
  toast("🔥 El horno está vacío. Trae guías recubiertas.");}
 function coatDlg(){openD(`<span class="tag">📈 Control estadístico de proceso</span><h2>El gráfico de control avisa</h2><p>El espesor del recubrimiento viene subiendo: ${G.spc.slice(-6).map(v=>v.toFixed(1)).join(" → ")} µm. La especificación es 9–15 µm y los límites de control son 10,2–13,8 µm.</p><p>¿Qué haces?</p>
  ${[["Ajustar la viscosidad del baño según el procedimiento y verificar las siguientes piezas",1],["Seguir: todavía está dentro de especificación",0],["Hacerle un ajuste de cero al medidor: puede estar descalibrado",0]].map((o,k)=>[o,k]).sort(()=>rnd()-.5).map(([o,k])=>`<button class="opt" onclick="coatDo(${k})">${o[0]}</button>`).join("")}`);}
@@ -612,10 +614,10 @@ function step(dt){if(G.phase!=="prod")return;if(G.cd>0){const o=Math.ceil(G.cd-.
  for(const k of ORDER){const s=ST[k];if(s.lock>0){s.lock-=dt;if(s.lock<=0&&k==="fuga")toast("🫧 Probador de fuga calibrado y listo.");}
   if(!s.p||s.done||s.wait||G.stop>0||s.lock>0)continue;let go=s.mach;if(s.man){const a=ap(s);go=G.working===k&&Math.hypot(p.x-a[0],p.y-a[1])<.35&&p.tx==null;}
   if(go){s.prog+=dt;G.busy[k]+=dt;if(s.prog>=s.tm)complete(s);}}
- if(ST.horno){const s=ST.horno;if(s.run&&G.stop<=0){s.prog+=dt;G.busy.horno+=dt;if(s.prog>=s.tm){s.run=false;s.done=true;s.prog=0;for(const q of s.q)q.st=s.out;beep(1200,.1);floatTxt(s.x,s.y,"✓ lote","#3ec46d");}}}
+ if(ST.horno){const s=ST.horno;if(s.run&&G.stop<=0){s.prog+=dt;G.busy.horno+=dt;if(s.prog>=s.tm){s.run=false;s.done=true;s.prog=0;for(const q of s.q)if(q.st===s.in)q.st=s.out;beep(1200,.1);floatTxt(s.x,s.y,"✓ lote","#3ec46d");}}}
  if(MODE==="line"){stepLine(dt);for(const k of LV.LINE){const s=ST[k];if(G.line.jam[k]){const a=ap(s);if(G.working===k&&Math.hypot(p.x-a[0],p.y-a[1])<.35&&!p.path.length){s.prog+=dt;if(s.prog>=2.5){G.line.jam[k]=0;s.prog=0;G.working=null;beep(1000,.08);floatTxt(s.x,s.y,"✓","#3ec46d");}}}else s.prog=0;}}
  // movimiento
- let vx=(KEYS.ArrowRight||KEYS.d?1:0)-(KEYS.ArrowLeft||KEYS.a?1:0),vy=(KEYS.ArrowDown||KEYS.s?1:0)-(KEYS.ArrowUp||KEYS.w?1:0);if(TR)[vx,vy]=[vy,vx];const run=p.run||KEYS.Shift;const sp=(run?5.2:3.4)*(G.stop>0?.5:1);let moved=0;
+ let vx=(KEYS.ArrowRight||KEYS.d?1:0)-(KEYS.ArrowLeft||KEYS.a?1:0),vy=(KEYS.ArrowDown||KEYS.s?1:0)-(KEYS.ArrowUp||KEYS.w?1:0);if(TR)[vx,vy]=[vy,vx];const run=p.run||KEYS.Shift;const sp=(run?6:4.2)*(G.stop>0?.5:1);let moved=0;
  if(vx||vy){p.tx=null;p.goal=null;p.path=[];G.working=null;const n=Math.hypot(vx,vy);const nx=p.x+vx/n*sp*dt,ny=p.y+vy/n*sp*dt;const ox=p.x,oy=p.y;if(!blocked(nx,ny,.2)){p.x=nx;p.y=ny}else if(!blocked(nx,p.y,.2))p.x=nx;else if(!blocked(p.x,ny,.2))p.y=ny;moved=Math.hypot(p.x-ox,p.y-oy);const sd=TR?vy:vx;if(sd)p.dir=Math.sign(sd);}
  else if(p.path.length){let m=sp*dt;while(m>0&&p.path.length){const t=p.path[0],dx=t[0]-p.x,dy=t[1]-p.y,d=Math.hypot(dx,dy);const sd=TR?dy:dx;if(Math.abs(sd)>.02)p.dir=Math.sign(sd);if(d<=m){p.x=t[0];p.y=t[1];p.path.shift();m-=d;moved+=d}else{p.x+=dx/d*m;p.y+=dy/d*m;moved+=m;m=0}}
   if(!p.path.length){p.tx=null;const g=p.goal;p.goal=null;if(g){faceTo(g);interact(g);}}}
@@ -711,7 +713,7 @@ function sopDlg(){if(MODE==="line")return openD(`<span class="tag">📋 Trabajo 
  <h3>Reglas del cuarto limpio</h3><p>🚶 Se camina, no se corre · 🗑️ Lo rechazado y lo que cae al piso va a scrap · 📄 Solo documentos controlados · ♨️ Ningún parámetro fuera de la ventana validada · 🫧 Ningún equipo con calibración vencida</p><button class="btn" onclick="closeD()">Entendido</button>`);}
 function helpDlg(){openD(`<h2>🩺 Célula Limpia</h2><p>Fabricas dispositivos médicos en un área limpia. Afuera, los doctores llevan 30 horas de guardia y llegan como zombies: cada uno necesita su dispositivo para atender a un paciente. Cuando se lo das, despierta y corre al quirófano. Al final de cada nivel llega el 🧌 <b>Dr. Ogro</b>, jefe de cirugía, que pide 3 a la vez.</p>
  <ul style="font-size:14px;line-height:1.5"><li><b>Moverte:</b> toca una estación y caminas hasta ella. En computadora también puedes usar las flechas o WASD y la barra espaciadora (o E) para usar la estación más cercana.</li>
- <li><b>Manos:</b> llevas una cosa a la vez. En las <b>celdas</b>, las estaciones manuales avanzan solo si te quedas en ellas y las máquinas trabajan solas. El 🔥 <b>horno</b> trabaja por lotes: lo cargas y lo arrancas tocándolo con las manos libres.</li><li><b>Línea:</b> la banda no para mientras tenga material. Tú surtes los alimentadores, destrabas ⚠️ atascos, vacías rechazos y llevas las cajas.</li>
+ <li><b>Manos:</b> llevas una cosa a la vez. En las <b>celdas</b>, las estaciones manuales avanzan solo si te quedas en ellas (al terminar, la pieza pasa sola a tus manos) y las máquinas trabajan solas. Si una máquina terminó y traes la pieza que sigue, se <b>intercambian</b> en un solo toque. El 🔥 <b>horno</b> trabaja por lotes: lo cargas y lo arrancas tocándolo con las manos libres.</li><li><b>Línea:</b> la banda no para mientras tenga material. Tú surtes los alimentadores, destrabas ⚠️ atascos, vacías rechazos y llevas las cajas.</li>
  <li><b>🎯 Takt:</b> llega un doctor cada ${G.takt} s y su paciencia se agota. Puedes dejar hasta 3 en espera en la ventanilla.</li>
  <li><b>🌫️ Partículas:</b> suben al caminar, mucho más al 🏃 correr, y con lo que no sacaste en 5S. Si llegan al límite, la célula se detiene.</li>
  <li><b>♨️ Selladora:</b> vigila su temperatura en la barra de arriba; tócala para ajustarla dentro de la ventana validada.</li></ul>
