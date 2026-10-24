@@ -903,7 +903,7 @@ function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(CT){CAM.x+
 // ---------- HUD ----------
 function bar(v,c){return `<div class="bar"><i style="width:${clamp(v,0,100)}%;background:${c}"></i></div>`}
 const mc=v=>v>=70?"#9be08f":v>=40?"#ffd27a":"#ff8a70";
-function hud(){pcTick();$("clk").textContent=clk();const left=Math.max(0,30*60-S.t);$("left").textContent=` · bloque ${blk()}/4 · faltan ${Math.floor(left/60)} h ${String(Math.floor(left%60)).padStart(2,"0")} min`;
+function hud(){pcTick();if(!S.started&&!S.done&&$("ov").hidden&&$("pc").hidden&&typeof introDlg==="function")introDlg();$("clk").textContent=clk();const left=Math.max(0,30*60-S.t);$("left").textContent=` · bloque ${blk()}/4 · faltan ${Math.floor(left/60)} h ${String(Math.floor(left%60)).padStart(2,"0")} min`;
  $("pr").textContent=Math.round(S.prod).toLocaleString("es-CR");$("en").textContent=Math.round(S.en);$("en").style.color=mc(S.en);$("cf").textContent=S.cafes;
  const r=rate(),co=co2v();
  let h=`<div class="row" style="cursor:pointer" onclick="playerDlg()"><span>👤 <b>${S.player?S.player.nick:"—"}</b></span><span class="mut">${S.player&&S.player.room?"🏫 "+S.player.room:"sin sala"}</span></div>`;
@@ -977,14 +977,15 @@ buildGround();fitCam();
 const had=load();try{S.outbox=JSON.parse(localStorage.getItem(SK+"-out")||"[]")}catch(e){}
 function start(){const nk=($("nk")?$("nk").value:"").trim().replace(/[<>"'`]/g,"").slice(0,24),rc=($("rc")?$("rc").value:"").trim().toUpperCase().slice(0,12);if(rc&&!nk){$("perr").textContent="Escribe tu nickname para que tu profesor te reconozca.";return}
  S.player={nick:nk||"Ingeniero",room:rc};if(rc)checkRoom(rc);S.started=true;closeD();if(!had){S.nextInc=6;toast("🌙 18:00. El turno de la tarde se va. Desde ahora, todo es tu responsabilidad.");}setSpd(1);}
-openD(`<span class="tag">PES Labs · Juego de ingeniería de planta</span><h2>🌙 Turno Noche</h2>
+function introDlg(){openD(`<span class="tag">PES Labs · Juego de ingeniería de planta</span><h2>🌙 Turno Noche</h2>
 <p>Son las <b>18:00</b>. El ingeniero de la tarde te entrega la planta envasadora de bebida gaseosa y se va a su casa. Desde ahora hasta las <b>06:00</b> eres el <b>ingeniero superintendente</b>… y el único ingeniero en la planta.</p>
 <p class="mut">⏱️ El turno dura cerca de <b>1 hora real</b>, en <b>4 bloques de unos 15 minutos</b>. Se guarda solo: puedes jugar un bloque por día. El reloj avanza solo mientras juegas (▶▶ para acelerar los ratos tranquilos).</p>
 <p>Calidad, proceso, ambiente, seguridad y personas: todo pasa por ti. La meta es <b>${META.toLocaleString("es-CR")} cajas</b> sin lastimar a nadie, sin contaminar y sin despachar producto malo. ¿Sobrevives al turno?</p>
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${Object.keys(CHARS).map(k=>face(k,40)).join("")}</div>
 <div class="data"><b>👤 Jugador</b><br><label for="nk">Tu nickname</label><input id="nk" maxlength="24" placeholder="Ej.: JR-07"><label for="rc">Código de sala (solo si tu profesor te dio uno)</label><input id="rc" maxlength="12" placeholder="Ej.: QUIM-4821" style="text-transform:uppercase"></div><p id="perr" class="bad"></p>
 <p class="mut">💻 Se disfruta más en computadora. Planta y datos genéricos con fines educativos.</p>
-<button class="btn" onclick="start()">${had?`Continuar el turno (${clk()}) ▶`:"Empezar el turno ▶"}</button>${had?` <button class="btn o" onclick="localStorage.removeItem(SK);location.reload()">Empezar de cero</button>`:""} <button class="btn o" onclick="helpDlg()">❓ Cómo se juega</button>`);
+<button class="btn" onclick="start()">${had?`Continuar el turno (${clk()}) ▶`:"Empezar el turno ▶"}</button>${had?` <button class="btn o" onclick="localStorage.removeItem(SK);location.reload()">Empezar de cero</button>`:""} <button class="btn o" onclick="helpDlg()">❓ Cómo se juega</button>`);}
+introDlg();
 if(W<700)$("kp").classList.add("min");hud();requestAnimationFrame(loop);
 </script>
 <script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
