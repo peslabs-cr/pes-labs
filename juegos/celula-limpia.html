@@ -479,13 +479,14 @@ function sealDefect(){const s=G.seal;if(s.T<140)return "Sello débil: se despega
 function testSeal(){G.tests=(G.tests||0)+1;beep(500,.15);const w=inWin();G.sealTestOk=w;const e=$("si");sealInfo();
  e.innerHTML+=w?"<br>🧪 <b>Sello de prueba:</b> ancho uniforme de 6 mm, sin canales ni arrugas. Desprendimiento: <b>4,1 lbf</b> (mínimo 2,5) ✅. Prueba de tinte: sin fugas ✅.":`<br>🧪 <b>Sello de prueba:</b> ❌ ${sealDefect()}`;if($("sgo"))$("sgo").disabled=!w;}
 function sealClose(){if(G.seal.drift&&inWin()){G.seal.drift=0;G.ev.driftFix=G.t;toast("♨️ Corregiste la temperatura. Lo sellado mientras estuvo fuera de ventana es <b>sospechoso</b>: anótalo para el cierre del lote.",6000);}closeD();hud();}
-function startProd(){log("arranque","Verificación de arranque de la selladora","Selladora · Ventana validada",G.tests===1?1:.5,G.tests+" sellos de prueba");closeD();G.phase="prod";G.t=0;if(MODE!=="line"&&!G.stock.length)G.stock.push({st:"listo",prod:LV.prod});G.pl.x=7;G.pl.y=MODE==="line"?6.6:7;G.P=10+G.gownErr*4;G.cd=3.6;hud();
+function startProd(){clearRun();log("arranque","Verificación de arranque de la selladora","Selladora · Ventana validada",G.tests===1?1:.5,G.tests+" sellos de prueba");closeD();G.phase="prod";G.t=0;if(MODE!=="line"&&!G.stock.length)G.stock.push({st:"listo",prod:LV.prod});G.pl.x=7;G.pl.y=MODE==="line"?6.6:7;G.P=10+G.gownErr*4;G.cd=3.6;hud();
  toast(MODE==="line"?"💧 La línea arranca sola. Tú la mantienes viva: surte componentes desde los estantes, destraba atascos ⚠️, vacía los rechazos y lleva las cajas 📦 a 🔔 entrega.":`${LV.ic} El turno anterior dejó ${LV.unit==="guía"?"una":"un"} ${LV.unit} en 🔔 entrega. Toca ${ST.rack.ic} ${ST.rack.n.toLowerCase()} para empezar. 💡 Truco: mientras una máquina trabaja sola, ve adelantando la siguiente pieza.`,7000);}
 // ---------- producción ----------
 function goTo(k){const a=ap(ST[k]);G.working=null;const p=G.pl;if(Math.hypot(p.x-a[0],p.y-a[1])<.15){p.tx=null;p.path=[];p.goal=null;faceTo(k);return interact(k)}p.tx=a[0];p.ty=a[1];p.goal=k;p.path=findPath([p.x,p.y],[a[0],a[1]]);}
 function faceTo(k){const s=ST[k];const d=(TR?s.y-G.pl.y:s.x-G.pl.x);if(Math.abs(d)>.05)G.pl.dir=Math.sign(d);}
 function nextFor(st){return PROC.find(k=>ST[k].in===st)}
 function interact(k){const s=ST[k],p=G.pl;if(G.stop>0){toast("🌫️ La célula está detenida por la alarma de partículas.");return}
+ if(G.spcAl&&((k==="medi"&&!(G.spcSnooze>G.t))||(k==="recub"&&!(p.hold&&p.hold.st===s.in)))){coatDlg();return}
  if(k==="rack"){if(p.hold){toast(`Ya tienes una pieza en la mano: ${STG[p.hold.st]}.`);return}p.hold={st:s.give,prod:LV.prod};G.tubes=(G.tubes||0)+1;beep(660,.05);return}
  if(s.shelf){if(p.hold){toast(`Tienes las manos ocupadas: ${STG[p.hold.st]||"algo"}.`);return}p.hold={st:"bandeja",comp:s.shelf,prod:"tray"};beep(660,.05);return}
  if(s.line)return lineInteract(s);
@@ -502,13 +503,12 @@ function interact(k){const s=ST[k],p=G.pl;if(G.stop>0){toast("🌫️ La célula
  if(s.done&&!s.wait){if(p.hold&&p.hold.st===s.in){const o=s.p;s.p=p.hold;p.hold=o;s.prog=0;s.done=false;beep(820,.05);if(s.man)G.working=k;if(o.st==="rechazado")toast("❌ Pieza rechazada: llévala al 🗑️ scrap.");return}if(p.hold){toast("Tienes las manos ocupadas: deja primero tu pieza.");return}p.hold=s.p;s.p=null;s.done=false;s.prog=0;beep(900,.05);if(p.hold.st==="rechazado")toast("❌ Pieza rechazada: llévala al 🗑️ scrap.");return}
  if(s.wait){G.working=k;return}
  if(s.man){G.working=k;return}
- if(k==="medi"&&G.spcAl&&!G.spcIgn){coatDlg();return}
  if(k==="uv"&&!p.hold){if(s.prog<s.tm*.97){p.hold=s.p;p.hold.bad="curado incompleto";p.hold.st="unido";s.p=null;s.prog=0;toast("⚠️ Sacaste la pieza <b>antes de terminar el curado</b>. Se ve igual… pero la unión quedó débil.",5200);beep(260,.15);return}}
  toast(`⏳ ${s.n} está trabajando.`);}
 function complete(s){const p=s.p;s.prog=s.tm;
  if(s.id==="punta"&&LV.prod==="cat"){if(rnd()<.15)p.vis=1;else if(rnd()<.3)p.glint=1}
  if(s.id==="medi"){const real=12+G.coat+(rnd()+rnd()+rnd()-1.5)*.7;const shown=G.medFake?12+(rnd()-.5)*.8:real;G.spc.push(+shown.toFixed(2));G.spcReal=(G.spcReal||[]).concat(+real.toFixed(2));
-  const L7=G.spc.slice(-6);const trend=L7.length===6&&L7.every((v,i)=>!i||v>L7[i-1]);if(!G.spcAl&&(shown>13.8||shown<10.2||trend)){G.spcAl=true;beep(1300,.1);toast("📈 <b>El gráfico de control avisa:</b> "+(trend?"6 puntos seguidos subiendo":"un punto fuera de los límites de control")+". Toca 📈 Medición para actuar.",6500);}
+  const L7=G.spc.slice(-6);const trend=L7.length===6&&L7.every((v,i)=>!i||v>L7[i-1]);if(!G.spcAl&&(shown>13.8||shown<10.2||trend)){G.spcAl=true;beep(1300,.1);toast("📈 <b>El gráfico de control avisa:</b> "+(trend?"6 puntos seguidos subiendo":"un punto fuera de los límites de control")+". Toca 📈 Medición SPC o 🧪 Recubrimiento para actuar.",6500);}
   if(shown<9||shown>15){p.st="rechazado";s.done=true;floatTxt(s.x,s.y,"✗ "+shown.toFixed(1)+" µm","#e0493c");return}if(real<9||real>15)p.coatBad=1;}
  if(s.id==="fuga"){if(G.calOk&&(p.bad||rnd()<.03)){p.st="rechazado";s.done=true;toast("🫧 ❌ Falló la prueba de fuga.");floatTxt(s.x,s.y,"✗ fuga","#e0493c");beep(240,.2);return}if(!G.calOk)p.unver=1}
  if(s.id==="insp"){s.wait=true;return}
@@ -550,7 +550,7 @@ function coatDlg(){openD(`<span class="tag">📈 Control estadístico de proceso
  ${[["Ajustar la viscosidad del baño según el procedimiento y verificar las siguientes piezas",1],["Seguir: todavía está dentro de especificación",0],["Hacerle un ajuste de cero al medidor: puede estar descalibrado",0]].map((o,k)=>[o,k]).sort(()=>rnd()-.5).map(([o,k])=>`<button class="opt" onclick="coatDo(${k})">${o[0]}</button>`).join("")}`);}
 function coatDo(k){log("spc","Tendencia en el gráfico de control","SPC · Control de proceso",[1,0,0][k],["Ajustar baño","Seguir","Ajustar medidor"][k]);
  if(k===0){G.coat=0;G.coatDrift=0;G.spcAl=false;ST.recub.lock=8;toast("✅ Bien: el gráfico avisó antes de que hubiera rechazos. Ajustaste la causa (el baño), no el síntoma.",5600)}
- else if(k===1){G.spcIgn=1;toast("⚠️ Una tendencia es una señal aunque todo esté «en especificación». Pronto vendrán los rechazos.",5600)}
+ else if(k===1){G.spcIgn=1;G.spcSnooze=G.t+30;toast("⚠️ Una tendencia es una señal aunque todo esté «en especificación». Pronto vendrán los rechazos.",5600)}
  else{G.medFake=1;G.spcAl=false;G.spcIgn=1;toast("⚠️ Ahora el gráfico se ve bonito… pero el recubrimiento sigue saliéndose. Ajustar el medidor esconde el problema.",6000)}closeD();}
 // ---------- línea ----------
 const CAPF={rollo:20,spike:12,camara:12,regul:12,bolsa:12},NEED={m1:"rollo",m2:"spike",m3:"camara",m4:"regul",m6:"bolsa"};
@@ -579,13 +579,13 @@ function stepLine(dt){const L=G.line,ks=LV.LINE;let why=null;
  for(const k of ks)if(k!=="pack"&&!L.jam[k]&&rnd()<dt*.005){L.jam[k]=1;beep(300,.25);toast(`⚠️ <b>Atasco en ${ST[k].n}.</b> La línea se detuvo.`,3500);}}
 function lotDlg(){openD(`<span class="tag">📦 Recibo de materiales</span><h2>Llegó un lote nuevo de spikes</h2><p>Bodega trae un lote nuevo de spikes con la etiqueta amarilla de <b>«EN CUARENTENA»</b>: calidad todavía no lo ha liberado. Te quedan pocos spikes del lote liberado.</p><p>¿Qué haces?</p>
  ${[["Seguir con lo liberado y pedirle a calidad que revise y libere el lote nuevo",1],["Detener la línea hasta que calidad lo revise (20 s)",.5],["Usarlo: es el mismo proveedor, trae certificado de análisis y calidad lo libera en la mañana",0]].map((o,k)=>[o,k]).sort(()=>rnd()-.5).map(([o,k])=>`<button class="opt" onclick="lotDo(${k})">${o[0]}</button>`).join("")}`);}
-function lotDo(k){log("cuarentena","Lote de componentes en cuarentena","Materiales · Cuarentena",[1,.5,0][k],["Pedir liberación","Detener la línea","Usarlo"][k]);
+function lotDo(k){G.lotDone=1;log("cuarentena","Lote de componentes en cuarentena","Materiales · Cuarentena",[1,.5,0][k],["Pedir liberación","Detener la línea","Usarlo"][k]);
  if(k===0){G.line.feed.spike+=6;toast("✅ Bien: calidad revisó el lote y lo liberó en un rato. Llegaron 6 spikes extra liberados.",5200)}
  else if(k===1){G.line.lock=20;toast("🟡 Correcto en calidad, pero no hacía falta parar: había material liberado para seguir.",5200)}
  else{G.quarUsed=1;toast("⚠️ Todo lo que se arme con ese lote queda <b>sin liberar</b>. Si calidad lo rechaza, hay que recuperar el producto.",6000)}closeD();}
 function calDlg(){openD(`<span class="tag">📋 Metrología</span><h2>🫧 La calibración del probador de fuga venció hoy</h2><p>Al pasar por la estación ves la etiqueta de calibración: <b>vencía ayer a medianoche</b>. El probador parece funcionar normal.</p><p>¿Qué haces?</p>
  ${[["Ponerle la etiqueta «fuera de servicio» y cambiarlo por el probador de respaldo calibrado (12 s)",1],["Bloquearlo y llamar a metrología para que lo calibre (30 s)",.5],["Seguir usándolo y verificarlo con la pieza patrón cada hora hasta que llegue metrología",0]].map((o,k)=>[o,k]).sort(()=>rnd()-.5).map(([o,k])=>`<button class="opt" onclick="calDo(${k})">${o[0]}</button>`).join("")}`);}
-function calDo(k){const v=[1,.5,0][k];log("calibracion","Probador con calibración vencida","Metrología · Calibración",v,["Respaldo calibrado","Metrología","Usarlo igual"][k]);
+function calDo(k){G.calDec=1;const v=[1,.5,0][k];log("calibracion","Probador con calibración vencida","Metrología · Calibración",v,["Respaldo calibrado","Metrología","Usarlo igual"][k]);
  if(k===0){ST.fuga.lock=12;G.ev.calDone=1;toast("✅ Bien: un equipo con calibración vencida no puede liberar producto. El respaldo ya está calibrado.",5200)}
  else if(k===1){ST.fuga.lock=30;G.ev.calDone=1;toast("🟡 Correcto, pero más lento: había un equipo de respaldo calibrado disponible.",5200)}
  else{G.calOk=false;toast("⚠️ Todo lo que pruebes con ese equipo queda <b>sin verificar</b>: no hay evidencia de que la prueba sea válida.",6000)}closeD();}
@@ -600,7 +600,7 @@ function audDo(k){const o=G.audQ[1][k];log("auditoria","Auditoría: "+G.audQ[0],
  if(o[1]===1)toast("🕵️ «Muy bien. Gracias, siga trabajando.»");else{G.audFind=1;toast("🕵️ «Voy a anotar un hallazgo.» La respuesta correcta era: <b>"+G.audQ[1][0][0]+"</b>.",6500)}closeD();}
 // ---------- bucle ----------
 function step(dt){if(G.phase!=="prod")return;if(G.cd>0){const o=Math.ceil(G.cd-.6);G.cd-=dt;const n=Math.ceil(G.cd-.6);if(n!==o)beep(n>0?600:1000,.15,.07);return}G.t+=dt;const p=G.pl;
- if(G.t>=G.LEN){G.phase="dhr";$("insp").hidden=true;setTimeout(()=>{if(G.phase==="dhr")dhrDlg()},500);return}
+ if(G.t>=G.LEN){clearRun();G.phase="dhr";$("insp").hidden=true;setTimeout(()=>{if(G.phase==="dhr")dhrDlg()},500);return}
  const E=LV.ev;
  if(E.cal&&!G.ev.cal&&G.t>=E.cal){G.ev.cal=1;calDlg();}
  if(E.coat&&!G.ev.coat&&G.t>=E.coat){G.ev.coat=1;G.coatDrift=1;}
@@ -649,6 +649,17 @@ addEventListener("keydown",e=>{if(!$("ov").hidden)return;const k=e.key.length===
  if(k.startsWith("Arrow"))e.preventDefault();});
 addEventListener("keyup",e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;KEYS[k]=false;if(k==="Shift")KEYS.Shift=false;});
 addEventListener("blur",()=>{KEYS={}});
+
+// ---------- guardar la partida en curso ----------
+const RSK="pes-celula-run";
+function saveRun(){if(!G||G.phase!=="prod")return;try{const st={};for(const k in ST){const s=ST[k];st[k]={x:s.x,y:s.y,slot:s.slot,p:s.p,prog:s.prog,done:s.done,wait:s.wait,lock:s.lock,q:s.q,run:s.run}}localStorage.setItem(RSK,JSON.stringify({G,st,at:Date.now()}))}catch(e){}}
+function clearRun(){try{localStorage.removeItem(RSK)}catch(e){}}
+function getRun(){try{const d=JSON.parse(localStorage.getItem(RSK)||"null");return d&&d.G&&LEVELS[d.G.lv]?d:null}catch(e){return null}}
+function loadRun(){const d=getRun();if(!d)return;newGame(d.G.lv);Object.assign(G,d.G);for(const k in d.st)if(ST[k])Object.assign(ST[k],d.st[k]);sizeSt();FKEY="";
+ G.phase="prod";G.cd=3.6;G.working=null;G.pl.path=[];G.pl.tx=null;G.pl.goal=null;closeD();$("ban").hidden=true;hud();
+ toast(`⏯️ Continúas el nivel ${G.lv} · ${LV.name}: quedan ${fmt(G.LEN-G.t)}.`,5000);
+ setTimeout(()=>{if(LV.ev.cal&&G.ev.cal&&!G.calDec)calDlg();else if(LV.ev.lot&&G.ev.lot&&!G.lotDone)lotDlg();else if(G.ev.aud&&G.audOk===undefined&&G.audQ)audDlg();},3800);}
+setInterval(saveRun,4000);addEventListener("pagehide",saveRun);document.addEventListener("visibilitychange",()=>{if(document.hidden)saveRun()});
 // ---------- equipo: contratar operadores ----------
 const CREW={st:{n:"Operador de estación",ic:"🧑‍🏭",cost:40,sal:1,col:"#3fae62",d:"Se queda en una estación manual y la trabaja solo. Ponlo donde más se te acumula el trabajo."},
  ws:{n:"Surtidor de materiales",ic:"🧺",cost:60,sal:1,col:"#e0a51c",d:"Mueve las piezas terminadas a la siguiente estación libre, trae material y lleva lo listo a entrega."},
@@ -776,7 +787,7 @@ function helpDlg(){openD(`<h2>🩺 Célula Limpia</h2><p>Fabricas dispositivos m
  <li><b>Manos:</b> llevas una cosa a la vez. En las <b>celdas</b>, las estaciones manuales avanzan solo si te quedas en ellas (al terminar, la pieza pasa sola a tus manos) y las máquinas trabajan solas. Si una máquina terminó y traes la pieza que sigue, se <b>intercambian</b> en un solo toque. El 🔥 <b>horno</b> trabaja por lotes: lo cargas y lo arrancas tocándolo con las manos libres.</li><li><b>👷 Equipo:</b> con tus ⭐ puedes contratar un operador para una estación, un surtidor de materiales o, en la línea, un técnico de mantenimiento. Cada uno cobra salario.</li><li><b>Línea:</b> la banda no para mientras tenga material. Tú surtes los alimentadores, destrabas ⚠️ atascos, vacías rechazos y llevas las cajas.</li>
  <li><b>🎯 Takt:</b> llega un doctor cada ${G.takt} s y su paciencia se agota. Puedes dejar hasta 3 en espera en la ventanilla.</li>
  <li><b>🌫️ Partículas:</b> suben al caminar, mucho más al 🏃 correr, y con lo que no sacaste en 5S. Si llegan al límite, la célula se detiene.</li>
- <li><b>♨️ Selladora:</b> vigila su temperatura en la barra de arriba; tócala para ajustarla dentro de la ventana validada.</li></ul>
+ <li><b>📈 Gráfico de control (nivel 2):</b> si aparece ⚠️ en la medición, toca 📈 Medición SPC o 🧪 Recubrimiento para decidir qué hacer con el baño.</li><li><b>♨️ Selladora:</b> vigila su temperatura en la barra de arriba; tócala para ajustarla dentro de la ventana validada.</li></ul>
  <p class="mut">Planta, procesos y datos genéricos con fines educativos, sin marcas reales. Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · PES Labs · CC BY-NC 4.0.</p><button class="btn" onclick="backD()">Entendido</button> <a class="btn o" href="../index.html#juegos">Volver a PES Labs</a>`);}
 const LVLS=[[1,"Célula en U · Hemodinamia · 5S, takt, selladora y expediente del lote"],[2,"Célula + horno por lotes · Radiología, de noche · SPC y flujo contra lotes"],[3,"Línea automatizada · Emergencias · OEE, supermercado y Pareto de paros"],["🫀","Stent","Célula con microscopio · Cardiología"],["🔀","Cambio de producto","Despeje de línea entre lotes"],["🕵️","Día de auditoría","Todo el sistema de calidad"],["🧟","La gran guardia","Todos los productos a la vez"]];
 function unlocked(n){return n===1||(SAVE.best[n-1]||0)>=1}
@@ -785,7 +796,7 @@ function menu(){G.phase="menu";const pl=SAVE.player||{};
  <p>En el hospital, los doctores llevan <b>30 horas de guardia</b> y ya parecen zombies 🧟: arrastran los pies y solo repiten «catéteeer…». Lo único que los despierta es recibir a tiempo el dispositivo que necesita su paciente.</p>
  <p>Tú fabricas dispositivos médicos en un <b>área limpia</b>, primero en celdas y luego en una línea. Vístete bien, organiza con <b>5S</b>, verifica la <b>selladora</b>, sigue el <b>trabajo estándar</b> y produce al ritmo del <b>takt</b>. Del otro lado hay un paciente.</p>
  <div class="data"><b>👤 Jugador</b><label for="nk">Tu nickname</label><input id="nk" maxlength="24" placeholder="Ej.: JR-07" value="${(pl.nick||"").replace(/"/g,"")}"><label for="rc">Código de sala (solo si tu profesor te dio uno)</label><input id="rc" maxlength="12" placeholder="Ej.: IND-4821" style="text-transform:uppercase" value="${pl.room||""}"></div><p id="perr" class="bad"></p>
- <h3>Niveles</h3>${LVLS.map((l,i)=>{if(typeof l[0]==="number"){const L=LEVELS[l[0]],ok=unlocked(l[0]),b=SAVE.best[l[0]]||0;return `<button class="opt" ${ok?`onclick="startGame(${l[0]})"`:"disabled style='opacity:.55'"}>${ok?"▶️":"🔒"} <b>${l[0]}. ${L.ic} ${L.name}</b> ${b?"⭐".repeat(b):""}<br><span class="mut">${l[1]}${ok?"":" · supera el nivel anterior para desbloquearlo"}</span></button>`}return `<div class="mut" style="margin:6px 4px">🔒 <b>${i+1}. ${l[0]} ${l[1]}</b> · ${l[2]} · próximamente</div>`}).join("")}
+ ${(()=>{const r=getRun();return r?`<button class="btn" style="width:100%;margin:6px 0 2px" onclick="loadRun()">⏯️ Continuar nivel ${r.G.lv}: ${LEVELS[r.G.lv].name} · quedan ${fmt(r.G.LEN-r.G.t)}</button><p class="mut" style="margin:2px 0 8px">Se guardó solo cuando saliste. Si empiezas otro nivel, esta partida se reemplaza.</p>`:""})()}<h3>Niveles</h3>${LVLS.map((l,i)=>{if(typeof l[0]==="number"){const L=LEVELS[l[0]],ok=unlocked(l[0]),b=SAVE.best[l[0]]||0;return `<button class="opt" ${ok?`onclick="startGame(${l[0]})"`:"disabled style='opacity:.55'"}>${ok?"▶️":"🔒"} <b>${l[0]}. ${L.ic} ${L.name}</b> ${b?"⭐".repeat(b):""}<br><span class="mut">${l[1]}${ok?"":" · supera el nivel anterior para desbloquearlo"}</span></button>`}return `<div class="mut" style="margin:6px 4px">🔒 <b>${i+1}. ${l[0]} ${l[1]}</b> · ${l[2]} · próximamente</div>`}).join("")}
  <p class="mut">⏱️ Unos 10 minutos por nivel · 💻 Se disfruta más en computadora, pero funciona en el celular.</p>
  ${(()=>{const n=[3,2,1].find(unlocked);return `<button class="btn" onclick="startGame(${n})">▶ Jugar nivel ${n}: ${LEVELS[n].name}</button> `})()}<button class="btn o" onclick="helpDlg()">❓ Cómo se juega</button>`);}
 function backD(){const ph=G.phase;if(ph==="menu")return menu();if(ph==="gown")return gownDlg();if(ph==="seal")return sealDlg(true);if(ph==="end"&&G.resH){openD(G.resH);drawSpg();drawSpc();return}closeD();}
