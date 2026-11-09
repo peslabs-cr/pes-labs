@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="author" content="Ing. Ricardo Fonseca Pereira (PES Labs)">
+<!-- PES Labs · Creado por Ing. Ricardo Fonseca Pereira con ayuda de IA · peslabs-cr.github.io/pes-labs · Licencia CC BY-NC 4.0: uso libre con crédito al autor, sin fines comerciales. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Mi Cuadrilla · Juego de liderazgo en planta</title>
+<meta name="description" content="Eres supervisor de una cuadrilla en una fab de microchips. Cada decisión mueve la producción, el rendimiento, al equipo y a la gerencia… y la confianza de cada persona.">
+<meta property="og:title" content="Mi Cuadrilla: un juego de liderazgo en una fab de microchips">
+<meta property="og:description" content="Juego gratis de PES Labs: decide como supervisor y descubre qué tipo de líder eres.">
+<meta property="og:image" content="https://peslabs-cr.github.io/pes-labs/media/og-mi-cuadrilla.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="627">
+<meta property="og:type" content="website"><meta property="og:url" content="https://peslabs-cr.github.io/pes-labs/juegos/mi-cuadrilla.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👷</text></svg>">
+<style>
+:root{--ink:#1f2a33;--mut:#6b7780;--bg1:#f6e7a8;--bg2:#e9cf6f;--card:#fffdf6;--tl:#0f9d8a;--bad:#d64532;--ok:#1f9a55}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg2);-webkit-user-select:none;user-select:none;touch-action:manipulation}
+body{background:radial-gradient(120% 80% at 50% 0%,#fbf0c2 0%,var(--bg1) 45%,var(--bg2) 100%)}
+body:before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(120,90,10,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(120,90,10,.07) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(8px + env(safe-area-inset-bottom,0px))}
+#hdr{width:100%;max-width:560px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#6b5a1e;font-weight:700;letter-spacing:.3px}
+#hdr button{background:rgba(255,255,255,.6);border:2px solid #2a2a2a22;border-radius:10px;padding:4px 9px;font:inherit;cursor:pointer;color:var(--ink)}
+#meters{display:flex;gap:10px;margin:8px 0 4px;width:100%;max-width:440px;justify-content:space-between}
+.mt{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.mt .ic{position:relative;width:52px;height:52px;border-radius:14px;background:#fff8;border:3px solid var(--ink);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:24px}
+.mt .ic i{position:absolute;left:0;right:0;bottom:0;background:#f2b631;transition:height .5s,background .5s;z-index:0}
+.mt .ic span{position:relative;z-index:1}
+.mt .lb{font-size:11px;font-weight:800;color:#5d4c12}
+.mt .dot{height:10px;display:flex;align-items:center;justify-content:center}
+.mt .dot b{display:block;border-radius:50%;background:var(--ink);transition:all .2s}
+.mt.lo .ic i{background:#e35d48}.mt.hi .ic i{background:#3fae62}
+.mt.ch .ic{animation:pulse .5s}@keyframes pulse{50%{transform:scale(1.12)}}
+#stage{flex:1;width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:0}
+#card{position:relative;width:min(92vw,380px);background:var(--card);border:3px solid var(--ink);border-radius:22px;box-shadow:0 8px 0 var(--ink),0 18px 30px rgba(60,40,0,.25);padding:14px 16px 16px;touch-action:none;cursor:grab;transition:transform .25s;will-change:transform}
+#card.drag{transition:none;cursor:grabbing}
+#card.grave{border-color:#a8231a;box-shadow:0 8px 0 #a8231a,0 18px 30px rgba(120,20,0,.35);background:#fff7f4}
+#card .gb{background:#a8231a;color:#fff;font-weight:900;font-size:12px;letter-spacing:.3px;border-radius:9px;padding:6px 9px;margin-bottom:8px;text-align:center}
+#card .gb[hidden]{display:none}
+#card .por{height:170px;border-radius:14px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative}
+#card .por svg{height:165px}
+#card .who{margin:10px 0 2px;font-weight:900;font-size:17px}
+#card .role{font-size:12.5px;color:var(--mut);margin-bottom:8px}
+#card .txt{font-size:16px;line-height:1.45;min-height:70px}
+#card .hint{position:absolute;z-index:3;top:14px;padding:8px 10px;max-width:62%;background:var(--ink);color:#fff;border-radius:12px;font-size:13.5px;font-weight:700;opacity:0;transition:opacity .15s;pointer-events:none;line-height:1.3}
+#card .hint.l{left:14px}#card .hint.r{right:14px;text-align:right}
+#opts{display:flex;gap:8px;margin-top:14px;width:min(92vw,380px)}
+#opts button{flex:1;background:#fff;border:3px solid var(--ink);border-radius:14px;box-shadow:0 4px 0 var(--ink);padding:10px 10px;font:600 13.5px/1.3 system-ui,sans-serif;color:var(--ink);cursor:pointer;text-align:left}
+#opts button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+#opts button .ar{display:block;font-size:11px;font-weight:800;color:var(--mut);margin-bottom:3px}
+#res{min-height:40px;margin-top:10px;width:min(92vw,380px);font-size:13.5px;line-height:1.35;color:#4f4416;text-align:center;font-style:italic}
+#team{display:flex;gap:6px;justify-content:center;width:100%;max-width:440px;margin-top:4px}
+.tm{display:flex;flex-direction:column;align-items:center;cursor:pointer;width:62px}
+.tm .av{width:48px;height:48px;border-radius:50%;border:4px solid #bbb;background:#fff;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;transition:border-color .4s}
+.tm .av svg{width:46px;height:46px}
+.tm .nm{font-size:10.5px;font-weight:800;margin-top:2px;white-space:nowrap}
+.tm.gone{opacity:.35}
+.tm .ar{font-size:11px;font-weight:900;height:12px}
+#ov{position:fixed;inset:0;background:rgba(40,30,0,.45);display:flex;align-items:center;justify-content:center;padding:12px;z-index:20}
+#ov[hidden]{display:none}
+#dlg{background:var(--card);border:3px solid var(--ink);border-radius:20px;box-shadow:0 7px 0 var(--ink);max-width:560px;width:100%;max-height:calc(100% - 16px);overflow:auto;padding:18px 18px 16px;-webkit-user-select:text;user-select:text}
+#dlg h2{margin:2px 0 8px;font-size:22px;font-weight:900}
+#dlg h3{margin:14px 0 6px;font-size:15px}
+#dlg p{margin:7px 0;line-height:1.45;font-size:14.5px}
+.tag{display:inline-block;background:#ffd23f;border:2px solid var(--ink);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800}
+.btn{display:inline-block;margin:10px 6px 0 0;padding:11px 16px;border-radius:12px;border:3px solid var(--ink);background:var(--tl);color:#fff;font:800 14.5px system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 0 var(--ink);text-decoration:none}
+.btn.o{background:#fff;color:var(--ink)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.mut{color:var(--mut);font-size:13px}
+.row{display:flex;align-items:center;gap:10px;margin:7px 0}
+.row .av{width:44px;height:44px;flex:none;border-radius:50%;border:3px solid #bbb;overflow:hidden;background:#fff;display:flex;align-items:flex-end;justify-content:center}
+.row .av svg{width:42px;height:42px}
+.bar{height:9px;border-radius:6px;background:#ece4c8;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%}
+.box{background:#fff6d6;border:2px solid #e6d28a;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.45}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.grid4 div{background:#fff;border:2px solid #e6d28a;border-radius:10px;padding:6px;text-align:center;font-size:12px}
+.grid4 b{display:block;font-size:18px}
+.up{color:var(--ok)}.dn{color:var(--bad)}
+#credit{position:fixed;right:6px;bottom:3px;font:600 10px system-ui,sans-serif;color:#5d4c12;opacity:.75;text-decoration:none;z-index:2}
+@media (max-height:700px){#card .por{height:120px}#card .por svg{height:118px}#card .txt{font-size:15px;min-height:56px}.mt .ic{width:44px;height:44px;font-size:20px}}
+@media (max-height:600px){#card .por{height:90px}#card .por svg{height:88px}#team{display:none}}
+</style></head><body>
+<div id="app">
+ <div id="hdr"><span id="when">Fab PES · Fotolitografía</span><span><button onclick="helpDlg()">❓</button> <button onclick="teamDlg()">👥</button></span></div>
+ <div id="meters"></div>
+ <div id="stage">
+  <div id="card"><div class="gb" id="gb" hidden>⚠️ DECISIÓN GRAVE · lo que elijas tendrá consecuencias</div><div class="hint l" id="hl"></div><div class="hint r" id="hr"></div><div class="por" id="por"></div><div class="who" id="who"></div><div class="role" id="role"></div><div class="txt" id="txt"></div></div>
+  <div id="opts"><button id="bL"></button><button id="bR"></button></div>
+  <div id="res"></div>
+ </div>
+ <div id="team"></div>
+</div>
+<div id="ov" hidden><div id="dlg"></div></div>
+<a id="credit" href="../index.html#sobre" target="_blank" rel="noopener">PES Labs · Ing. Ricardo Fonseca · con ayuda de IA</a>
+<script>
+// ================= PERSONAS =================
+const PEOPLE={
+ chepe:{n:"Don Chepe",r:"Operador de litografía · 22 años en la fab",t0:35,
+  bio:"Ha visto pasar a seis supervisores. Sabe más del proceso que muchos ingenieros, pero ya casi no lo dice. Si confía en ti, es tu mejor alarma temprana.",
+  look:{skin:"#c99a74",brow:"#d6d6d6",browW:5,glasses:1,trim:"#8a96a3",eye:"round"}},
+ kevin:{n:"Kevin",r:"Operador nuevo · 3 semanas",t0:45,
+  bio:"Viene de un técnico en electrónica. Aprende rápido, pero tiene miedo de preguntar y quedar mal frente a los demás.",
+  look:{skin:"#e2b48c",brow:"#3a2a20",browW:3,trim:"#5bb0e0",eye:"big"}},
+ mariela:{n:"Mariela",r:"Operadora de grabado · 6 años",t0:50,
+  bio:"Siempre anda con una libreta. Ve mejoras donde otros ven rutina, aunque ya se cansó de proponer ideas que nadie prueba.",
+  look:{skin:"#b98560",brow:"#2a1c14",browW:3,trim:"#e07aa8",eye:"almond",lash:1}},
+ luis:{n:"Luis",r:"Operador de litografía · 4 años",t0:55,
+  bio:"El más rápido de la cuadrilla. Le gusta ganar la meta y a veces corta camino para lograrlo.",
+  look:{skin:"#d8a77e",brow:"#1e1410",browW:4,trim:"#f0a63a",eye:"narrow"}},
+ sofia:{n:"Sofía",r:"Operadora de inspección · 3 años",t0:45,
+  bio:"Detallista, la mejor encontrando defectos. Es mamá soltera y últimamente llega tarde.",
+  look:{skin:"#edc3a0",brow:"#5a3a24",browW:3,trim:"#9b7be0",eye:"almond",lash:1}},
+ andres:{n:"Andrés",r:"Operador de grabado · 2 años",t0:40,
+  bio:"Callado. Habla poco en las reuniones, pero escucha las máquinas mejor que nadie.",
+  look:{skin:"#8e623f",brow:"#120c08",browW:4,trim:"#4cc28a",eye:"round"}}};
+const OTHERS={
+ rojas:{n:"Ing. Rojas",r:"Gerente de producción",look:{skin:"#d9ad86",brow:"#3a2a20",suit:"manager"}},
+ paula:{n:"Ing. Paula",r:"Ingeniera de calidad",look:{skin:"#c48e66",brow:"#2a1c14",trim:"#2f7fd0",hood:"#cfe3f7",eye:"almond",lash:1}},
+ beto:{n:"Beto",r:"Técnico de mantenimiento",look:{skin:"#a8774f",brow:"#1e1410",trim:"#7b8794",hood:"#dfe3e7",eye:"round"}},
+ rrhh:{n:"Laura",r:"Recursos Humanos",look:{skin:"#e8bf9b",brow:"#6a4428",suit:"hr"}},
+ noche:{n:"Marco",r:"Supervisor del turno de noche",look:{skin:"#c79a72",brow:"#2a1c14",trim:"#3a4a5a",hood:"#e8ecef",eye:"narrow"}},
+ tablero:{n:"Arranque de turno",r:"5 minutos frente al tablero",look:{board:1}}};
+// ================= CARTAS =================
+// fx: p=producción, y=rendimiento, e=equipo, g=gerencia · tr: confianza por persona · tag: estilo
+const ARR=[
+ {id:"arr1",who:"tablero",text:"Ayer el rendimiento cerró en 91 %. La meta es 94 %. La cuadrilla espera de pie, con el traje puesto y ganas de entrar.",
+  L:{t:"Repasar todos los números y pedir más esfuerzo",fx:{g:4,e:-4},tag:"numero",r:"Todos asintieron. Nadie supo qué hacer distinto."},
+  R:{t:"Explicar qué causó la caída y preguntar qué vieron ellos",fx:{p:-2,y:4,e:3},trAll:3,tag:"explica",r:"Andrés mencionó un cassette que llegó húmedo. Era la causa."}},
+ {id:"arr2",who:"tablero",text:"La extracción del cuarto limpio suena fuerte hoy. Al fondo nadie te escucha bien.",
+  L:{t:"Hablar más fuerte y terminar rápido",fx:{p:2,e:-3},tag:"numero",r:"Ganaste dos minutos. La mitad no escuchó la alerta de la receta nueva."},
+  R:{t:"Mover la reunión al pasillo de batas",fx:{p:-2,y:3,e:3},tag:"escucha",r:"Dos minutos menos de producción, pero todos escucharon el cambio de receta."}},
+ {id:"arr3",who:"tablero",text:"Kevin nunca habla en el arranque. Hoy está atrás, mirando el piso.",
+  L:{t:"Preguntarle directo frente a todos qué opina",fx:{e:-1},tr:{kevin:-6},tag:"expone",r:"Kevin se puso rojo y dijo «nada, todo bien». Ahora habla menos."},
+  R:{t:"Preguntar al grupo qué fue lo más difícil de ayer y esperar",fx:{e:3},tr:{kevin:5},tag:"escucha",r:"Hubo silencio unos segundos… y Kevin habló de la alineación."}},
+ {id:"arr4",who:"tablero",text:"El tablero tiene once indicadores. Nadie lo mira.",
+  L:{t:"Repasarlos uno por uno para que nadie diga que no sabía",fx:{g:3,e:-2},tag:"numero",r:"Cumpliste con informar. Al salir, nadie recordaba más de dos."},
+  R:{t:"Escoger uno solo y explicar qué acciones lo mueven",fx:{y:4,e:2},trAll:2,tag:"explica",r:"Hoy todos sabían que la limpieza de la bahía mueve el rendimiento."}},
+ {id:"arr5",who:"tablero",text:"Don Chepe está con los brazos cruzados. Anoche resolvió un atasco del robot que nadie más pudo.",
+  L:{t:"Seguir con la agenda: el tiempo es corto",fx:{p:1},tr:{chepe:-3},tag:"numero",r:"Don Chepe se fue sin decir nada."},
+  R:{t:"Pedirle que cuente cómo lo resolvió",fx:{p:-1,y:2,e:3},tr:{chepe:9},tag:"escucha",r:"Don Chepe habló cuatro minutos. Kevin tomó nota de todo."}},
+ {id:"arr6",who:"tablero",text:"Ayer el rendimiento subió a 95 %. Andrés limpió por su cuenta el sensor de la grabadora 2.",
+  L:{t:"Felicitar al grupo en general",fx:{e:3},tag:"numero",r:"Bien recibido. Andrés no supo si alguien lo había notado."},
+  R:{t:"Contar lo que hizo Andrés y por qué ayudó",fx:{e:5,y:2},tr:{andres:9},tag:"protege",r:"Andrés no dijo nada, pero esa tarde revisó también la grabadora 3."}},
+ {id:"arr7",who:"tablero",text:"Luis pregunta en voz alta: «¿Para qué medimos tanto si al final siempre piden más?»",
+  L:{t:"«Porque la gerencia lo pide, Luis»",fx:{g:2,e:-4},tr:{luis:-5},tag:"impone",r:"La pregunta quedó flotando. Otros pensaban lo mismo."},
+  R:{t:"Mostrar cómo el rendimiento de ayer cambió lo que se le entregó al cliente",fx:{p:-2,y:3,e:4},tr:{luis:6},tag:"explica",r:"Luis dijo: «Ah, entonces el 1 % son 300 chips»."}},
+ {id:"arr8",who:"tablero",text:"Sofía llega cuando ya empezaste. Todos se voltean a verla.",
+  L:{t:"«Ya que llegó Sofía, empecemos otra vez»",fx:{e:-4},tr:{sofia:-10},tag:"expone",r:"Todos se rieron. Sofía no."},
+  R:{t:"Saludarla con la mirada y seguir; hablar con ella después",fx:{e:2},tr:{sofia:6},tag:"protege",r:"Sofía se integró sin que nadie le diera importancia."}},
+ {id:"arr9",who:"tablero",text:"Mañana entra una receta nueva en litografía. Tienes 5 minutos y mucho que explicar.",
+  L:{t:"Leer el cambio del documento para que quede dicho",fx:{g:2,y:-2},tag:"numero",r:"Lo leíste completo. Nadie preguntó nada."},
+  R:{t:"Explicar solo qué cambia en sus manos y pedir que alguien lo repita",fx:{p:-1,y:5,e:2},trAll:2,tag:"explica",r:"Mariela lo repitió con sus palabras y corrigió un detalle que tú habías dicho mal."}},
+ {id:"arr10",who:"tablero",text:"Cerraron una semana sin defectos de partículas. Es la primera vez en el año.",
+  L:{t:"Avisar al gerente por correo",fx:{g:6},tag:"numero",r:"El gerente respondió con un «bien». La cuadrilla no se enteró."},
+  R:{t:"Celebrarlo en el arranque y preguntar qué hicieron distinto",fx:{e:6,y:2},trAll:3,tag:"escucha",r:"Resulta que Sofía y Andrés se pusieron de acuerdo para revisar los guantes al entrar."}},
+ {id:"arr11",who:"tablero",text:"Hoy hay presión: el cliente adelantó un pedido. Se siente en el ambiente.",
+  L:{t:"Pedir velocidad: «hoy no hay excusas»",fx:{p:5,y:-4,e:-4},tag:"impone",r:"Todos corrieron. Hubo dos lotes en revisión."},
+  R:{t:"Explicar la meta y preguntar dónde pueden ganar tiempo sin riesgo",fx:{p:3,y:1,e:3},trAll:2,tag:"escucha",r:"Luis propuso precalentar mientras se hace la verificación. Funcionó."}},
+ {id:"arr12",who:"tablero",text:"Último turno de la semana. Todos están cansados.",
+  L:{t:"Arranque corto: «ya saben lo que hay que hacer»",fx:{p:2,e:-1},tag:"numero",r:"Rápido y sin sorpresas."},
+  R:{t:"Agradecer la semana con un ejemplo concreto de cada uno",fx:{p:-2,e:7},trAll:4,tag:"protege",r:"Fueron tres minutos. Don Chepe sonrió por primera vez en el mes."}}];
+
+const CARDS=[
+// ---------- Sofía ----------
+ {id:"sof1",who:"sofia",kind:"arc",req:S=>S.turn>=1,text:"Sofía llega 15 minutos tarde por segunda vez esta semana. «Perdón, jefe.» Varios compañeros la miran.",
+  L:{t:"Recordarle frente a todos que la puntualidad es para todos",fx:{g:3,e:-6},tr:{sofia:-14},tag:"expone",r:"El mensaje llegó. Sofía no volvió a mirarte en todo el turno."},
+  R:{t:"«Buenos días, Sofía. Pasa, después hablamos»",fx:{p:-1,e:2},tr:{sofia:8},tag:"protege",set:"sof_talk",sch:[["sof2",1]],r:"Nadie le dio importancia. Hablarán en la pausa."}},
+ {id:"sof2",who:"sofia",kind:"sched",req:S=>S.f.sof_talk,text:"En privado, Sofía te cuenta que su hijo está enfermo y que la guardería abre a las 5:30. El turno empieza a las 5:45.",
+  L:{t:"Comprenderla, pero recordarle que las reglas aplican igual",fx:{g:2,e:-2},tr:{sofia:-8},tag:"impone",r:"Sofía asintió. Al día siguiente llegó a tiempo, pero agotada."},
+  R:{t:"Pedir a Recursos Humanos un horario temporal",fx:{g:-5,e:4},tr:{sofia:18},tag:"protege",set:"sof_help",sch:[["sof3",3]],r:"Te costó una conversación incómoda con la gerencia. Sofía empezó a entrar 20 minutos más tarde."}},
+ {id:"sof3",who:"sofia",kind:"sched",req:S=>S.f.sof_help,text:"Un compañero del turno de noche tuvo una emergencia. Sofía se quedó dos horas extra a cubrirlo sin que nadie se lo pidiera.",
+  L:{t:"Agradecerle en privado",fx:{e:2},tr:{sofia:6},tag:"escucha",r:"«Usted me ayudó cuando lo necesité», te dijo."},
+  R:{t:"Reconocerla en el arranque frente a todos",fx:{e:7},tr:{sofia:8},tag:"protege",r:"La cuadrilla aplaudió. Ese día nadie llegó tarde."}},
+ {id:"sof_low",who:"sofia",kind:"low",text:"Sofía dejó pasar una oblea con un rayón en inspección. Cuando le preguntas, dice: «Ya no me concentro aquí».",
+  pre:{y:-8},
+  L:{t:"Hacer un reporte de desempeño",fx:{g:3,e:-3},tr:{sofia:-8},tag:"impone",r:"Quedó documentado. El problema de fondo, no."},
+  R:{t:"Preguntarle qué está pasando, sin prisa",fx:{p:-2},tr:{sofia:14},tag:"escucha",r:"Lloró un poco. Te contó del horario de la guardería."}},
+// ---------- Kevin ----------
+ {id:"kev1",who:"kevin",kind:"arc",req:S=>S.turn>=1,text:"Ves que Kevin carga un cassette de obleas sin revisar la orden en el sistema. Lo hace rápido, como los demás.",
+  L:{t:"Corregirlo en el momento: «así no se hace»",fx:{y:3},tr:{kevin:-9},tag:"impone",r:"Kevin lo corrigió. Desde entonces carga más lento y mirando a todos lados."},
+  R:{t:"Hacer la siguiente carga con él, explicando para qué se revisa la orden",fx:{p:-3,y:4},tr:{kevin:12},tag:"explica",set:"kev_taught",sch:[["kev2",2]],r:"«Ah, por eso los lotes no se mezclan», dijo."}},
+ {id:"kev2",who:"kevin",kind:"sched",req:S=>S.f.kev_taught,text:"Kevin se acerca, nervioso: «Jefe, ¿por qué la receta de la capa 12 tiene otro tiempo de exposición que la 11?»",
+  L:{t:"«Así viene de ingeniería, no te preocupes»",fx:{p:1},tr:{kevin:-7},tag:"resuelve",r:"Kevin no volvió a preguntar."},
+  R:{t:"Explicarle y pedirle que se lo explique al próximo nuevo",fx:{p:-2,e:3},tr:{kevin:12},tag:"delega",set:"kev_teach",r:"Lo explicó mejor que tú. Usó un dibujo."}},
+ {id:"kev3",who:"kevin",kind:"high",req:S=>S.turn>=6,text:"Kevin detectó un patrón raro en la oblea de prueba y paró la herramienta antes de correr el lote completo.",
+  L:{t:"Felicitarlo y reportar el hallazgo con su nombre",fx:{y:9,e:4},tr:{kevin:8},tag:"protege",r:"Ingeniería encontró una lámpara degradada. Habría arruinado 25 obleas."},
+  R:{t:"Pedirle que la próxima vez te consulte antes de parar",fx:{y:6,p:2},tr:{kevin:-10},tag:"impone",r:"Tiene sentido: parar cuesta. Pero Kevin entendió otra cosa: que mejor no parar."}},
+ {id:"kev_low",who:"kevin",kind:"low",text:"Kevin corrió un lote con la receta equivocada. No preguntó porque «no quería molestar». 25 obleas a revisión.",
+  pre:{y:-10},
+  L:{t:"Buscar al responsable y documentarlo",fx:{g:2,e:-5},tr:{kevin:-8},tag:"expone",r:"Kevin firmó el reporte temblando."},
+  R:{t:"Revisar con él qué faltó en su entrenamiento",fx:{p:-3,y:3},tr:{kevin:12},tag:"explica",r:"Nadie le había explicado cómo verificar la receta en el sistema."}},
+// ---------- Don Chepe ----------
+ {id:"che1",who:"chepe",kind:"arc",req:S=>S.turn>=1,text:"«Otro procedimiento nuevo… El anterior funcionaba. Esto lo inventaron en una oficina sin entrar a la bahía.»",
+  L:{t:"«Es la instrucción, Don Chepe, hay que seguirla»",fx:{y:2},tr:{chepe:-8},tag:"impone",r:"Lo siguió. Sin decir nada más."},
+  R:{t:"Pedirle que lo revise contigo y te diga qué ve mal",fx:{p:-3},tr:{chepe:12},tag:"escucha",set:"che_rev",sch:[["che2",2]],r:"Se quedó mirando el documento un buen rato."}},
+ {id:"che2",who:"chepe",kind:"sched",req:S=>S.f.che_rev,text:"Don Chepe encontró que el paso 7 del procedimiento nuevo deja la oblea expuesta mientras se cambia el cassette.",
+  L:{t:"Llevar el hallazgo a ingeniería con su nombre",fx:{y:9,g:3},tr:{chepe:15},tag:"protege",r:"Ingeniería corrigió el procedimiento y lo llamó a la reunión."},
+  R:{t:"Llevarlo tú, para que ingeniería lo tome más en serio",fx:{y:9,g:8},tr:{chepe:-12},tag:"resuelve",r:"Lo tomaron en serio. Don Chepe se enteró por otro compañero."}},
+ {id:"che3",who:"chepe",kind:"high",req:S=>S.turn>=5,text:"«Jefe, el muchacho nuevo tiene buena mano. Si me da una hora a la semana, yo lo entreno en la alineación.»",
+  L:{t:"«Gracias, pero el entrenamiento lo da el departamento»",fx:{},tr:{chepe:-10},tag:"resuelve",r:"Tienes razón en lo formal. Don Chepe no volvió a ofrecer."},
+  R:{t:"Aceptar y reorganizar el turno para darles esa hora",fx:{p:-4,y:5,e:3},tr:{chepe:10,kevin:10},tag:"delega",set:"mentor",r:"Dos semanas después, Kevin alineaba solo."}},
+ {id:"che_low",who:"chepe",kind:"low",text:"Don Chepe vio desde ayer que el vacío de la cámara venía bajando. No dijo nada. «¿Para qué, si nadie escucha?»",
+  pre:{y:-9},
+  L:{t:"Llamarle la atención por no reportar",fx:{g:2,e:-3},tr:{chepe:-6},tag:"impone",r:"Tienes razón en la norma. Él tiene razón en lo otro."},
+  R:{t:"Reconocer que no lo has escuchado y pedirle ayuda",fx:{p:-1},tr:{chepe:14},tag:"escucha",r:"«Bueno… le cuento lo que veo», dijo."}},
+// ---------- Mariela ----------
+ {id:"mar1",who:"mariela",kind:"arc",req:S=>S.turn>=2,text:"Mariela te enseña un dibujo: reordenar el cuarto de cassettes para caminar menos. «Lo hice en mi casa.»",
+  L:{t:"«Buena idea, mándala por el buzón de sugerencias»",fx:{},tr:{mariela:-8},tag:"numero",r:"El buzón responde en tres meses. Mariela lo sabe."},
+  R:{t:"Probarla con ella en el siguiente turno",fx:{p:-4,e:2},tr:{mariela:12},tag:"escucha",set:"mar_idea",sch:[["mar2",2]],r:"Perdieron una hora moviendo estantes."}},
+ {id:"mar2",who:"rojas",kind:"sched",req:S=>S.f.mar_idea,text:"«El tiempo de espera de los lotes bajó 12 % en tu cuadrilla. ¿Quién hizo eso?»",
+  L:{t:"«Lo trabajamos en equipo»",fx:{p:6,g:5},tr:{mariela:-6},tag:"resuelve",r:"Es cierto en parte. Mariela estaba escuchando."},
+  R:{t:"«Fue idea de Mariela; yo solo la apoyé»",fx:{p:6,g:3,e:4},tr:{mariela:15},tag:"protege",set:"mar_known",r:"El gerente anotó su nombre."}},
+ {id:"mar3",who:"mariela",kind:"high",req:S=>S.turn>=8,text:"Hay una vacante de líder de línea. Mariela aplicaría si tú la recomiendas, pero perderías a tu mejor operadora.",
+  L:{t:"Recomendarla",fx:{p:-5,e:6,g:2},tr:{mariela:10},tag:"delega",set:"mar_promo",r:"Mariela fue seleccionada. Antes de irse, entrenó a Andrés en su puesto."},
+  R:{t:"Pedirle que espere unos meses",fx:{p:4},tr:{mariela:-15},tag:"numero",r:"La cuadrilla sigue fuerte. Mariela ya no trae su libreta."}},
+ {id:"mar_low",who:"mariela",kind:"low",text:"Mariela ya no propone nada. Hoy oíste que le dijo a Kevin: «No pierdas el tiempo con ideas, aquí nadie las prueba».",
+  L:{t:"No meterte: es su opinión",fx:{e:-4},tr:{mariela:-3},tag:"numero",r:"Kevin dejó de anotar sus ideas."},
+  R:{t:"Pedirle una idea, solo una, y probarla esta semana",fx:{p:-3,e:2},tr:{mariela:14},tag:"escucha",r:"«¿En serio?», preguntó. Al día siguiente trajo tres."}},
+// ---------- Luis ----------
+ {id:"lui1",who:"luis",kind:"arc",req:S=>S.turn>=1,text:"Luis va adelante en la meta del día. Ves que se saltó la verificación de partículas de la bandeja para ganar 5 minutos.",
+  L:{t:"Dejarlo pasar: hoy la meta está apretada",fx:{p:6,y:-3},tr:{luis:4},tag:"numero",set:"lui_skip",sch:[["lui2a",2]],r:"Ganaste 5 minutos. Todos lo vieron."},
+  R:{t:"Detenerlo y explicarle qué hace una partícula en una oblea",fx:{p:-3,y:4},tr:{luis:-3},tag:"explica",set:"lui_ok",sch:[["lui2b",3]],r:"«Está bien, jefe», con cara de fastidio."}},
+ {id:"lui2a",who:"paula",kind:"sched",req:S=>S.f.lui_skip,text:"«Un lote de la cuadrilla salió con defectos por partículas. Fue uno de los que corrió Luis. Hay 50 obleas en revisión.»",
+  pre:{y:-9},
+  L:{t:"Sancionarlo por escrito",fx:{g:3,e:-4},tr:{luis:-12},tag:"expone",r:"Luis firmó. «Pero usted me vio y no dijo nada.»"},
+  R:{t:"Admitir que tú lo dejaste pasar y revisar juntos el método",fx:{g:-3,e:4},tr:{luis:10},tag:"protege",r:"Te costó con calidad. Luis no volvió a saltarse la verificación."}},
+ {id:"lui2b",who:"luis",kind:"sched",req:S=>S.f.lui_ok,text:"«Jefe, medí el tiempo. La verificación toma 5 minutos, pero se puede hacer mientras la herramienta calienta.»",
+  L:{t:"«Hagámoslo como dice el procedimiento»",fx:{y:1},tr:{luis:-6},tag:"impone",r:"Luis volvió a su puesto. Ya no midió nada más."},
+  R:{t:"Validarlo con calidad y probarlo",fx:{p:6},tr:{luis:12},tag:"escucha",set:"lui_idea",r:"Calidad lo aprobó. Ahora es el estándar de las tres cuadrillas."}},
+ {id:"lui_low",who:"luis",kind:"low",text:"Luis anda diciendo en el comedor que «este supervisor no sabe lo que es producir».",
+  L:{t:"Confrontarlo frente a los que lo escucharon",fx:{e:-6},tr:{luis:-8},tag:"expone",r:"Ganaste la discusión. Perdiste a Luis."},
+  R:{t:"Invitarlo a un café y preguntarle qué haría él distinto",fx:{p:-1},tr:{luis:14},tag:"escucha",r:"Te dio dos ideas buenas y una mala. Le agradeciste las tres."}},
+// ---------- Andrés ----------
+ {id:"and1",who:"andres",kind:"arc",req:S=>S.turn>=2,text:"Andrés casi nunca habla. Al final del arranque murmura algo que no alcanzas a oír.",
+  L:{t:"Seguir: el tiempo se acabó",fx:{p:1},tr:{andres:-6},tag:"numero",r:"Cada quien a su puesto."},
+  R:{t:"Acercarte y preguntarle qué dijo",fx:{p:-1},tr:{andres:10},tag:"escucha",set:"and_warn",sch:[["and2",1]],r:"«La bomba de la grabadora 3 suena distinto desde ayer.»"}},
+ {id:"and2",who:"beto",kind:"sched",req:S=>S.f.and_warn,text:"«Revisé la bomba de la grabadora 3. Tiene un rodamiento gastado. Puedo cambiarlo hoy, pero hay que parar 3 horas.»",
+  L:{t:"Esperar al mantenimiento programado del viernes",fx:{p:4},set:"bomba",sch:[["and3",2]],tag:"numero",r:"La grabadora sigue corriendo."},
+  R:{t:"Parar hoy y cambiarlo",fx:{p:-8,y:5,g:-2},tr:{andres:8},tag:"escucha",r:"Tres horas perdidas. Beto te enseñó el rodamiento: estaba a punto de romperse."}},
+ {id:"and3",who:"rojas",kind:"sched",req:S=>S.f.bomba,text:"«La bomba de la grabadora 3 falló en pleno lote. Seis horas fuera de servicio y 25 obleas perdidas. ¿Nadie lo vio venir?»",
+  pre:{p:-10,y:-8},
+  L:{t:"«Andrés lo reportó; fue mi decisión esperar»",fx:{g:-4},tr:{andres:8},tag:"protege",r:"El gerente apreció que no buscaras excusas."},
+  R:{t:"«Estaba programado para el viernes»",fx:{g:-6},tr:{andres:-10},tag:"resuelve",r:"Andrés escuchó. Pensó que su aviso no había servido de nada."}},
+ {id:"and4",who:"andres",kind:"arc",req:S=>S.turn>=4,text:"Andrés y Luis discuten fuerte en el vestidor por un cambio de turno. Hay compañeros mirando.",
+  L:{t:"Decirles que lo arreglen fuera del trabajo",fx:{e:-5},tr:{andres:-6,luis:-4},tag:"impone",r:"Se callaron. El problema siguió."},
+  R:{t:"Separarlos y hablar con cada uno por aparte",fx:{p:-3,e:3},tr:{andres:7,luis:5},tag:"escucha",r:"Era un malentendido con el rol de vacaciones. Lo arreglaron en 10 minutos."}},
+ {id:"and_low",who:"andres",kind:"low",text:"Andrés escuchó un ruido raro en la grabadora y no dijo nada. Se dañó un lote.",
+  pre:{y:-8},
+  L:{t:"Recordarle que reportar es su obligación",fx:{e:-2},tr:{andres:-5},tag:"impone",r:"«Sí, jefe.»"},
+  R:{t:"Preguntarle por qué no te avisó",fx:{},tr:{andres:12},tag:"escucha",r:"«Una vez avisé y nadie hizo nada.»"}},
+// ---------- Gerencia y otros ----------
+ {id:"g1",who:"rojas",kind:"pool",text:"«El cliente adelantó el pedido. Necesito 10 % más de producción esta semana.»",
+  L:{t:"Aceptar sin discutir",fx:{p:8,g:9,y:-5,e:-7},tag:"numero",r:"El gerente quedó contento. La cuadrilla, agotada."},
+  R:{t:"Negociar 5 % y explicarle qué se arriesga con más",fx:{p:4,g:-3,e:3},tag:"protege",r:"Aceptó a regañadientes. Te pidió los datos para la próxima vez."}},
+ {id:"g2",who:"rojas",kind:"pool",text:"«Quiero la lista de los operadores con más errores del mes. Vamos a hablar con ellos.»",
+  L:{t:"Entregar la lista",fx:{g:6,e:-9},trAll:-5,tag:"expone",r:"La lista llegó. También el rumor."},
+  R:{t:"Proponer analizar las causas de los errores, no a las personas",fx:{g:-4,y:4,e:5},tag:"protege",r:"Encontraron que 6 de 10 errores venían de la misma pantalla confusa."}},
+ {id:"g3",who:"paula",kind:"pool",text:"«Hay una excursión de partículas en la bahía de litografía. Si paramos para limpiar, perdemos el resto del turno.»",
+  L:{t:"Seguir corriendo con monitoreo extra",fx:{p:4,y:-9},tag:"numero",r:"El turno se salvó. El rendimiento de la semana, no tanto."},
+  R:{t:"Parar y limpiar",fx:{p:-11,y:8,g:-3},tag:"explica",r:"Perdieron el turno. El lote siguiente salió limpio."}},
+ {id:"g4",who:"rrhh",kind:"pool",text:"«Hay presupuesto para una sola capacitación este mes: control estadístico para tu cuadrilla, o un curso de liderazgo para ti.»",
+  L:{t:"Curso de liderazgo para mí",fx:{g:4},tag:"resuelve",r:"Buen curso. Lo primero que enseñaron fue a invertir en tu equipo."},
+  R:{t:"Control estadístico para la cuadrilla",fx:{p:-4,y:6,e:4},trAll:3,tag:"delega",r:"Ahora Sofía lee las gráficas mejor que tú."}},
+ {id:"g5",who:"beto",kind:"pool",text:"«Le puedo hacer el mantenimiento preventivo a la herramienta 2 hoy o el lunes. Hoy pierden tres horas.»",
+  L:{t:"El lunes",fx:{p:4,y:-4},tag:"numero",r:"Hoy salió todo. El lunes ya veremos."},
+  R:{t:"Hoy",fx:{p:-7,y:5},tag:"explica",r:"Beto encontró un sello desgastado."}},
+ {id:"g6",who:"rojas",kind:"pool",req:S=>S.turn>=4,text:"«Me dicen que tu arranque de turno dura 10 minutos. Los otros supervisores tardan 5.»",
+  L:{t:"Volver a 5 minutos",fx:{g:5,e:-4},tag:"numero",r:"Cumples la norma. Pierdes tu mejor momento con la gente."},
+  R:{t:"Mostrarle con datos qué ganaste con esos 5 minutos extra",fx:{},pv:{g:6},tag:"explica",fn:S=>{const ok=S.m.y>=55;S.m.g+=ok?6:-6;return ok?"Los datos te respaldaron: el gerente pidió que otros lo prueben.":"Tus datos no eran convincentes todavía. El gerente no quedó contento."},r:""}},
+ {id:"g7",who:"noche",kind:"pool",text:"«Perdón, mae. Anoche nos llovió todo: les dejé la bahía desordenada y sin registros.»",
+  L:{t:"Reportarlo a la gerencia",fx:{g:3,e:-2},tag:"expone",r:"El supervisor de noche ya no te pasa información."},
+  R:{t:"Ayudarle a ordenar y acordar cómo entregar el turno",fx:{p:-3,e:2},tag:"protege",set:"noche_ok",r:"Desde entonces, las entregas de turno vienen completas."}},
+ {id:"g8",who:"rojas",kind:"pool",text:"«Cumplieron la meta del mes. ¿Qué quieres hacer para reconocerlo?»",
+  L:{t:"Pedir que lo mencione en el boletín de la planta",fx:{g:4,e:3},tag:"numero",r:"Salió una línea en el boletín."},
+  R:{t:"Pedirle que baje a la bahía a decírselo en persona",fx:{g:2,e:8},trAll:3,tag:"protege",r:"El gerente bajó con el traje mal puesto. A todos les encantó."}},
+ {id:"g9",who:"paula",kind:"pool",text:"«Detectamos que la prueba de pulseras antiestáticas se está firmando sin hacerla. ¿Sabías?»",
+  L:{t:"Reunir a la cuadrilla y advertir que habrá sanciones",fx:{y:4,e:-6},tag:"impone",r:"Ahora todos la hacen. Por miedo."},
+  R:{t:"Hacer la prueba con ellos y explicar qué le hace la estática a un chip",fx:{p:-2,y:5,e:2},tag:"explica",r:"Andrés no sabía que una descarga invisible podía matar un chip."}},
+ {id:"g10",who:"rojas",kind:"pool",req:S=>S.turn>=6,text:"«Necesito prestarle a Luis a la otra cuadrilla por dos semanas.»",
+  L:{t:"Aceptar: es lo que la planta necesita",fx:{g:6,p:-6},tr:{luis:-4},tag:"numero",r:"Luis se fue molesto. A tu cuadrilla le costó."},
+  R:{t:"Proponer a Kevin, que necesita aprender otras herramientas",fx:{g:2,p:-2},tr:{kevin:5},tag:"delega",r:"Kevin volvió con ideas nuevas. Luis siguió en su puesto."}},
+ {id:"g11",who:"paula",kind:"pool",text:"«Una oblea salió con un defecto que nunca había visto. Necesito a alguien de tu cuadrilla una hora para investigarlo.»",
+  L:{t:"Ir tú: así no pierdes a nadie de la línea",fx:{y:3},tag:"resuelve",r:"Lo resolviste tú. Nadie en la cuadrilla aprendió nada."},
+  R:{t:"Mandar a Sofía, que es la mejor encontrando defectos",fx:{p:-3,y:5},tr:{sofia:8},tag:"delega",r:"Sofía encontró la causa en 40 minutos."}},
+ {id:"g12",who:"rrhh",kind:"pool",req:S=>S.turn>=3,text:"«En la encuesta de clima, tu cuadrilla dice que no recibe reconocimiento.»",
+  L:{t:"«Les pago para que trabajen bien»",fx:{e:-6},trAll:-3,tag:"numero",r:"Laura anotó algo en su libreta."},
+  R:{t:"Pedir los comentarios exactos y hablarlo con la cuadrilla",fx:{e:5},trAll:3,tag:"escucha",r:"Era más simple de lo que creías: querían saber si lo que hacían servía."}},
+ {id:"g13",who:"beto",kind:"pool",text:"«La grabadora 1 está dando alarmas intermitentes. No sé qué es. Puede ser nada.»",
+  L:{t:"Seguir y monitorear",fx:{p:3},pv:{y:4},fn:S=>{if(S.trustAvg()>=60){S.m.y+=2;return"Andrés y Don Chepe la estuvieron vigilando sin que se los pidieras. Era un sensor sucio."}S.m.y-=6;return"Nadie la vigiló. La alarma era real y se perdió un lote."},r:""},
+  R:{t:"Pedir a la cuadrilla que anote cada alarma con la hora",fx:{p:-2,y:4},trAll:2,tag:"delega",r:"Con los registros, Beto encontró el patrón en una hora."}},
+ {id:"g14",who:"rojas",kind:"pool",req:S=>S.turn>=7,text:"«Hay una plaza de supervisor senior en otra área. Te recomendaría, pero tendrías que dejar tu cuadrilla en dos semanas.»",
+  L:{t:"Aceptar la oportunidad",fx:{g:8,e:-5},tag:"resuelve",set:"leaving",r:"Tu cuadrilla se enteró por los pasillos."},
+  R:{t:"Pedir tiempo para preparar a alguien de la cuadrilla que te reemplace",fx:{g:3,e:4},trAll:3,tag:"delega",r:"El gerente lo pensó: «Eso es lo que hace un líder»."}},
+ {id:"g15",who:"paula",kind:"pool",text:"«En la auditoría de mañana van a entrevistar a operadores. ¿Los preparas?»",
+  L:{t:"Darles las respuestas que deben decir",fx:{g:3,y:-2},tag:"impone",r:"Respondieron de memoria. El auditor lo notó."},
+  R:{t:"Repasar con ellos por qué se hace cada control",fx:{p:-3,y:4,g:4},trAll:2,tag:"explica",r:"Kevin le explicó al auditor la verificación de receta. Sin papel."}}];
+// ================= DECISIONES GRAVES =================
+const SENIOR=["kevin","andres","sofia","luis","mariela","chepe"];
+function cutBy(S,how){const t=Object.keys(PEOPLE).filter(k=>!S.gone[k]);if(!t.length)return null;const p=how==="trust"?t.sort((a,b)=>S.tr[a]-S.tr[b])[0]:SENIOR.find(k=>t.includes(k));S.gone[p]=1;S.cut=S.cut||{};S.cut[p]=1;return p}
+const CRISIS=[
+ {id:"cr_hf",who:"mariela",kind:"crisis",text:"Mariela se salpicó el guante con ácido fluorhídrico al cambiar un recipiente en grabado. Dice que no siente nada y quiere terminar. Faltan 2 horas para entregar un lote urgente.",
+  L:{t:"Aplicarle el gel de gluconato, revisar que esté bien y dejar que termine",fx:{p:4,g:3},set:"hf_bad",sch:[["cr_hf2",1]],int:-1,il:"Dejaste que Mariela siguiera trabajando después de tocar ácido fluorhídrico.",r:"Mariela terminó el lote. Dijo que no sentía nada."},
+  R:{t:"Mandarla ya al servicio médico, parar la estación y reportar el incidente",fx:{p:-14,g:-6,e:5},tr:{mariela:12},trAll:3,int:1,il:"Paraste la estación y mandaste a Mariela al médico aunque el lote se atrasara.",r:"El médico encontró una quemadura que empezaba. El ácido fluorhídrico actúa horas después."}},
+ {id:"cr_hf2",who:"rojas",kind:"sched",req:S=>S.f.hf_bad,pre:{e:-12,g:-12},text:"Mariela amaneció con una quemadura profunda en el dedo: el ácido fluorhídrico duele horas después del contacto. Seguridad abrió una investigación. «¿Por qué siguió trabajando?»",
+  L:{t:"«Ella me dijo que estaba bien»",fx:{g:-4},tr:{mariela:-25},trAll:-8,int:-1,il:"Le echaste la culpa a Mariela por la quemadura.",r:"Mariela escuchó tu respuesta. La cuadrilla también."},
+  R:{t:"«Fue mi decisión. No seguí el protocolo»",fx:{g:-6},tr:{mariela:6},int:1,il:"Asumiste ante seguridad el error del ácido.",r:"Te ganaste una amonestación. Y el respeto de la cuadrilla."}},
+ {id:"cr_esc",who:"paula",kind:"crisis",text:"«Tres lotes que ya salieron al cliente pasaron por la grabadora 2 con el sensor de presión descalibrado. Pueden estar bien. Si lo reportamos, el cliente detiene su línea y nos multa.»",
+  L:{t:"Hacer pruebas internas primero y avisar solo si fallan",fx:{g:4,p:2},set:"esc_hide",sch:[["cr_esc2",2]],int:-1,il:"Decidiste no avisar al cliente de los lotes en duda.",r:"Las pruebas tardan una semana. El cliente no sabe nada."},
+  R:{t:"Avisar hoy al cliente y retener lo que quede en planta",fx:{p:-10,g:-14,y:6},int:1,il:"Avisaste al cliente de los lotes en duda aunque costara una multa.",r:"El cliente se molestó, pero agradeció el aviso: «Así se trabaja»."}},
+ {id:"cr_esc2",who:"rojas",kind:"sched",req:S=>S.f.esc_hide,pre:{g:-18,y:-10},text:"«El cliente encontró chips fallando en su ensamble. Rastrearon los lotes hasta nosotros… y descubrieron que ya lo sabíamos. Viene una auditoría.»",
+  L:{t:"Decir la verdad: «Decidimos esperar las pruebas»",fx:{g:-4},int:1,il:"Dijiste la verdad en la auditoría del cliente.",r:"La auditoría fue dura, pero honesta."},
+  R:{t:"«No teníamos evidencia de que estuvieran malos»",fx:{g:2,y:-4},int:-1,il:"Te defendiste con un tecnicismo ante el cliente.",r:"Técnicamente cierto. El cliente ya no confía igual."}},
+ {id:"cr_cut",who:"rojas",kind:"crisis",text:"«Bajó la demanda. Tengo que sacar a una persona de tu cuadrilla esta semana. O la escoges tú, o la escojo yo con los números.»",
+  L:{t:"Escogerla yo, con mi criterio, y decírselo en persona",fx:{e:-8},trAll:-3,int:1,il:"Tomaste la decisión del recorte y diste la cara.",fn:S=>{const p=cutBy(S,"trust");return p?`Escogiste a ${PEOPLE[p].n}. Se lo dijiste mirándolo a los ojos. Fue lo más difícil del mes.`:""},r:""},
+  R:{t:"Que la gerencia decida con los números",fx:{e:-12},trAll:-8,int:0,il:"Dejaste que la gerencia decidiera el recorte.",fn:S=>{const p=cutBy(S,"senior");return p?`La gerencia escogió a ${PEOPLE[p].n} por antigüedad. Se enteró por un correo.`:""},r:""}},
+ {id:"cr_fals",who:"chepe",kind:"crisis",req:S=>!S.gone.chepe,text:"Descubres que Don Chepe firmó la verificación de vacío de toda la semana sin hacerla. Lleva 22 años y se jubila en 6 meses. Si lo reportas, lo despiden.",
+  L:{t:"Hablar con él en privado, que la haga ahora y no reportarlo",fx:{e:2},tr:{chepe:8},set:"fals_hide",sch:[["cr_fals2",2]],int:-1,il:"Tapaste una firma falsa de Don Chepe.",r:"«Gracias, jefe. No vuelve a pasar.»"},
+  R:{t:"Reportarlo a calidad, aunque le cueste el puesto",fx:{y:5,e:-10},trAll:-6,int:1,il:"Reportaste una firma falsa aunque fuera de Don Chepe.",fn:S=>{S.gone.chepe=1;S.fired=1;return "Calidad lo despidió. La cuadrilla quedó en silencio. Kevin perdió a su maestro."},r:""}},
+ {id:"cr_fals2",who:"paula",kind:"sched",req:S=>S.f.fals_hide,pre:{y:-8,g:-10},text:"«En la auditoría encontramos firmas de verificación sin datos del equipo. Una es de Don Chepe… y el registro muestra que tú lo sabías.»",
+  L:{t:"Admitir que lo sabía y no lo reporté",fx:{g:-6},int:1,il:"Admitiste en la auditoría que lo sabías.",r:"Recibiste una amonestación escrita. Don Chepe, también."},
+  R:{t:"«Me enteré después»",fx:{g:-2},tr:{chepe:-15},int:-1,il:"Mentiste en la auditoría.",r:"Calidad no te creyó del todo. Don Chepe sí sabe la verdad."}},
+ {id:"cr_aco",who:"sofia",kind:"crisis",req:S=>!S.gone.sofia&&!S.gone.luis,text:"Sofía te cuenta en privado que Luis le hace comentarios incómodos desde hace semanas. Luis es tu operador más rápido y faltan dos días para cerrar la meta.",
+  L:{t:"Hablar tú con Luis primero, para no hacer un problema grande",fx:{p:2},tr:{sofia:-18},set:"aco_hide",sch:[["cr_aco2",1]],int:-1,il:"Trataste una queja de acoso como un problema menor.",r:"Luis se rió: «Era en broma, jefe»."},
+  R:{t:"Escalarlo hoy a Recursos Humanos y separarlos de puesto",fx:{p:-10,g:-3},tr:{sofia:15},int:1,il:"Escalaste la queja de Sofía aunque costara la meta.",fn:S=>{S.gone.luis=1;S.moved=1;return "Recursos Humanos abrió el caso. Luis fue movido a otro turno mientras investigan."},r:""}},
+ {id:"cr_aco2",who:"rrhh",kind:"sched",req:S=>S.f.aco_hide,pre:{e:-10,g:-12},text:"«Sofía puso la denuncia directamente con nosotros. Dice que te lo contó hace días y no pasó nada.»",
+  L:{t:"«Es cierto. Pensé que podía arreglarlo yo»",fx:{g:-4},tr:{sofia:-6},int:1,il:"Reconociste ante RR.HH. que no escalaste la queja.",r:"Laura anotó todo. Te pidió hacer el curso de prevención de acoso."},
+  R:{t:"«No me dio detalles suficientes»",fx:{g:1},tr:{sofia:-25},int:-1,il:"Le echaste la culpa a Sofía ante RR.HH.",r:"Sofía estaba al otro lado de la puerta."}},
+ {id:"cr_fat",who:"kevin",kind:"crisis",req:S=>!S.gone.kevin,text:"Kevin lleva tres dobles turnos seguidos porque falta gente. Hoy te pide hacer otro: necesita el dinero para pagar una deuda.",
+  L:{t:"Aceptar: él lo pidió y la línea lo necesita",fx:{p:8},tr:{kevin:4},set:"fat_yes",sch:[["cr_fat2",1]],int:-1,il:"Dejaste que Kevin hiciera un cuarto doble turno seguido.",r:"Kevin te agradeció. Tenía los ojos rojos."},
+  R:{t:"Negárselo y buscar cómo cubrir el turno",fx:{p:-9,e:-2},tr:{kevin:-6},int:1,il:"Le negaste a Kevin un cuarto doble turno, aunque él lo pidiera.",r:"Kevin se fue molesto. Tú cubriste parte del turno."}},
+ {id:"cr_fat2",who:"paula",kind:"sched",req:S=>S.f.fat_yes,pre:{y:-12,p:-6},text:"«Kevin se quedó dormido de pie y dejó caer un contenedor con 25 obleas. Por suerte no se lastimó.»",
+  L:{t:"Reportarlo como error del operador",fx:{},tr:{kevin:-15},int:-1,il:"Culpaste a Kevin por el cansancio que tú permitiste.",r:"El reporte quedó en su expediente."},
+  R:{t:"Reportar que fue fatiga y que yo autoricé el turno",fx:{g:-6},tr:{kevin:8},int:1,il:"Asumiste que la fatiga de Kevin era tu responsabilidad.",r:"El gerente prohibió los cuartos dobles en toda la planta."}},
+ {id:"cr_firma",who:"rojas",kind:"crisis",text:"«Fírmame que la cuadrilla aceptó las horas extra obligatorias del sábado. Recursos Humanos lo necesita hoy.» Nadie de la cuadrilla ha aceptado todavía.",
+  L:{t:"Firmarlo: la planta necesita el sábado",fx:{g:8,e:-12},trAll:-6,int:-1,il:"Firmaste un acuerdo que tu cuadrilla no había aceptado.",r:"El sábado vinieron todos. Callados."},
+  R:{t:"Negarme y pedir un día para hablarlo con la cuadrilla",fx:{g:-10,e:5},trAll:3,int:1,il:"Te negaste a firmar algo que no era cierto.",r:"El gerente se molestó. Al día siguiente, 4 de 6 aceptaron venir."}}];
+CRISIS.forEach(c=>CARDS.push(c));
+// ================= RETRATOS =================
+function por(id,mood){const P=PEOPLE[id]||OTHERS[id];const L=P.look;mood=mood||"n";
+ if(L.board)return `<svg viewBox="0 0 200 170"><rect x="22" y="18" width="156" height="118" rx="10" fill="#fff" stroke="#1f2a33" stroke-width="6"/><text x="100" y="48" font-size="15" font-weight="800" text-anchor="middle" fill="#6b7780" font-family="system-ui">TURNO ANTERIOR</text><rect x="40" y="62" width="70" height="10" rx="5" fill="#e6d28a"/><rect x="40" y="82" width="90" height="10" rx="5" fill="#e6d28a"/><rect x="40" y="102" width="55" height="10" rx="5" fill="#e6d28a"/><text x="160" y="74" font-size="16" font-weight="900" text-anchor="end" fill="#1f2a33" font-family="system-ui">91%</text><text x="160" y="113" font-size="16" font-weight="900" text-anchor="end" fill="#d64532" font-family="system-ui">9</text><rect x="70" y="136" width="10" height="34" fill="#1f2a33"/><rect x="120" y="136" width="10" height="34" fill="#1f2a33"/></svg>`;
+ const sk=L.skin,ink="#1f2a33";
+ const brow=(x,flip)=>{const a=mood==="a"?(flip?-6:6):mood==="s"?(flip?5:-5):0;return `<path d="M${x-13} ${86+(flip?-a:a)/2} Q${x} ${80} ${x+13} ${86+(flip?a:-a)/2}" stroke="${L.brow}" stroke-width="${L.browW||4}" fill="none" stroke-linecap="round"/>`};
+ const eye=x=>{const ry=L.eye==="narrow"?4:L.eye==="big"?8:6,rx=L.eye==="almond"?8:6;let s=`<ellipse cx="${x}" cy="100" rx="${rx}" ry="${mood==="h"?3:ry}" fill="${ink}"/>`;if(mood!=="h")s+=`<circle cx="${x+2}" cy="98" r="1.8" fill="#fff"/>`;if(L.lash)s+=`<path d="M${x-rx-2} 97 l-4 -3" stroke="${ink}" stroke-width="2.5"/>`;return s};
+ if(L.suit){const shirt=L.suit==="manager"?"#e9f0f7":"#f3d9e6";const hair=L.suit==="manager"?"#2b211b":"#5a3420";
+  return `<svg viewBox="0 0 200 170"><path d="M30 170 Q30 128 70 120 L130 120 Q170 128 170 170Z" fill="${shirt}" stroke="${ink}" stroke-width="5"/>${L.suit==="manager"?`<path d="M100 122 L92 135 L100 170 L108 135Z" fill="#2f7fd0" stroke="${ink}" stroke-width="3"/>`:`<path d="M80 122 Q100 140 120 122" fill="none" stroke="${ink}" stroke-width="4"/>`}<rect x="86" y="104" width="28" height="22" fill="${sk}"/>
+  ${L.suit==="hr"?`<path d="M52 70 Q50 140 66 150 L134 150 Q150 140 148 70Z" fill="${hair}"/>`:""}<ellipse cx="100" cy="82" rx="42" ry="48" fill="${sk}" stroke="${ink}" stroke-width="5"/>
+  <path d="M58 72 Q60 32 100 32 Q142 32 142 72 Q120 52 82 58 Z" fill="${hair}"/>${brow(84)}${brow(116,1)}${eye(84)}${eye(116)}
+  ${L.suit==="manager"?`<circle cx="84" cy="100" r="13" fill="none" stroke="${ink}" stroke-width="3"/><circle cx="116" cy="100" r="13" fill="none" stroke="${ink}" stroke-width="3"/><path d="M97 100 L103 100" stroke="${ink}" stroke-width="3"/>`:""}
+  <path d="M88 ${mood==="s"?120:116} Q100 ${mood==="h"?128:mood==="s"?112:120} 112 ${mood==="s"?120:116}" stroke="${ink}" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`}
+ const hood=L.hood||"#f4f6f8";
+ return `<svg viewBox="0 0 200 170"><path d="M22 170 Q24 130 62 118 L138 118 Q176 130 178 170Z" fill="${hood}" stroke="${ink}" stroke-width="5"/><path d="M100 120 L100 170" stroke="#c9d1d8" stroke-width="3"/><rect x="118" y="138" width="34" height="20" rx="4" fill="#fff" stroke="${ink}" stroke-width="3"/><rect x="122" y="143" width="26" height="4" fill="${L.trim}"/>
+ <path d="M48 120 Q40 40 100 26 Q160 40 152 120 Q130 130 100 130 Q70 130 48 120Z" fill="${hood}" stroke="${ink}" stroke-width="5"/>
+ <path d="M60 46 Q100 30 140 46" stroke="${L.trim}" stroke-width="6" fill="none"/>
+ <ellipse cx="100" cy="98" rx="38" ry="28" fill="${sk}" stroke="${ink}" stroke-width="4"/>
+ ${brow(84)}${brow(116,1)}${eye(84)}${eye(116)}
+ ${L.glasses?`<rect x="68" y="90" width="30" height="20" rx="7" fill="none" stroke="${ink}" stroke-width="3"/><rect x="102" y="90" width="30" height="20" rx="7" fill="none" stroke="${ink}" stroke-width="3"/>`:""}
+ <path d="M64 110 Q100 ${mood==="h"?102:106} 136 110 L132 128 Q100 138 68 128Z" fill="#dbe8f2" stroke="${ink}" stroke-width="4"/>
+ ${mood==="h"?`<path d="M74 106 Q80 102 86 106 M114 106 Q120 102 126 106" stroke="${ink}" stroke-width="2" fill="none"/>`:""}</svg>`}
+// ================= MOTOR =================
+const MK=[["p","Producción","🏭"],["y","Rendimiento","🔬"],["e","Equipo","👥"],["g","Gerencia","👔"]];
+const TURNS=12,DAYS=["Lunes","Martes","Jueves","Viernes"],KEY="pes-cuadrilla-v1";
+const BYID={};ARR.forEach(c=>BYID[c.id]=Object.assign({kind:"arr"},c));CARDS.forEach(c=>BYID[c.id]=c);
+const $=id=>document.getElementById(id);const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=Math.random;const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let S=null;
+function fresh(){const tr={};for(const k in PEOPLE)tr[k]=PEOPLE[k].t0;
+ return {turn:0,m:{p:50,y:50,e:50,g:50},tr,f:{},tags:{},q:[],qi:0,sch:[],used:{},gone:{},low:{},resAsk:{},notes:[],t0:null,done:false,fail:null,last:{}}}
+function api(){S.trustAvg=()=>{const v=Object.keys(PEOPLE).filter(k=>!S.gone[k]).map(k=>S.tr[k]);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0}}
+function save(){try{const c=Object.assign({},S);delete c.trustAvg;localStorage.setItem(KEY,JSON.stringify(c))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&!s.done&&s.turn>0)return s}catch(e){}return null}
+function clearSave(){try{localStorage.removeItem(KEY)}catch(e){}}
+function resignCard(p){const P=PEOPLE[p];const again=S.resAsk[p];return {id:"res_"+p,who:p,kind:"res",text:again?`${P.n} vuelve a tu escritorio: «Lo pensé bien. Ya acepté la otra oferta.»`:`${P.n} te pide hablar: «Me ofrecieron trabajo en otra fab. Creo que voy a aceptar.»`,
+ L:{t:"Desearle lo mejor",fx:{e:-7,p:-5},gone:p,tag:"numero",r:`${P.n} se fue. La cuadrilla lo sintió.`},
+ R:again?{t:"Agradecerle y pedirle que entrene a quien la reemplace",fx:{e:-4,p:-3},gone:p,tag:"delega",r:`${P.n} se fue, pero dejó a alguien preparado.`}:{t:"Pedirle una oportunidad para cambiar lo que no le gusta",fx:{e:2},tr:{[p]:14},resAsk:p,tag:"escucha",r:`«Está bien… pero que se note», dijo ${P.n}.`}}}
+function getCard(id){if(!id)return null;if(id.startsWith("res_"))return resignCard(id.slice(4));return BYID[id]}
+function team(){return Object.keys(PEOPLE).filter(k=>!S.gone[k])}
+function newTurn(){S.turn++;S.t0={m:Object.assign({},S.m),tr:Object.assign({},S.tr)};S.notes=[];
+ const q=[];const arr=ARR.filter(c=>!S.used[c.id]);const a=(arr.length?arr:ARR)[Math.floor(rnd()*(arr.length||ARR.length))];q.push(a.id);
+ const pick=[];const take=id=>{if(pick.length<3&&!pick.includes(id))pick.push(id)};
+ const CR={3:["cr_hf"],5:["cr_fals","cr_aco","cr_fat","cr_firma"],7:["cr_esc"],9:["cr_fals","cr_aco","cr_fat","cr_firma"],11:["cr_cut"]}[S.turn];let crisis=null;
+ if(CR){const ok=shuffle(CR.slice()).filter(id=>!S.used[id]&&(!BYID[id].req||BYID[id].req(S))&&(!PEOPLE[BYID[id].who]||!S.gone[BYID[id].who]));if(ok.length){crisis=ok[0];pick.push(crisis)}}
+ for(const p of team())if(S.tr[p]<=10)take("res_"+p);
+ for(const s of S.sch.filter(s=>s.at<=S.turn)){const c=BYID[s.id];if(c&&!S.used[c.id]&&(!c.req||c.req(S))&&(!c.who||!PEOPLE[c.who]||!S.gone[c.who]))take(c.id)}
+ for(const p of shuffle(team()))if(S.tr[p]<25&&!S.low[p]&&S.turn>=2&&BYID[p.slice(0,3)+"_low"]){take(p.slice(0,3)+"_low")}
+ for(const c of shuffle(CARDS.filter(c=>c.kind==="high"&&!S.used[c.id]&&!S.gone[c.who]&&S.tr[c.who]>=68&&(!c.req||c.req(S)))))take(c.id);
+ let arcs=0;for(const c of shuffle(CARDS.filter(c=>c.kind==="arc"&&!S.used[c.id]&&!S.gone[c.who]&&(!c.req||c.req(S))))){if(arcs<2&&pick.length<3){take(c.id);arcs++}}
+ for(const c of shuffle(CARDS.filter(c=>c.kind==="pool"&&!S.used[c.id]&&(!c.req||c.req(S)))))take(c.id);
+ shuffle(pick);if(crisis){pick.splice(pick.indexOf(crisis),1);pick.push(crisis)}S.q=q.concat(pick);S.qi=0;save();
+ if(S.turn===1||S.turn===5||S.turn===9)weekDlg();else showCard()}
+function when(){const w=Math.ceil(S.turn/4),d=DAYS[(S.turn-1)%4];return `Semana ${w} de 3 · ${d} · Turno ${S.turn} de ${TURNS}`}
+function cur(){return getCard(S.q[S.qi])}
+function showCard(){const c=cur();if(!c){return endTurn()}
+ if(c.pre&&!S.last[c.id]){S.last[c.id]=1;for(const k in c.pre)S.m[k]=clamp(S.m[k]+c.pre[k],0,100);renderMeters(c.pre);if(checkFail())return}
+ const P=PEOPLE[c.who]||OTHERS[c.who];$("when").textContent=when();
+ const mood=c.kind==="low"||c.kind==="res"||c.kind==="crisis"||(c.kind==="sched"&&c.id.startsWith("cr_"))?"s":c.kind==="high"?"h":"n";
+ $("por").innerHTML=por(c.who,mood);$("por").style.background=PEOPLE[c.who]?"#fff1c2":c.who==="tablero"?"#e7f3f1":"#eef1f5";
+ const gr=c.kind==="crisis";$("card").classList.toggle("grave",gr);$("gb").hidden=!gr;
+ $("who").textContent=P.n;$("role").textContent=P.r;$("txt").textContent=c.text;
+ $("bL").innerHTML=`<span class="ar">← DESLIZA A LA IZQUIERDA</span>${c.L.t}`;$("bR").innerHTML=`<span class="ar">DESLIZA A LA DERECHA →</span>${c.R.t}`;
+ $("hl").textContent=c.L.t;$("hr").textContent=c.R.t;const cd=$("card");cd.style.transform="";cd.style.opacity=1;renderMeters();renderTeam()}
+function fxOf(o){const v=Object.assign({},o.fx||{});if(o.pv)Object.assign(v,o.pv);if(o.trAll)v.e=(v.e||0)+1;return v}
+function preview(side){const c=cur();if(!c)return;const o=side?c[side]:null;const v=o?fxOf(o):{};
+ for(const [k] of MK){const d=$("dot_"+k),a=Math.abs(v[k]||0);d.innerHTML=a?`<b style="width:${a>=8?10:6}px;height:${a>=8?10:6}px"></b>`:""}}
+function choose(side){const c=cur();if(!c||busy)return;const o=c[side];busy=true;const cd=$("card");cd.style.transform=`translateX(${side==="L"?-480:480}px) rotate(${side==="L"?-22:22}deg)`;cd.style.opacity=0;preview(null);
+ const before={m:Object.assign({},S.m),tr:Object.assign({},S.tr)};
+ const mult=c.kind==="crisis"||c.kind==="sched"?1:1+.15*(Math.ceil(S.turn/4)-1);for(const k in (o.fx||{}))S.m[k]=clamp(S.m[k]+Math.round(o.fx[k]*mult),0,100);
+ if(o.il!==undefined){S.integ=S.integ||[];S.integ.push([o.int||0,o.il])}
+ if(o.trAll)for(const p of team())S.tr[p]=clamp(S.tr[p]+o.trAll,0,100);
+ for(const p in (o.tr||{}))if(!S.gone[p])S.tr[p]=clamp(S.tr[p]+o.tr[p],0,100);
+ if(o.tag)S.tags[o.tag]=(S.tags[o.tag]||0)+1;
+ if(o.set)S.f[o.set]=1;for(const [id,n] of (o.sch||[]))S.sch.push({id,at:S.turn+n});
+ if(o.gone){S.gone[o.gone]=1}if(o.resAsk)S.resAsk[o.resAsk]=1;
+ let r=o.r;if(o.fn){r=o.fn(S)||r;for(const k in S.m)S.m[k]=clamp(S.m[k],0,100)}
+ if(c.kind==="low")S.low[c.who]=1;
+ S.used[c.id]=1;S.notes.push(r);S.qi++;save();
+ const dm={};for(const k in S.m)dm[k]=S.m[k]-before.m[k];const dt={};for(const p in S.tr)dt[p]=S.tr[p]-before.tr[p];
+ $("res").textContent=r;renderMeters(dm);renderTeam(dt);
+ setTimeout(()=>{busy=false;if(checkFail())return;if(S.qi>=S.q.length)endTurn();else showCard()},420)}
+let busy=false;
+function checkFail(){for(const [k,n] of MK)if(S.m[k]<=0){S.fail=k;S.done=true;save();setTimeout(endGame,350);return true}return false}
+function renderMeters(d){$("meters").innerHTML=MK.map(([k,n,ic])=>{const v=S.m[k];return `<div class="mt ${v<25?"lo":v>=75?"hi":""} ${d&&d[k]?"ch":""}"><div class="ic"><i style="height:${v}%"></i><span>${ic}</span></div><div class="lb">${n}</div><div class="dot" id="dot_${k}"></div></div>`}).join("")}
+function tcol(v){return v<30?"#d64532":v<55?"#e0a51c":v<75?"#0f9d8a":"#1f9a55"}
+function renderTeam(dt){$("team").innerHTML=Object.keys(PEOPLE).map(p=>{const g=S.gone[p],v=S.tr[p],d=dt&&dt[p];return `<div class="tm ${g?"gone":""}" onclick="personDlg('${p}')"><div class="av" style="border-color:${g?"#bbb":tcol(v)}">${por(p)}</div><div class="nm">${PEOPLE[p].n.replace("Don ","D. ")}</div><div class="ar ${d>0?"up":"dn"}">${d?(d>0?"▲":"▼"):""}</div></div>`}).join("")}
+// ---------- turnos ----------
+function passive(){let warn=0,blind=0;for(const p of team()){if(S.tr[p]>=70)warn++;else if(S.tr[p]<30)blind++}
+ const ad=(k,v)=>S.m[k]=clamp(S.m[k]+v,0,100);ad("y",Math.min(3,warn)-Math.min(3,blind)-2);ad("p",Math.min(3,warn)-Math.min(2,blind));const av=S.trustAvg();let auto=0;if(S.turn>=3&&av>=60)auto=S.turn>=8&&av>=72?7:4;ad("p",auto+(S.m.y>=85?3:S.m.y>=70?1:0));if(S.m.y>=80)ad("g",2);const wk=Math.ceil(S.turn/4);ad("g",(S.m.p>=60?2:S.m.p>=45?0:-2)-(wk-1));
+ if(S.m.e<30)for(const p of team())S.tr[p]=clamp(S.tr[p]-2,0,100);
+ S.m.e=clamp(S.m.e+Math.round((S.trustAvg()-50)/12),0,100);return {warn,blind,auto}}
+function endTurn(){const pv=passive();S.hist=S.hist||[];S.hist.push(Object.assign({},S.m));save();if(checkFail())return;
+ const rows=MK.map(([k,n,ic])=>{const d=S.m[k]-S.t0.m[k];return `<div>${ic}<b>${S.m[k]}</b><span class="${d>0?"up":d<0?"dn":""}">${d>0?"+":""}${d}</span><br>${n}</div>`}).join("");
+ const ppl=Object.keys(PEOPLE).map(p=>{const d=S.tr[p]-S.t0.tr[p];if(S.gone[p])return S.notes.some(n=>n.startsWith(PEOPLE[p].n+" se fue"))?`<div class="row"><div class="av">${por(p,"s")}</div><div><b>${PEOPLE[p].n}</b> <span class="dn">se fue de la cuadrilla</span></div></div>`:"";return d?`<div class="row"><div class="av" style="border-color:${tcol(S.tr[p])}">${por(p,d>0?"h":"s")}</div><div style="flex:1"><b>${PEOPLE[p].n}</b> <span class="${d>0?"up":"dn"}">${d>0?"▲ confía más en ti":"▼ confía menos en ti"}</span><div class="bar"><i style="width:${S.tr[p]}%;background:${tcol(S.tr[p])}"></i></div></div></div>`:""}).join("");
+ const pas=(pv.warn?`<p>🙋 ${pv.warn===1?"Una persona que confía en ti te avisó":pv.warn+" personas que confían en ti te avisaron"} de un problema pequeño antes de que creciera.</p>`:"")+(pv.auto?`<p>⚙️ La cuadrilla resolvió ${pv.auto>=5?"varios problemas":"un problema"} sin que tuvieras que intervenir. Eso también es producción.</p>`:"")+(pv.blind?`<p>🙈 ${pv.blind===1?"Alguien vio algo raro y no te lo dijo":pv.blind+" personas vieron cosas raras y no te las dijeron"}.</p>`:"");
+ openD(`<span class="tag">${when()}</span><h2>Fin del turno</h2><div class="grid4">${rows}</div>${ppl?`<h3>Tu cuadrilla</h3>${ppl}`:""}${pas}<h3>Lo que pasó</h3>${S.notes.map(n=>`<p class="mut">• ${n}</p>`).join("")}
+ <button class="btn" onclick="${S.turn>=TURNS?"S.done=true;save();endGame()":"closeD();newTurn()"}">${S.turn>=TURNS?"Ver tu espejo ▶":"Siguiente turno ▶"}</button>`)}
+const WEEK={1:["Semana 1 · Conoce a tu cuadrilla","Te acaban de asignar la cuadrilla A de fotolitografía. Son seis personas, cada una con su historia. Tú todavía no sabes cuál es."],
+ 5:["Semana 2 · Lo que sembraste","Lo que decidiste la semana pasada empieza a volver. Algunas personas ya te cuentan cosas. Otras, ya no."],
+ 9:["Semana 3 · El equipo sin ti","Esta semana se nota si la cuadrilla depende de ti… o si ya sabe qué hacer sola."]};
+function weekDlg(){const w=WEEK[S.turn];openD(`<span class="tag">Fab PES · Fotolitografía · Turno A</span><h2>${w[0]}</h2><p>${w[1]}</p><button class="btn" onclick="closeD();showCard()">Empezar el turno ▶</button>`)}
+// ---------- espejo ----------
+const STY={mixto:["🧭 El líder en construcción","A veces escuchas y explicas; otras veces mandas o resuelves solo. Tu equipo todavía no sabe qué esperar de ti.","Fortaleza: sabes adaptarte a la situación.","Riesgo: sin un estilo claro, la gente no sabe si contarte las cosas o guardárselas."],
+ forma:["🌱 El que forma gente","Explicas el porqué y das espacio para que otros enseñen. Tu cuadrilla aprende de ti y entre ellos.","Fortaleza: tu equipo crece y puede funcionar sin ti.","Riesgo: formar toma tiempo, y a veces la gerencia quiere resultados para ayer."],
+ cuida:["🤝 El que cuida a su gente","Escuchas, proteges y das la cara por tu equipo. La gente confía en ti y te cuenta lo que ve.","Fortaleza: te enteras de los problemas antes que nadie.","Riesgo: proteger sin explicar puede crear dependencia: que todo pase por ti."],
+ solo:["🦸 El que lo resuelve todo solo","Cuando algo falla, lo arreglas tú. Eres rápido y confiable.","Fortaleza: la gerencia sabe que puede contar contigo.","Riesgo: tu equipo no aprende y, cuando no estás, nadie sabe qué hacer."],
+ numero:["📊 El que cuida el número","Te enfocas en la meta y en los indicadores. Informas bien y cumples la norma.","Fortaleza: nadie puede decir que no sabías cómo ibas.","Riesgo: la gente escucha los números, pero no sabe qué hacer para moverlos."],
+ manda:["📢 El que manda","Corriges rápido y dejas claras las reglas. No hay ambigüedad contigo.","Fortaleza: en una emergencia, todos saben quién decide.","Riesgo: la gente deja de avisarte para no quedar mal, y los problemas llegan tarde."]};
+function style(){const t=S.tags,g=k=>t[k]||0;const F=g("explica")+g("delega"),C=g("escucha")+g("protege"),pos=F+C,tot=Object.values(t).reduce((a,b)=>a+b,0)||1,pp=Math.round(pos/tot*100);let best;
+ if(pp>=65)best=F>=C*.8?"forma":"cuida";else if(pp<=38){const sc={solo:g("resuelve")*1.6,numero:g("numero"),manda:g("impone")+g("expone")};best=Object.keys(sc).sort((a,b)=>sc[b]-sc[a])[0]}else best="mixto";return {best,pos:pp}}
+function fate(p){const v=S.tr[p];if(S.cut&&S.cut[p])return "Salió en el recorte de personal.";if(p==="chepe"&&S.fired)return "Fue despedido por la firma falsa, seis meses antes de jubilarse.";if(p==="luis"&&S.moved)return "Fue movido a otro turno mientras Recursos Humanos investiga la queja.";if(S.gone[p])return "Renunció. Se fue a otra fab.";if(p==="mariela"&&S.f.mar_promo)return "Ahora es líder de línea. Dice que aprendió a escuchar trabajando contigo.";
+ if(p==="kevin"&&S.f.mentor&&v>=60)return "Ya alinea solo. Don Chepe lo entrenó, y ahora él le explica a otros.";
+ return v>=75?"Confía en ti. Te avisa antes de que el problema llegue.":v>=50?"Hace bien su trabajo, pero no siempre te cuenta lo que ve.":v>=25?"Cumple lo mínimo. Lo que sabe, se lo guarda.":"Ya no cree en ti. Si se queda, es por el salario."}
+const FAIL={p:"La producción se desplomó: la fab no cumplió con el cliente y el gerente te movió de puesto.",y:"El rendimiento se cayó: se perdieron demasiadas obleas y calidad detuvo la bahía.",e:"Tu cuadrilla se quemó: renuncias, ausencias y nadie quiere el turno A.",g:"El gerente perdió la confianza en ti y nombró a otro supervisor."};
+function endGame(){clearSave();const st=style(),s=STY[st.best];const m=MK.map(([k,n,ic])=>`<div>${ic}<b>${S.m[k]}</b>${n}</div>`).join("");
+ openD(`<span class="tag">${S.fail?"Fin anticipado · turno "+S.turn:"Fin de las 3 semanas"}</span><h2>Tu espejo de liderazgo</h2>${S.fail?`<div class="box">⚠️ ${FAIL[S.fail]}</div>`:""}
+ <div class="box"><b style="font-size:18px">${s[0]}</b><p>${s[1]}</p><p>✅ ${s[2]}</p><p>⚠️ ${s[3]}</p><p class="mut">${st.pos} % de tus decisiones fueron para escuchar, explicar, proteger o delegar.</p></div>
+ ${(S.integ&&S.integ.length)?`<h3>Las decisiones graves</h3>${S.integ.map(([v,t])=>`<p>${v>0?"✅":v<0?"⚠️":"➖"} ${t}</p>`).join("")}<div class="box">${S.integ.some(x=>x[0]<0)?"Hubo momentos en que elegiste no perder antes que hacer lo correcto. En la planta real, esas son las decisiones que más pesan, y las que tu equipo nunca olvida.":"En las decisiones graves hiciste lo correcto, aunque te costara en los números. Eso es lo que tu equipo recuerda."}</div>`:""}
+ <h3>Así terminó tu cuadrilla</h3>${Object.keys(PEOPLE).map(p=>`<div class="row"><div class="av" style="border-color:${S.gone[p]?"#bbb":tcol(S.tr[p])}">${por(p,S.gone[p]?"s":S.tr[p]>=60?"h":"n")}</div><div style="flex:1"><b>${PEOPLE[p].n}</b><br><span class="mut">${fate(p)}</span></div></div>`).join("")}
+ <h3>Los indicadores</h3><div class="grid4">${m}</div>${chart()}
+ <h3>Para pensar</h3><p>• ¿Quién de tu cuadrilla real te avisaría primero de un problema? ¿Y quién no?</p><p>• ¿Cuál de tus decisiones repetirías, y cuál cambiarías?</p><p>• ¿Tu equipo sabe qué hace que los indicadores se muevan… o solo los escucha?</p>
+ <div class="box" style="text-align:center"><b>Informar es decir cómo vamos.<br>Liderar es lograr que el equipo sepa qué hace que vayamos así.</b></div>
+ <button class="btn" onclick="startNew()">Jugar otra vez</button><a class="btn o" href="../index.html">🏠 PES Labs</a>`)}
+function chart(){const H=[{p:50,y:50,e:50,g:50}].concat(S.hist||[]);if(H.length<3)return "";const w=520,h=150,X=i=>20+i*(w-40)/(TURNS),Y=v=>h-14-v*(h-30)/100;
+ const C={p:"#d98a00",y:"#2f7fd0",e:"#1f9a55",g:"#8b5ad8"};const lines=MK.map(([k])=>`<polyline fill="none" stroke="${C[k]}" stroke-width="3.5" stroke-linejoin="round" points="${H.map((m,i)=>X(i)+","+Y(m[k])).join(" ")}"/>`).join("");
+ const wk=[4,8].map(t=>`<line x1="${X(t)}" y1="8" x2="${X(t)}" y2="${h-14}" stroke="#d8c98e" stroke-dasharray="4 4"/>`).join("");
+ return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;background:#fff;border:2px solid #e6d28a;border-radius:12px">${wk}${lines}<text x="${X(2)}" y="${h-2}" font-size="11" text-anchor="middle" fill="#6b7780">Semana 1</text><text x="${X(6)}" y="${h-2}" font-size="11" text-anchor="middle" fill="#6b7780">Semana 2</text><text x="${X(10)}" y="${h-2}" font-size="11" text-anchor="middle" fill="#6b7780">Semana 3</text></svg>
+ <p class="mut">${MK.map(([k,n])=>`<b style="color:${C[k]}">━ ${n}</b>`).join(" · ")}</p>${ins(H)}`}
+function ins(H){const a=H[Math.min(4,H.length-1)],b=H[H.length-1],st=style().best;
+ if((st==="manda"||st==="numero")&&a.p>=b.p)return `<div class="box">📉 La producción arrancó bien… y se fue cayendo. Sin la gente de tu lado, los resultados rápidos no duran.</div>`;
+ if((st==="cuida"||st==="forma")&&b.p>=a.p)return `<div class="box">📈 Al principio cuidar a la gente costó producción. Después, el equipo empezó a resolver solo, y los números subieron.</div>`;
+ if(st==="cuida"||st==="forma")return `<div class="box">🤔 Cuidaste a la gente, pero los números no te acompañaron. Cuidar también es explicar el resultado y defender la meta.</div>`;return ""}
+// ---------- diálogos ----------
+function openD(h){$("dlg").innerHTML=h;$("ov").hidden=false;$("dlg").scrollTop=0}
+function closeD(){$("ov").hidden=true}
+function backD(){if(!S||S.turn===0)menu();else closeD()}
+function helpDlg(){openD(`<h2>❓ Cómo se juega</h2><p>Eres el supervisor de la cuadrilla A de fotolitografía en una fab de microchips. Durante 3 semanas (12 turnos) te llegan situaciones: personas de tu equipo, la gerencia, calidad o mantenimiento.</p>
+ <p><b>Decide deslizando la carta</b> a la izquierda o a la derecha, o tocando una de las dos opciones. Ninguna es siempre la correcta.</p>
+ <p><b>Cuida las 4 barras:</b> 🏭 Producción, 🔬 Rendimiento (obleas buenas), 👥 Equipo y 👔 Gerencia. Si una llega a cero, pierdes el puesto. Los puntos bajo cada barra te muestran qué se moverá, pero no hacia dónde.</p>
+ <p><b>Cada persona tiene su confianza</b> en ti (el color de su círculo). Quien confía en ti te avisa de los problemas antes de que crezcan. Quien no confía, se los guarda. Lo que decides hoy vuelve en los turnos siguientes.</p>
+ <p>Al final verás tu <b>espejo de liderazgo</b>: qué tipo de líder fuiste y qué pasó con cada persona. Tu partida se guarda sola al terminar cada decisión.</p><button class="btn" onclick="backD()">Entendido</button>`)}
+function personDlg(p){const P=PEOPLE[p],v=S.tr[p];openD(`<div class="row"><div class="av" style="width:80px;height:80px;border-color:${S.gone[p]?"#bbb":tcol(v)}">${por(p)}</div><div><h2 style="margin:0">${P.n}</h2><span class="mut">${P.r}</span></div></div><p>${P.bio}</p>${S.gone[p]?`<div class="box">Ya no está en tu cuadrilla.</div>`:`<p><b>Confianza en ti:</b></p><div class="bar" style="height:14px"><i style="width:${v}%;background:${tcol(v)}"></i></div><p class="mut">${v>=75?"Te cuenta todo lo que ve.":v>=55?"Te cuenta lo importante.":v>=30?"Te cuenta solo si le preguntas.":"Ya casi no te cuenta nada."}</p>`}<button class="btn" onclick="backD()">Volver</button>`)}
+function teamDlg(){openD(`<h2>👥 Tu cuadrilla</h2>${Object.keys(PEOPLE).map(p=>`<div class="row" style="cursor:pointer" onclick="personDlg('${p}')"><div class="av" style="border-color:${S.gone[p]?"#bbb":tcol(S.tr[p])}">${por(p)}</div><div style="flex:1"><b>${PEOPLE[p].n}</b> <span class="mut">· ${PEOPLE[p].r}</span><div class="bar"><i style="width:${S.gone[p]?0:S.tr[p]}%;background:${tcol(S.tr[p])}"></i></div></div></div>`).join("")}<p class="mut">El color muestra cuánto confía cada persona en ti. Toca a alguien para conocerlo mejor.</p><button class="btn" onclick="backD()">Volver</button>`)}
+function menu(){const sv=load();openD(`<div style="text-align:center"><div style="display:flex;justify-content:center;gap:4px;margin:4px 0">${["chepe","mariela","kevin"].map(p=>`<div style="width:90px">${por(p,"h")}</div>`).join("")}</div>
+ <span class="tag">Juego de liderazgo · Fab de microchips</span><h2 style="font-size:30px;margin-top:8px">Mi Cuadrilla</h2>
+ <p>Eres supervisor de producción en una fab de microchips. Tienes 3 semanas, 6 personas y muchas decisiones sin respuesta obvia.</p><p class="mut">Los números importan. Pero los mueve la gente.</p>
+ ${sv?`<button class="btn" onclick="cont()">▶ Continuar (turno ${sv.turn})</button> <button class="btn o" onclick="startNew()">Empezar de nuevo</button>`:`<button class="btn" onclick="startNew()">▶ Empezar</button>`} <button class="btn o" onclick="helpDlg()">❓ Cómo se juega</button>
+ <p class="mut" style="margin-top:14px">Personajes, planta y datos ficticios con fines educativos.</p></div>`)}
+function startNew(){S=fresh();api();clearSave();closeD();renderMeters();renderTeam();newTurn()}
+function cont(){S=Object.assign(fresh(),load());api();closeD();renderMeters();renderTeam();showCard()}
+// ---------- arrastre ----------
+(function(){const cd=$("card");let x0=null,dx=0;
+ cd.addEventListener("pointerdown",e=>{if(busy||!S||!$("ov").hidden)return;x0=e.clientX;dx=0;cd.classList.add("drag");cd.setPointerCapture(e.pointerId)});
+ cd.addEventListener("pointermove",e=>{if(x0===null)return;dx=e.clientX-x0;cd.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;const s=dx<-25?"L":dx>25?"R":null;$("hl").style.opacity=s==="L"?1:0;$("hr").style.opacity=s==="R"?1:0;preview(s)});
+ const up=()=>{if(x0===null)return;x0=null;cd.classList.remove("drag");$("hl").style.opacity=0;$("hr").style.opacity=0;if(dx<-90)choose("L");else if(dx>90)choose("R");else{cd.style.transform="";preview(null)}};
+ cd.addEventListener("pointerup",up);cd.addEventListener("pointercancel",up);
+ for(const [b,s] of [["bL","L"],["bR","R"]]){$(b).addEventListener("click",()=>choose(s));$(b).addEventListener("mouseenter",()=>preview(s));$(b).addEventListener("mouseleave",()=>preview(null))}
+ document.addEventListener("keydown",e=>{if(!$("ov").hidden||!S)return;if(e.key==="ArrowLeft")choose("L");if(e.key==="ArrowRight")choose("R")});})();
+S=fresh();api();renderMeters();renderTeam();menu();
+</script>
+<script data-goatcounter="https://peslabs.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body></html>
